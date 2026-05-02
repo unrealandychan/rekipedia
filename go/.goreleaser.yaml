@@ -65,7 +65,7 @@ homebrew_casks:
     url:
       template: "https://github.com/unrealandychan/rekipedia-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     binaries:
-      - rekipedia
+      - reki
     repository:
       owner: unrealandychan
       name: homebrew-tap
