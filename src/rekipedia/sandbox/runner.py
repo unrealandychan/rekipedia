@@ -110,10 +110,10 @@ class DockerSandboxRunner(BaseRunner):
 
 
 def get_runner(force_local: bool = False) -> BaseRunner:
-    """Return DockerSandboxRunner if Docker is available, otherwise LocalRunner."""
+    """Return DockerSandboxRunner if Docker is available and image exists, otherwise LocalRunner."""
     if force_local:
         return LocalRunner()
-    if _docker_available():
+    if _docker_image_available():
         return DockerSandboxRunner()
     return LocalRunner()
 
@@ -128,7 +128,22 @@ def _docker_available() -> bool:
             timeout=5,
         )
         return result.returncode == 0
-    except Exception:  # noqa: BLE001
+    except Exception:
+        return False
+
+
+def _docker_image_available() -> bool:
+    """Return True only if Docker is running AND the sandbox image exists locally."""
+    if not _docker_available():
+        return False
+    try:
+        result = subprocess.run(
+            ["docker", "image", "inspect", _SANDBOX_IMAGE],
+            capture_output=True,
+            timeout=5,
+        )
+        return result.returncode == 0
+    except Exception:
         return False
 
 
