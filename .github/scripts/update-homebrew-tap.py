@@ -77,7 +77,7 @@ for p, s in shas.items():
 formula = f"""# typed: false
 # frozen_string_literal: true
 
-class CloseWiki < Formula
+class Rekipedia < Formula
   desc "Agentic repo-to-wiki — scan any codebase into a structured knowledge base"
   homepage "https://github.com/unrealandychan/rekipedia"
   version "{VERSION}"

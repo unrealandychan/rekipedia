@@ -1,10 +1,10 @@
 #!/bin/sh
-# close-wiki installer — downloads the latest release binary
-# Usage: curl -fsSL https://github.com/unrealandychan/close-wiki/releases/latest/download/install.sh | sh
+# rekipedia installer — downloads the latest release binary
+# Usage: curl -fsSL https://github.com/unrealandychan/rekipedia/releases/latest/download/install.sh | sh
 set -e
 
-REPO="unrealandychan/close-wiki"
-BIN="close-wiki"
+REPO="unrealandychan/rekipedia"
+BIN="reki"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
 # Detect OS
@@ -35,7 +35,7 @@ fi
 ARCHIVE="${BIN}_${VERSION#v}_${OS}_${ARCH}.tar.gz"
 URL="https://github.com/${REPO}/releases/download/${VERSION}/${ARCHIVE}"
 
-echo "→ Installing close-wiki ${VERSION} (${OS}/${ARCH})..."
+echo "→ Installing rekipedia ${VERSION} (${OS}/${ARCH})..."
 
 TMP=$(mktemp -d)
 trap "rm -rf $TMP" EXIT
@@ -53,5 +53,5 @@ else
   exit 1
 fi
 
-echo "✓ close-wiki ${VERSION} installed to ${INSTALL_DIR}/${BIN}"
-echo "  Run: close-wiki --help"
+echo "✓ rekipedia  installed to ${INSTALL_DIR}/${BIN}"
+echo "  Run: reki --help"

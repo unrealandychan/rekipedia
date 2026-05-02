@@ -58,6 +58,7 @@ dev = [
 
 [project.scripts]
 rekipedia = "rekipedia.cli:main"
+reki = "rekipedia.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/unrealandychan/rekipedia"
