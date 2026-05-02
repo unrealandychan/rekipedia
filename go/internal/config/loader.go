@@ -43,9 +43,28 @@ func Load(repoRoot string) (Config, error) {
 	return cfg, nil
 }
 
-// applyEnvOverrides is intentionally removed — configuration is read from
-// .rekipedia/config.yml only. Use CLI flags to override at runtime.
-func applyEnvOverrides(_ *Config) {}
+// applyEnvOverrides applies environment variable overrides to the config.
+// Supported env vars:
+//   REKIPEDIA_API_KEY     — LLM API key (also reads OPENAI_API_KEY as fallback)
+//   REKIPEDIA_MODEL       — LLM model name
+//   REKIPEDIA_BASE_URL    — LLM base URL (for OpenAI-compatible endpoints)
+//   REKIPEDIA_EMBED_KEY   — Embedding API key
+func applyEnvOverrides(cfg *Config) {
+	if v := os.Getenv("REKIPEDIA_API_KEY"); v != "" {
+		cfg.LLM.APIKey = v
+	} else if v := os.Getenv("OPENAI_API_KEY"); v != "" {
+		cfg.LLM.APIKey = v
+	}
+	if v := os.Getenv("REKIPEDIA_MODEL"); v != "" {
+		cfg.LLM.Model = v
+	}
+	if v := os.Getenv("REKIPEDIA_BASE_URL"); v != "" {
+		cfg.LLM.BaseURL = v
+	}
+	if v := os.Getenv("REKIPEDIA_EMBED_KEY"); v != "" {
+		cfg.LLM.EmbedAPIKey = v
+	}
+}
 
 // InitDir scaffolds .rekipedia/ with a default config.yml and .gitignore entry.
 func InitDir(repoRoot string) error {
