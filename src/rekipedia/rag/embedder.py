@@ -24,8 +24,13 @@ from typing import Iterator
 
 try:
     import numpy as np
+    _NUMPY_AVAILABLE = True
+except ImportError:
+    _NUMPY_AVAILABLE = False
+
+try:
     import faiss  # noqa: F401
-    _RAG_AVAILABLE = True
+    _RAG_AVAILABLE = _NUMPY_AVAILABLE
 except ImportError:
     _RAG_AVAILABLE = False
     np = None  # type: ignore[assignment]
@@ -239,7 +244,12 @@ class EmbedPipeline:
 
         Returns number of chunks embedded.
         """
-        import faiss  # noqa: PLC0415
+        try:
+            import faiss as _faiss  # noqa: PLC0415
+            _HAS_FAISS = True
+        except ImportError:
+            _faiss = None
+            _HAS_FAISS = False
 
         self._out.mkdir(parents=True, exist_ok=True)
 
@@ -296,16 +306,19 @@ class EmbedPipeline:
         matrix = np.vstack(all_vecs)  # (N, D)
         dim = matrix.shape[1]
 
-        # 3. Build FAISS flat L2 index
+        # 3. Build index
         if progress_cb:
-            progress_cb(f"🗄  Building FAISS index (dim={dim}, n={n})…")
-        index = faiss.IndexFlatL2(dim)
-        # Normalize to cosine similarity space
-        faiss.normalize_L2(matrix)
-        index.add(matrix)
-
-        # 4. Persist
-        faiss.write_index(index, str(self._out / _INDEX_FILE))
+            progress_cb(f"🗄  Building index (dim={dim}, n={n})…")
+        if _HAS_FAISS:
+            index = _faiss.IndexFlatL2(dim)
+            _faiss.normalize_L2(matrix)
+            index.add(matrix)
+            _faiss.write_index(index, str(self._out / _INDEX_FILE))
+        else:
+            # numpy fallback — normalise + save raw matrix
+            norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+            matrix /= np.where(norms == 0, 1, norms)
+            np.save(str(self._out / _INDEX_FILE) + ".npy", matrix)
         (self._out / _CHUNKS_FILE).write_text(
             json.dumps(all_chunks, ensure_ascii=False, indent=1),
             encoding="utf-8",
@@ -338,36 +351,58 @@ class EmbedPipeline:
         Each result dict has: file, chunk_idx, text, score, is_implementation.
         Returns [] if no index exists.
         """
-        import faiss  # noqa: PLC0415
+        try:
+            import faiss as _faiss  # noqa: PLC0415
+            _HAS_FAISS = True
+        except ImportError:
+            _faiss = None
+            _HAS_FAISS = False
 
         index_path = self._out / _INDEX_FILE
+        npy_path = Path(str(index_path) + ".npy")
         chunks_path = self._out / _CHUNKS_FILE
 
-        if not index_path.exists() or not chunks_path.exists():
+        if not chunks_path.exists():
+            return []
+        if not index_path.exists() and not npy_path.exists():
             return []
 
         try:
-            index = faiss.read_index(str(index_path))
             chunks = json.loads(chunks_path.read_text(encoding="utf-8"))
         except Exception as exc:
-            logger.warning("Failed to load FAISS index: %s", exc)
+            logger.warning("Failed to load chunks: %s", exc)
             return []
 
         try:
             q_vec = _embed_batch([query], self._model, self._cfg)  # (1, D)
-            faiss.normalize_L2(q_vec)
-            distances, indices = index.search(q_vec, top_k)
+            if _HAS_FAISS and index_path.exists():
+                index = _faiss.read_index(str(index_path))
+                _faiss.normalize_L2(q_vec)
+                distances, indices = index.search(q_vec, top_k)
+                results = []
+                for dist, idx in zip(distances[0], indices[0]):
+                    if idx < 0 or idx >= len(chunks):
+                        continue
+                    chunk = dict(chunks[idx])
+                    chunk["score"] = float(1.0 - dist / 2.0)
+                    results.append(chunk)
+            elif npy_path.exists():
+                # numpy brute-force cosine
+                matrix = np.load(str(npy_path))
+                q = q_vec[0]
+                q /= max(np.linalg.norm(q), 1e-9)
+                scores = matrix @ q
+                top_idx = np.argsort(scores)[::-1][:top_k]
+                results = []
+                for idx in top_idx:
+                    chunk = dict(chunks[int(idx)])
+                    chunk["score"] = float(scores[idx])
+                    results.append(chunk)
+            else:
+                return []
         except Exception as exc:
-            logger.warning("FAISS search failed: %s", exc)
+            logger.warning("Search failed: %s", exc)
             return []
-
-        results = []
-        for dist, idx in zip(distances[0], indices[0]):
-            if idx < 0 or idx >= len(chunks):
-                continue
-            chunk = dict(chunks[idx])
-            chunk["score"] = float(1.0 - dist / 2.0)  # approx cosine from L2
-            results.append(chunk)
 
         # Prioritise implementation files over tests/docs
         results.sort(key=lambda c: (not c.get("is_implementation", True), -c["score"]))

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rekipedia"
-version = "0.9.6"
+version = "0.9.7"
 description = "Agentic repo-to-wiki: scan any repository into a knowledge store with wiki pages, diagrams, and grounded Q&A."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -44,12 +44,13 @@ dependencies = [
     "python-multipart>=0.0.9",
     "tqdm>=4.67.3",
     "pyfiglet>=1.0.4",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
 rag = [
-    "faiss-cpu>=1.13.2",
-    "numpy>=2.4.4",
+    "faiss-cpu>=1.7",
+    "numpy>=1.26",
 ]
 dev = [
     "pytest>=8.0",
