@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/unrealandychan/close-wiki/internal/llm"
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/llm"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 const pageSystemPrompt = `You are a senior technical writer creating documentation for a software repository. Write a single wiki page in clean Markdown.

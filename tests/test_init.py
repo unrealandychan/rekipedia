@@ -1,4 +1,4 @@
-"""Tests for `close-wiki init` command."""
+"""Tests for `rekipedia init` command."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 from click.testing import CliRunner
 
-from close_wiki.cli import main
+from rekipedia.cli import main
 
 
 def test_init_creates_config_and_gitignore(tmp_path: Path) -> None:
@@ -14,7 +14,7 @@ def test_init_creates_config_and_gitignore(tmp_path: Path) -> None:
     result = runner.invoke(main, ["init", str(tmp_path)])
     assert result.exit_code == 0, result.output
 
-    config_path = tmp_path / ".close-wiki" / "config.yml"
+    config_path = tmp_path / ".rekipedia" / "config.yml"
     assert config_path.exists()
 
     config = yaml.safe_load(config_path.read_text())
@@ -23,7 +23,7 @@ def test_init_creates_config_and_gitignore(tmp_path: Path) -> None:
     assert "model" in config["llm"]
 
     gitignore = (tmp_path / ".gitignore").read_text()
-    assert ".close-wiki/store.db" in gitignore
+    assert ".rekipedia/store.db" in gitignore
 
 
 def test_init_is_idempotent(tmp_path: Path) -> None:
@@ -34,7 +34,7 @@ def test_init_is_idempotent(tmp_path: Path) -> None:
     assert result.exit_code == 0
 
     gitignore = (tmp_path / ".gitignore").read_text()
-    count = gitignore.count(".close-wiki/store.db")
+    count = gitignore.count(".rekipedia/store.db")
     assert count == 1, f"Expected 1 entry, got {count}"
 
 
@@ -43,4 +43,4 @@ def test_init_default_directory(tmp_path: Path, monkeypatch) -> None:
     runner = CliRunner()
     result = runner.invoke(main, ["init"])
     assert result.exit_code == 0
-    assert (tmp_path / ".close-wiki" / "config.yml").exists()
+    assert (tmp_path / ".rekipedia" / "config.yml").exists()

@@ -13,11 +13,11 @@ import (
 	"github.com/pterm/pterm"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/unrealandychan/close-wiki/internal/extractor"
-	"github.com/unrealandychan/close-wiki/internal/llm"
-	"github.com/unrealandychan/close-wiki/internal/models"
-	"github.com/unrealandychan/close-wiki/internal/storage"
-	"github.com/unrealandychan/close-wiki/internal/synthesis"
+	"github.com/unrealandychan/rekipedia/internal/extractor"
+	"github.com/unrealandychan/rekipedia/internal/llm"
+	"github.com/unrealandychan/rekipedia/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/storage"
+	"github.com/unrealandychan/rekipedia/internal/synthesis"
 )
 
 const maxShardWorkers = 4
@@ -45,9 +45,9 @@ func RunDigest(ctx context.Context, repoRoot, outputDir string, opts DigestOptio
 	cb := opts.Progress // optional non-terminal callback
 
 	// ── Header ─────────────────────────────────────────────────────────────
-	pterm.DefaultSection.WithLevel(1).Printf("close-wiki scan ▸ %s", repoRoot)
+	pterm.DefaultSection.WithLevel(1).Printf("rekipedia scan ▸ %s", repoRoot)
 	if cb != nil {
-		cb(fmt.Sprintf("close-wiki scan ▸ %s", repoRoot))
+		cb(fmt.Sprintf("rekipedia scan ▸ %s", repoRoot))
 	}
 
 	runID := uuid.New().String()

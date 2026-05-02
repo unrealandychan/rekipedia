@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // ConfigExtractor parses package.json, pyproject.toml, Makefile, Dockerfile, CI yml.

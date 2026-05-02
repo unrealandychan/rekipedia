@@ -1,15 +1,15 @@
 version: 2
 
-project_name: close-wiki
+project_name: rekipedia
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - id: close-wiki
-    main: ./cmd/close-wiki
-    binary: close-wiki
+  - id: rekipedia
+    main: ./cmd/rekipedia
+    binary: reki
     env:
       - CGO_ENABLED=0
     goos:
@@ -54,35 +54,35 @@ changelog:
 release:
   github:
     owner: unrealandychan
-    name: close-wiki-releases
+    name: rekipedia-releases
   name_template: "{{.ProjectName}} v{{.Version}}"
   draft: false
   prerelease: auto
   replace_existing_artifacts: true
 
 homebrew_casks:
-  - name: close-wiki
+  - name: rekipedia
     url:
-      template: "https://github.com/unrealandychan/close-wiki-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+      template: "https://github.com/unrealandychan/rekipedia-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     binaries:
-      - close-wiki
+      - rekipedia
     repository:
       owner: unrealandychan
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     commit_author:
       name: HermesBot
-      email: bot@close-wiki.dev
+      email: bot@rekipedia.dev
     directory: Casks
-    homepage: "https://github.com/unrealandychan/close-wiki"
+    homepage: "https://github.com/unrealandychan/rekipedia"
     description: "Agentic repo-to-wiki — scan any codebase into a structured knowledge base"
     skip_upload: false
 
 nfpms:
   - id: packages
-    package_name: close-wiki
+    package_name: rekipedia
     vendor: unrealandychan
-    homepage: "https://github.com/unrealandychan/close-wiki"
+    homepage: "https://github.com/unrealandychan/rekipedia"
     description: "Agentic repo-to-wiki — scan any codebase into a structured knowledge base"
     license: MIT
     maintainer: "unrealandychan <unrealandychan@users.noreply.github.com>"

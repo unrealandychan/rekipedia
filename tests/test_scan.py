@@ -1,4 +1,4 @@
-"""Integration test for close-wiki scan using LocalRunner (no Docker required)."""
+"""Integration test for rekipedia scan using LocalRunner (no Docker required)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from close_wiki.models.contracts import LLMConfig
-from close_wiki.orchestrator.run_digest import run_digest
+from rekipedia.models.contracts import LLMConfig
+from rekipedia.orchestrator.run_digest import run_digest
 
 MINI_PY = Path(__file__).parent / "fixtures" / "mini-py-repo"
 MINI_TS = Path(__file__).parent / "fixtures" / "mini-ts-repo"
@@ -30,7 +30,7 @@ def _fake_llm_response(slug: str = "index") -> str:
 
 @pytest.fixture()
 def mock_llm():
-    with patch("close_wiki.synthesis.page_builder.LLMClient") as MockClient:
+    with patch("rekipedia.synthesis.page_builder.LLMClient") as MockClient:
         mock_instance = MagicMock()
         mock_instance.call.side_effect = lambda prompt, system="": _fake_llm_response()
         MockClient.return_value = mock_instance
@@ -38,7 +38,7 @@ def mock_llm():
 
 
 def test_scan_mini_py_repo(mock_llm, tmp_path):
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
     run_digest(
         repo_root=MINI_PY,
         output_dir=output_dir,
@@ -63,7 +63,7 @@ def test_scan_mini_py_repo(mock_llm, tmp_path):
 
 
 def test_scan_creates_diagrams(mock_llm, tmp_path):
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
     run_digest(
         repo_root=MINI_PY,
         output_dir=output_dir,
@@ -75,7 +75,7 @@ def test_scan_creates_diagrams(mock_llm, tmp_path):
 
 
 def test_scan_populates_db(mock_llm, tmp_path):
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
     run_digest(
         repo_root=MINI_PY,
         output_dir=output_dir,
@@ -93,7 +93,7 @@ def test_scan_populates_db(mock_llm, tmp_path):
 
 
 def test_scan_mini_ts_repo(mock_llm, tmp_path):
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
     run_digest(
         repo_root=MINI_TS,
         output_dir=output_dir,

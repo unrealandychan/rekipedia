@@ -1,5 +1,5 @@
-// Package models defines shared data contracts for close-wiki.
-// These mirror the Python pydantic models in src/close_wiki/models/contracts.py.
+// Package models defines shared data contracts for rekipedia.
+// These mirror the Python pydantic models in src/rekipedia/models/contracts.py.
 package models
 
 // LLMConfig holds LLM provider settings.
@@ -135,7 +135,7 @@ type WikiPlan struct {
 type ScanMeta struct {
 	Model             string `json:"model"`
 	Timestamp         string `json:"timestamp"`
-	CloseWikiVersion  string `json:"close_wiki_version"`
+	CloseWikiVersion  string `json:"rekipedia_version"`
 	FileCount         int    `json:"file_count"`
 	ImplFileCount     int    `json:"impl_file_count"`
 	TestFileCount     int    `json:"test_file_count"`

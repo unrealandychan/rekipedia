@@ -1,4 +1,4 @@
-// Package storage provides SQLite-backed persistence for close-wiki.
+// Package storage provides SQLite-backed persistence for rekipedia.
 package storage
 
 import (
@@ -9,7 +9,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 const schemaVersion = 1
@@ -34,9 +34,9 @@ func Open(dbPath string) (*Store, error) {
 	return s, nil
 }
 
-// DefaultPath returns the standard store path inside a repo's .close-wiki dir.
+// DefaultPath returns the standard store path inside a repo's .rekipedia dir.
 func DefaultPath(repoRoot string) string {
-	return filepath.Join(repoRoot, ".close-wiki", "store.db")
+	return filepath.Join(repoRoot, ".rekipedia", "store.db")
 }
 
 // Close closes the underlying database connection.

@@ -9,7 +9,7 @@ import (
 	chromem "github.com/philippgille/chromem-go"
 )
 
-const collectionName = "close-wiki"
+const collectionName = "rekipedia"
 
 // VectorStore wraps chromem-go for persistent vector search.
 type VectorStore struct {

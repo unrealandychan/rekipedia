@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from close_wiki.orchestrator.snapshotter import Snapshotter
+from rekipedia.orchestrator.snapshotter import Snapshotter
 
 
 def _make_repo(root: Path) -> None:

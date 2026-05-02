@@ -1,4 +1,4 @@
-"""Tests for close-wiki ask (Phase 4 — grounded Q&A)."""
+"""Tests for rekipedia ask (Phase 4 — grounded Q&A)."""
 from __future__ import annotations
 
 import json
@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from close_wiki.models.contracts import LLMConfig
-from close_wiki.orchestrator.run_ask import run_ask
-from close_wiki.orchestrator.run_digest import run_digest
+from rekipedia.models.contracts import LLMConfig
+from rekipedia.orchestrator.run_ask import run_ask
+from rekipedia.orchestrator.run_digest import run_digest
 
 MINI_PY = Path(__file__).parent / "fixtures" / "mini-py-repo"
 
@@ -31,7 +31,7 @@ def _fake_page_response() -> str:
 
 @pytest.fixture()
 def mock_page_llm():
-    with patch("close_wiki.synthesis.page_builder.LLMClient") as MockClient:
+    with patch("rekipedia.synthesis.page_builder.LLMClient") as MockClient:
         mock_instance = MagicMock()
         mock_instance.call.side_effect = lambda prompt, system="": _fake_page_response()
         MockClient.return_value = mock_instance
@@ -43,7 +43,7 @@ def scanned_repo(mock_page_llm, tmp_path):
     """Run a full scan and return (repo_root, output_dir)."""
     repo = tmp_path / "repo"
     shutil.copytree(MINI_PY, repo)
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
     run_digest(repo_root=repo, output_dir=output_dir, llm_config=LLMConfig(), force_local=True)
     return repo, output_dir
 
@@ -52,7 +52,7 @@ def scanned_repo(mock_page_llm, tmp_path):
 
 def test_ask_returns_string(scanned_repo):
     repo, output_dir = scanned_repo
-    with patch("close_wiki.orchestrator.run_ask.LLMClient") as MockAskClient:
+    with patch("rekipedia.orchestrator.run_ask.LLMClient") as MockAskClient:
         mock = MagicMock()
         mock.call.return_value = "The entry point is main.py."
         MockAskClient.return_value = mock
@@ -73,7 +73,7 @@ def test_ask_includes_wiki_context_in_system_prompt(scanned_repo):
         captured_system.append(system)
         return "mocked answer"
 
-    with patch("close_wiki.orchestrator.run_ask.LLMClient") as MockAskClient:
+    with patch("rekipedia.orchestrator.run_ask.LLMClient") as MockAskClient:
         mock = MagicMock()
         mock.call.side_effect = _capture_call
         MockAskClient.return_value = mock
@@ -92,7 +92,7 @@ def test_ask_raises_if_no_scan(tmp_path):
     """run_ask raises RuntimeError if no store.db exists."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
 
     with pytest.raises(RuntimeError, match="No knowledge store found"):
         run_ask("anything?", repo, output_dir, LLMConfig())
@@ -100,9 +100,9 @@ def test_ask_raises_if_no_scan(tmp_path):
 
 def test_ask_raises_if_no_successful_run(tmp_path):
     """run_ask raises RuntimeError if store.db exists but has no successful run."""
-    from close_wiki.storage.sqlite_store import SqliteStore
+    from rekipedia.storage.sqlite_store import SqliteStore
 
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
     output_dir.mkdir(parents=True)
 
     # Create an empty (opened) store — no runs
@@ -136,7 +136,7 @@ def test_ask_uses_symbols_json_in_context(scanned_repo):
         captured.append(system)
         return "ok"
 
-    with patch("close_wiki.orchestrator.run_ask.LLMClient") as MockAskClient:
+    with patch("rekipedia.orchestrator.run_ask.LLMClient") as MockAskClient:
         mock = MagicMock()
         mock.call.side_effect = _capture
         MockAskClient.return_value = mock

@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from close_wiki.models.contracts import AnalysisResult, LLMConfig, Symbol
-from close_wiki.synthesis.page_builder import PageBuilder, CANONICAL_PAGES
+from rekipedia.models.contracts import AnalysisResult, LLMConfig, Symbol
+from rekipedia.synthesis.page_builder import PageBuilder, CANONICAL_PAGES
 
 
 @pytest.fixture()
@@ -41,7 +41,7 @@ def _make_fake_llm_response(slug: str) -> str:
 
 
 def test_builds_all_canonical_pages(sample_result):
-    with patch("close_wiki.synthesis.page_builder.LLMClient") as MockClient:
+    with patch("rekipedia.synthesis.page_builder.LLMClient") as MockClient:
         mock_instance = MagicMock()
         mock_instance.call.side_effect = lambda prompt, system="": _make_fake_llm_response("index")
         MockClient.return_value = mock_instance
@@ -53,7 +53,7 @@ def test_builds_all_canonical_pages(sample_result):
 
 
 def test_each_page_has_title_and_content(sample_result):
-    with patch("close_wiki.synthesis.page_builder.LLMClient") as MockClient:
+    with patch("rekipedia.synthesis.page_builder.LLMClient") as MockClient:
         mock_instance = MagicMock()
         mock_instance.call.side_effect = lambda prompt, system="": _make_fake_llm_response("index")
         MockClient.return_value = mock_instance
@@ -67,7 +67,7 @@ def test_each_page_has_title_and_content(sample_result):
 
 
 def test_page_has_yaml_frontmatter(sample_result):
-    with patch("close_wiki.synthesis.page_builder.LLMClient") as MockClient:
+    with patch("rekipedia.synthesis.page_builder.LLMClient") as MockClient:
         mock_instance = MagicMock()
         mock_instance.call.side_effect = lambda prompt, system="": _make_fake_llm_response("index")
         MockClient.return_value = mock_instance
@@ -80,7 +80,7 @@ def test_page_has_yaml_frontmatter(sample_result):
 
 
 def test_exclude_pages(sample_result):
-    with patch("close_wiki.synthesis.page_builder.LLMClient") as MockClient:
+    with patch("rekipedia.synthesis.page_builder.LLMClient") as MockClient:
         mock_instance = MagicMock()
         mock_instance.call.side_effect = lambda prompt, system="": _make_fake_llm_response("index")
         MockClient.return_value = mock_instance
@@ -97,7 +97,7 @@ def test_pinned_page_not_overwritten(sample_result, tmp_path):
     pinned = wiki_dir / "index.md"
     pinned.write_text("---\nslug: index\npin: true\n---\n\n# My Custom Index\n\nPinned content.\n")
 
-    with patch("close_wiki.synthesis.page_builder.LLMClient") as MockClient:
+    with patch("rekipedia.synthesis.page_builder.LLMClient") as MockClient:
         mock_instance = MagicMock()
         mock_instance.call.return_value = _make_fake_llm_response("other")
         MockClient.return_value = mock_instance
@@ -109,7 +109,7 @@ def test_pinned_page_not_overwritten(sample_result, tmp_path):
 
 
 def test_llm_error_fallback(sample_result):
-    with patch("close_wiki.synthesis.page_builder.LLMClient") as MockClient:
+    with patch("rekipedia.synthesis.page_builder.LLMClient") as MockClient:
         mock_instance = MagicMock()
         mock_instance.call.side_effect = RuntimeError("LLM unavailable")
         MockClient.return_value = mock_instance

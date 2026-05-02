@@ -1,3 +1,3 @@
 FROM scratch
-COPY close-wiki /usr/local/bin/close-wiki
-ENTRYPOINT ["/usr/local/bin/close-wiki"]
+COPY rekipedia /usr/local/bin/rekipedia
+ENTRYPOINT ["/usr/local/bin/rekipedia"]

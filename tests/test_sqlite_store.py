@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from close_wiki.storage.sqlite_store import SqliteStore
+from rekipedia.storage.sqlite_store import SqliteStore
 
 
 def test_open_creates_database(tmp_path: Path) -> None:

@@ -1,5 +1,5 @@
 // Package synthesis provides the PlannerAgent, PageBuilder, and DiagramBuilder
-// for close-wiki's wiki generation pipeline.
+// for rekipedia's wiki generation pipeline.
 package synthesis
 
 import (
@@ -10,9 +10,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/unrealandychan/close-wiki/internal/llm"
-	"github.com/unrealandychan/close-wiki/internal/models"
-	"github.com/unrealandychan/close-wiki/pkg/fsutil"
+	"github.com/unrealandychan/rekipedia/internal/llm"
+	"github.com/unrealandychan/rekipedia/internal/models"
+	"github.com/unrealandychan/rekipedia/pkg/fsutil"
 )
 
 const plannerSystemPrompt = `You are a technical documentation architect for software repositories. Your task: analyse a repo's static-analysis data and design the OPTIMAL wiki structure — like DeepWiki does for open-source projects.

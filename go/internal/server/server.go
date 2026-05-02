@@ -1,4 +1,4 @@
-// Package server provides the close-wiki HTTP server.
+// Package server provides the rekipedia HTTP server.
 package server
 
 import (
@@ -20,15 +20,15 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/yuin/goldmark"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
-	"github.com/unrealandychan/close-wiki/internal/orchestrator"
-	"github.com/unrealandychan/close-wiki/internal/storage"
+	"github.com/unrealandychan/rekipedia/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/orchestrator"
+	"github.com/unrealandychan/rekipedia/internal/storage"
 )
 
 //go:embed templates/*.html
 var templateFS embed.FS
 
-// Server serves the close-wiki web UI.
+// Server serves the rekipedia web UI.
 type Server struct {
 	repoRoot  string
 	outputDir string
@@ -76,7 +76,7 @@ func (s *Server) Start(ctx context.Context) error {
 		srv.Close()
 	}()
 
-	fmt.Printf("close-wiki server listening on http://%s\n", ln.Addr())
+	fmt.Printf("rekipedia server listening on http://%s\n", ln.Addr())
 	err = srv.Serve(ln)
 	if err == http.ErrServerClosed {
 		return nil

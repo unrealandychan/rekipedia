@@ -3,7 +3,7 @@
 // names expected by the orchestrator layer.
 package storage
 
-import "github.com/unrealandychan/close-wiki/internal/models"
+import "github.com/unrealandychan/rekipedia/internal/models"
 
 // UpsertRun creates or updates a run record.
 func (s *Store) UpsertRun(runID, repoPath string) error {

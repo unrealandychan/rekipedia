@@ -1,8 +1,8 @@
-# close-wiki
+# rekipedia
 
 > Your AI tech lead — always available, always up to date.
 
-close-wiki scans any repository into a portable SQLite knowledge store and gives every developer on the team an LLM-powered tech lead they can ask anything: _"How does the auth flow work?", "What's the fastest way to add a new API endpoint?", "What broke the payment service last week?"_
+rekipedia scans any repository into a portable SQLite knowledge store and gives every developer on the team an LLM-powered tech lead they can ask anything: _"How does the auth flow work?", "What's the fastest way to add a new API endpoint?", "What broke the payment service last week?"_
 
 No hallucinations, no guessing — every answer is grounded in your actual codebase.
 
@@ -13,7 +13,7 @@ No hallucinations, no guessing — every answer is grounded in your actual codeb
 - **Context slicing**: each page only receives the data it needs (~40–60% token reduction vs fixed-layout approach)
 - **Hybrid RAG Q&A**: FAISS-indexed code chunks + wiki pages give the LLM full codebase context when answering questions
 - **Embed provider choice**: `--embed-provider openai|ollama|azure|...` — any litellm-compatible embedding model
-- **Wiki export**: bundle to a single Markdown file, ZIP archive, or structured JSON (`close-wiki export`)
+- **Wiki export**: bundle to a single Markdown file, ZIP archive, or structured JSON (`rekipedia export`)
 - **Incremental updates**: only re-processes changed files after the first scan
 - **Grounded Q&A**: answers cite real file paths and line numbers — no hallucinations
 
@@ -22,31 +22,31 @@ No hallucinations, no guessing — every answer is grounded in your actual codeb
 ### via npm / npx (no install required)
 
 ```bash
-npx close-wiki init .
-npx close-wiki scan .
+npx rekipedia init .
+npx rekipedia scan .
 ```
 
 ### via uv / uvx (no install required)
 
 ```bash
-uvx close-wiki init .
-uvx close-wiki scan .
+uvx rekipedia init .
+uvx rekipedia scan .
 ```
 
 ### Permanent install
 
 ```bash
 # Core (scan + serve + ask)
-pip install close-wiki
+pip install rekipedia
 # or
-uv tool install close-wiki
+uv tool install rekipedia
 
 # With RAG support (semantic embed + search — needs faiss-cpu + numpy ~100MB)
-pip install "close-wiki[rag]"
+pip install "rekipedia[rag]"
 
 # Homebrew (Go single binary — no Python needed)
 brew tap unrealandychan/tap
-brew install close-wiki
+brew install rekipedia
 ```
 
 ---
@@ -55,19 +55,19 @@ brew install close-wiki
 
 | Command | Description |
 |---|---|
-| `close-wiki init [REPO]` | Scaffold `.close-wiki/` with `config.yml` and update `.gitignore` |
-| `close-wiki scan [REPO]` | Full analysis — extracts symbols, synthesises wiki pages, exports JSON |
-| `close-wiki update [REPO]` | Incremental refresh — re-extracts only changed files, keeps the rest |
-| `close-wiki ask [QUESTION]` | Interactive Q&A REPL — streaming answers, Ctrl+C to quit |
-| `close-wiki serve [REPO]` | Start a local web UI to browse wiki pages and ask questions |
-| `close-wiki embed [REPO]` | Build (or rebuild) the FAISS semantic search index for hybrid RAG Q&A |
-| `close-wiki export [REPO]` | Bundle the wiki to a single file (`--format md\|zip\|json`) |
+| `rekipedia init [REPO]` | Scaffold `.rekipedia/` with `config.yml` and update `.gitignore` |
+| `rekipedia scan [REPO]` | Full analysis — extracts symbols, synthesises wiki pages, exports JSON |
+| `rekipedia update [REPO]` | Incremental refresh — re-extracts only changed files, keeps the rest |
+| `rekipedia ask [QUESTION]` | Interactive Q&A REPL — streaming answers, Ctrl+C to quit |
+| `rekipedia serve [REPO]` | Start a local web UI to browse wiki pages and ask questions |
+| `rekipedia embed [REPO]` | Build (or rebuild) the FAISS semantic search index for hybrid RAG Q&A |
+| `rekipedia export [REPO]` | Bundle the wiki to a single file (`--format md\|zip\|json`) |
 
 ---
 
 ## LLM configuration
 
-After running `close-wiki init`, edit `.close-wiki/config.yml`:
+After running `rekipedia init`, edit `.rekipedia/config.yml`:
 
 ```yaml
 version: 1
@@ -75,13 +75,13 @@ ignore:
   - .git
   - node_modules
   - __pycache__
-  - .close-wiki
+  - .rekipedia
 languages:
   - python
   - typescript
 llm:
   model: ollama/llama4        # any litellm model string
-  api_key: ""                 # or set CLOSE_WIKI_API_KEY env var
+  api_key: ""                 # or set REKIPEDIA_API_KEY env var
   base_url: ""                # for local / self-hosted endpoints
   temperature: 0.2
 ```
@@ -99,19 +99,19 @@ llm:
 ### Runtime overrides (env vars)
 
 ```bash
-export CLOSE_WIKI_MODEL=gpt-5.5
-export CLOSE_WIKI_API_KEY=sk-...
-export CLOSE_WIKI_BASE_URL=https://my-proxy/v1
+export REKIPEDIA_MODEL=gpt-5.5
+export REKIPEDIA_API_KEY=sk-...
+export REKIPEDIA_BASE_URL=https://my-proxy/v1
 ```
 
 ---
 
 ## Output
 
-`close-wiki scan` writes everything to `.close-wiki/` inside your repo:
+`rekipedia scan` writes everything to `.rekipedia/` inside your repo:
 
 ```
-.close-wiki/
+.rekipedia/
 ├── config.yml              # your settings (committed)
 ├── store.db                # SQLite knowledge store (git-ignored)
 ├── scan_meta.json          # last scan metadata (model, timestamp, file count)
@@ -149,39 +149,39 @@ The wiki structure is designed dynamically by `PlannerAgent` based on what's act
 
 ```bash
 # Use a specific LLM model
-close-wiki scan . --model gpt-5.5
+rekipedia scan . --model gpt-5.5
 
 # Skip Docker (run extractors in-process)
-close-wiki scan . --no-docker
+rekipedia scan . --no-docker
 
 # Write output to a custom directory
-close-wiki scan . --output-dir /tmp/wiki-output
+rekipedia scan . --output-dir /tmp/wiki-output
 
 # Enable debug logging (litellm, HTTP, full tracebacks)
-close-wiki scan . --verbose
+rekipedia scan . --verbose
 
 # Auto-embed for RAG after scan
-close-wiki scan . --embed-model text-embedding-3-small --embed-provider openai
+rekipedia scan . --embed-model text-embedding-3-small --embed-provider openai
 ```
 
 ### RAG / semantic search
 
-`close-wiki ask` uses **hybrid retrieval** — wiki pages + FAISS-indexed code chunks — to answer questions with full codebase context.
+`rekipedia ask` uses **hybrid retrieval** — wiki pages + FAISS-indexed code chunks — to answer questions with full codebase context.
 
 ```bash
 # Build or rebuild the FAISS index
-close-wiki embed .
+rekipedia embed .
 
 # Custom embedding model + provider
-close-wiki embed . --model text-embedding-3-small --provider openai
-close-wiki embed . --model nomic-embed-text --provider ollama
+rekipedia embed . --model text-embedding-3-small --provider openai
+rekipedia embed . --model nomic-embed-text --provider ollama
 
 # If your embed provider uses a DIFFERENT API key from your main LLM:
-close-wiki embed . --model text-embedding-3-small --provider openai
+rekipedia embed . --model text-embedding-3-small --provider openai
 # set embed_api_key in config.yml, or:
-export CLOSE_WIKI_EMBED_API_KEY=sk-your-openai-key
+export REKIPEDIA_EMBED_API_KEY=sk-your-openai-key
 
-# Or configure everything in .close-wiki/config.yml:
+# Or configure everything in .rekipedia/config.yml:
 # llm:
 #   model: ollama/llama4          # main LLM (local)
 #   embed_model: text-embedding-3-small
@@ -190,34 +190,34 @@ export CLOSE_WIKI_EMBED_API_KEY=sk-your-openai-key
 #   embed_base_url: ""            # optional: custom endpoint
 
 # Env var overrides (all optional):
-export CLOSE_WIKI_EMBED_MODEL=nomic-embed-text
-export CLOSE_WIKI_EMBED_PROVIDER=ollama
-export CLOSE_WIKI_EMBED_API_KEY=sk-xxx
-export CLOSE_WIKI_EMBED_BASE_URL=https://my-proxy.example.com/v1
+export REKIPEDIA_EMBED_MODEL=nomic-embed-text
+export REKIPEDIA_EMBED_PROVIDER=ollama
+export REKIPEDIA_EMBED_API_KEY=sk-xxx
+export REKIPEDIA_EMBED_BASE_URL=https://my-proxy.example.com/v1
 ```
 
-The FAISS index is saved to `.close-wiki/rag/index.faiss` and chunked source code to `.close-wiki/rag/chunks.json`.
+The FAISS index is saved to `.rekipedia/rag/index.faiss` and chunked source code to `.rekipedia/rag/chunks.json`.
 
 ### Export the wiki
 
 ```bash
 # Single combined Markdown file (default)
-close-wiki export . --format md --output ./wiki-export.md
+rekipedia export . --format md --output ./wiki-export.md
 
 # ZIP archive (one .md per page + manifest.json)
-close-wiki export . --format zip --output ./wiki.zip
+rekipedia export . --format zip --output ./wiki.zip
 
 # Structured JSON (all pages + metadata)
-close-wiki export . --format json --output ./wiki.json
+rekipedia export . --format json --output ./wiki.json
 ```
 
 ### Incremental update
 
-After the first scan, `close-wiki update` only re-processes files whose SHA-256 has changed. Unchanged symbols and relationships are carried forward from the previous run — the wiki is refreshed in seconds.
+After the first scan, `rekipedia update` only re-processes files whose SHA-256 has changed. Unchanged symbols and relationships are carried forward from the previous run — the wiki is refreshed in seconds.
 
 ```bash
-close-wiki update .                    # auto-detect changed files
-close-wiki update . --no-docker        # skip Docker
+rekipedia update .                    # auto-detect changed files
+rekipedia update . --no-docker        # skip Docker
 ```
 
 If no previous scan is found, `update` automatically falls back to a full scan.
@@ -226,12 +226,12 @@ If no previous scan is found, `update` automatically falls back to a full scan.
 
 ```bash
 # Start interactive Q&A session (streams answers, Ctrl+C to quit)
-close-wiki ask
-close-wiki ask --repo ./my-project
-close-wiki ask --model gpt-4o
+rekipedia ask
+rekipedia ask --repo ./my-project
+rekipedia ask --model gpt-4o
 
 # Single-shot mode (backward compat)
-close-wiki ask -q "How does the auth flow work?"
+rekipedia ask -q "How does the auth flow work?"
 ```
 
 Answers are grounded **entirely** in your wiki pages and symbol index — the LLM cannot hallucinate details that aren't in the scanned knowledge store. Answers are streamed token-by-token with a spinner while waiting.
@@ -241,9 +241,9 @@ Not happy with a generated page? See **[docs/customizing.md](docs/customizing.md
 ### Serve the wiki
 
 ```bash
-close-wiki serve .                     # opens browser at http://127.0.0.1:7070
-close-wiki serve . --port 8080         # custom port
-close-wiki serve . --no-browser        # don't auto-open browser
+rekipedia serve .                     # opens browser at http://127.0.0.1:7070
+rekipedia serve . --port 8080         # custom port
+rekipedia serve . --no-browser        # don't auto-open browser
 ```
 
 - Browse generated wiki pages in a dark-themed web UI
@@ -259,12 +259,12 @@ close-wiki serve . --no-browser        # don't auto-open browser
 
 ---
 
-## Using close-wiki with AI coding agents
+## Using rekipedia with AI coding agents
 
-close-wiki ships a **Hermes agent skill** (`close-wiki-agent-skill.md`) that teaches AI assistants (Copilot, Claude Code, Codex) to use close-wiki as their codebase intelligence layer:
+rekipedia ships a **Hermes agent skill** (`rekipedia-agent-skill.md`) that teaches AI assistants (Copilot, Claude Code, Codex) to use rekipedia as their codebase intelligence layer:
 
-1. Copy `close-wiki-agent-skill.md` into your Hermes skills directory
-2. Any agent with the skill loaded will automatically scan + query close-wiki before diving into source files
+1. Copy `rekipedia-agent-skill.md` into your Hermes skills directory
+2. Any agent with the skill loaded will automatically scan + query rekipedia before diving into source files
 3. Dramatically reduces context window usage for large codebases
 
 ---

@@ -1,4 +1,4 @@
-"""Tests for close-wiki update (Phase 3 — incremental refresh)."""
+"""Tests for rekipedia update (Phase 3 — incremental refresh)."""
 from __future__ import annotations
 
 import json
@@ -8,10 +8,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from close_wiki.models.contracts import LLMConfig
-from close_wiki.orchestrator.run_digest import run_digest
-from close_wiki.orchestrator.run_update import run_update
-from close_wiki.storage.sqlite_store import SqliteStore
+from rekipedia.models.contracts import LLMConfig
+from rekipedia.orchestrator.run_digest import run_digest
+from rekipedia.orchestrator.run_update import run_update
+from rekipedia.storage.sqlite_store import SqliteStore
 
 MINI_PY = Path(__file__).parent / "fixtures" / "mini-py-repo"
 
@@ -32,7 +32,7 @@ def _fake_llm_response() -> str:
 
 @pytest.fixture()
 def mock_llm():
-    with patch("close_wiki.synthesis.page_builder.LLMClient") as MockClient:
+    with patch("rekipedia.synthesis.page_builder.LLMClient") as MockClient:
         mock_instance = MagicMock()
         mock_instance.call.side_effect = lambda prompt, system="": _fake_llm_response()
         MockClient.return_value = mock_instance
@@ -53,7 +53,7 @@ def _do_update(repo: Path, output_dir: Path) -> None:
 
 def test_update_no_prior_scan_falls_back_to_full(mock_llm, tmp_path):
     """If no previous scan exists, run_update() falls back to run_digest()."""
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
     _do_update(MINI_PY, output_dir)
 
     # Should produce the same output as a full scan
@@ -64,7 +64,7 @@ def test_update_no_prior_scan_falls_back_to_full(mock_llm, tmp_path):
 
 def test_update_no_changes_exits_early(mock_llm, tmp_path):
     """If nothing has changed, update exits early without re-calling the LLM."""
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
 
     # First: full scan
     _do_full_scan(MINI_PY, output_dir)
@@ -81,7 +81,7 @@ def test_update_on_changed_file_creates_new_run(mock_llm, tmp_path):
     # Copy fixture to a mutable tmpdir so we can modify files
     repo = tmp_path / "repo"
     shutil.copytree(MINI_PY, repo)
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
 
     # Full scan
     _do_full_scan(repo, output_dir)
@@ -105,7 +105,7 @@ def test_update_carries_forward_symbols_from_unchanged_files(mock_llm, tmp_path)
     """Symbols from unchanged files are present in the new run without re-extraction."""
     repo = tmp_path / "repo"
     shutil.copytree(MINI_PY, repo)
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
 
     _do_full_scan(repo, output_dir)
 
@@ -134,7 +134,7 @@ def test_update_wiki_pages_refreshed_after_change(mock_llm, tmp_path):
     """After an update the wiki pages should still exist and be 5 in number."""
     repo = tmp_path / "repo"
     shutil.copytree(MINI_PY, repo)
-    output_dir = tmp_path / ".close-wiki"
+    output_dir = tmp_path / ".rekipedia"
 
     _do_full_scan(repo, output_dir)
     (repo / "core.py").write_text("def new_core(): pass\n", encoding="utf-8")

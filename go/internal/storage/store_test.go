@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 func openTestStore(t *testing.T) *Store {
@@ -28,7 +28,7 @@ func TestOpenAndClose(t *testing.T) {
 
 func TestDefaultPath(t *testing.T) {
 	path := DefaultPath("/repos/myapp")
-	expected := filepath.Join("/repos/myapp", ".close-wiki", "store.db")
+	expected := filepath.Join("/repos/myapp", ".rekipedia", "store.db")
 	if path != expected {
 		t.Errorf("expected %s, got %s", expected, path)
 	}

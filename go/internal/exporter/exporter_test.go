@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 func makeJSONExporter(t *testing.T) (*JSONExporter, string) {

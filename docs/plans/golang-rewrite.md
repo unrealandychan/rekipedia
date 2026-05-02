@@ -1,15 +1,15 @@
-# close-wiki Go Rewrite — Implementation Plan
+# rekipedia Go Rewrite — Implementation Plan
 
 > **Branch:** `feat/golang-rewrite`
-> **Go module:** `github.com/unrealandychan/close-wiki`
+> **Go module:** `github.com/unrealandychan/rekipedia`
 > **Root:** `go/` directory inside the repo
 
-**Goal:** Full Go rewrite of close-wiki producing a single statically-linked binary, feature-parity with Python v0.7.3, with goreleaser-based distribution.
+**Goal:** Full Go rewrite of rekipedia producing a single statically-linked binary, feature-parity with Python v0.7.3, with goreleaser-based distribution.
 
 **Architecture:**
 ```
 go/
-├── cmd/close-wiki/        # main.go — cobra root command
+├── cmd/rekipedia/        # main.go — cobra root command
 ├── internal/
 │   ├── models/            # Data contracts (Go structs = Python pydantic models)
 │   ├── config/            # Config YAML loading + env var overrides
@@ -200,7 +200,7 @@ func TestAnalysisResultDefaults(t *testing.T) {
 
 ### Task 2: config/loader.go — YAML config + env overrides
 
-**Objective:** Load `.close-wiki/config.yml`, apply env var overrides, same logic as Python `_load_config`.
+**Objective:** Load `.rekipedia/config.yml`, apply env var overrides, same logic as Python `_load_config`.
 
 **Files:**
 - Create: `go/internal/config/loader.go`
@@ -217,7 +217,7 @@ import (
     "path/filepath"
 
     "gopkg.in/yaml.v3"
-    "github.com/unrealandychan/close-wiki/internal/models"
+    "github.com/unrealandychan/rekipedia/internal/models"
 )
 
 type Config struct {
@@ -230,43 +230,43 @@ type Config struct {
 func DefaultConfig() Config {
     return Config{
         Version:   1,
-        Ignore:    []string{".git", "node_modules", "__pycache__", ".close-wiki"},
+        Ignore:    []string{".git", "node_modules", "__pycache__", ".rekipedia"},
         Languages: []string{"python", "typescript"},
         LLM:       models.DefaultLLMConfig(),
     }
 }
 
-// Load reads config from repoRoot/.close-wiki/config.yml,
+// Load reads config from repoRoot/.rekipedia/config.yml,
 // falls back to defaults, then applies env var overrides.
 func Load(repoRoot string) (Config, error) {
     cfg := DefaultConfig()
-    path := filepath.Join(repoRoot, ".close-wiki", "config.yml")
+    path := filepath.Join(repoRoot, ".rekipedia", "config.yml")
     data, err := os.ReadFile(path)
     if err == nil {
         _ = yaml.Unmarshal(data, &cfg)
     }
     // Env var overrides (same as Python)
-    if v := os.Getenv("CLOSE_WIKI_MODEL"); v != "" {
+    if v := os.Getenv("REKIPEDIA_MODEL"); v != "" {
         cfg.LLM.Model = v
     }
-    if v := os.Getenv("CLOSE_WIKI_API_KEY"); v != "" {
+    if v := os.Getenv("REKIPEDIA_API_KEY"); v != "" {
         cfg.LLM.APIKey = v
     }
-    if v := os.Getenv("CLOSE_WIKI_BASE_URL"); v != "" {
+    if v := os.Getenv("REKIPEDIA_BASE_URL"); v != "" {
         cfg.LLM.BaseURL = v
     }
-    if v := os.Getenv("CLOSE_WIKI_EMBED_MODEL"); v != "" {
+    if v := os.Getenv("REKIPEDIA_EMBED_MODEL"); v != "" {
         cfg.LLM.EmbedModel = v
     }
-    if v := os.Getenv("CLOSE_WIKI_EMBED_PROVIDER"); v != "" {
+    if v := os.Getenv("REKIPEDIA_EMBED_PROVIDER"); v != "" {
         cfg.LLM.EmbedProvider = v
     }
     return cfg, nil
 }
 
-// InitDir creates .close-wiki/ with a default config.yml.
+// InitDir creates .rekipedia/ with a default config.yml.
 func InitDir(repoRoot string) error {
-    dir := filepath.Join(repoRoot, ".close-wiki")
+    dir := filepath.Join(repoRoot, ".rekipedia")
     if err := os.MkdirAll(dir, 0755); err != nil {
         return err
     }
@@ -352,7 +352,7 @@ import (
 )
 
 var DefaultIgnore = []string{
-    ".git", "node_modules", "__pycache__", ".close-wiki",
+    ".git", "node_modules", "__pycache__", ".rekipedia",
     "dist", "build", ".venv", "venv", ".tox",
 }
 
@@ -421,25 +421,25 @@ func SHA256File(path string) (string, error) {
 
 ---
 
-### Task 5: cmd/close-wiki/main.go — Cobra root
+### Task 5: cmd/rekipedia/main.go — Cobra root
 
 **Objective:** Wire up the cobra root command with all subcommands registered.
 
 **Files:**
-- Create: `go/cmd/close-wiki/main.go`
-- Create: `go/cmd/close-wiki/root.go`
+- Create: `go/cmd/rekipedia/main.go`
+- Create: `go/cmd/rekipedia/root.go`
 
 ```go
-// go/cmd/close-wiki/main.go
+// go/cmd/rekipedia/main.go
 package main
 
-import "github.com/unrealandychan/close-wiki/cmd/close-wiki/cmd"
+import "github.com/unrealandychan/rekipedia/cmd/rekipedia/cmd"
 
 func main() { cmd.Execute() }
 ```
 
 ```go
-// go/cmd/close-wiki/cmd/root.go
+// go/cmd/rekipedia/cmd/root.go
 package cmd
 
 import (
@@ -448,7 +448,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-    Use:   "close-wiki",
+    Use:   "rekipedia",
     Short: "Your AI tech lead — always available, always up to date.",
 }
 
@@ -463,7 +463,7 @@ func init() {
 }
 ```
 
-**Verify:** `cd go && go build ./cmd/close-wiki && ./close-wiki --help`
+**Verify:** `cd go && go build ./cmd/rekipedia && ./rekipedia --help`
 
 ---
 
@@ -535,7 +535,7 @@ import (
     "strings"
     "time"
     openai "github.com/sashabaranov/go-openai"
-    "github.com/unrealandychan/close-wiki/internal/models"
+    "github.com/unrealandychan/rekipedia/internal/models"
 )
 
 type Client struct {
@@ -665,10 +665,10 @@ func (c *Client) StreamCall(ctx context.Context, system, prompt string, cb func(
 5. Build diagrams
 6. Run PlannerAgent
 7. Build wiki pages (max 4 concurrent)
-8. Save to SQLite + write .close-wiki/wiki/*.md
+8. Save to SQLite + write .rekipedia/wiki/*.md
 9. Export JSON manifest
 10. Write scan_meta.json
-11. Auto-embed if CLOSE_WIKI_EMBED_MODEL set
+11. Auto-embed if REKIPEDIA_EMBED_MODEL set
 
 **Verify:** `cd go && go test ./internal/orchestrator/... -v`
 
@@ -688,7 +688,7 @@ func (c *Client) StreamCall(ctx context.Context, system, prompt string, cb func(
 
 **Hybrid retrieval:**
 1. If FAISS index exists → cosine similarity top-8 chunks
-2. Load all wiki pages from `.close-wiki/wiki/*.md`
+2. Load all wiki pages from `.rekipedia/wiki/*.md`
 3. Combine into system prompt, stream answer
 
 **Verify:** `cd go && go test ./internal/orchestrator/... -v`
@@ -724,7 +724,7 @@ type VectorStore struct {
 
 **Embedding API:** Use go-openai `CreateEmbeddings()` with custom BaseURL (same provider routing logic as LLM client).
 
-**Max sizes:** Env vars `CLOSE_WIKI_MAX_CODE_CHARS` (default 320000), `CLOSE_WIKI_MAX_DOC_CHARS` (default 32000).
+**Max sizes:** Env vars `REKIPEDIA_MAX_CODE_CHARS` (default 320000), `REKIPEDIA_MAX_DOC_CHARS` (default 32000).
 
 **Verify:** `cd go && go test ./internal/rag/... -v`
 
@@ -734,7 +734,7 @@ type VectorStore struct {
 
 ### Task 17: exporter/ — Markdown, ZIP, JSON exporters
 
-**Objective:** Implement `close-wiki export` — read wiki pages, bundle to md/zip/json.
+**Objective:** Implement `rekipedia export` — read wiki pages, bundle to md/zip/json.
 
 **Files:**
 - `go/internal/exporter/markdown.go`
@@ -772,13 +772,13 @@ GET  /api/status    → scan status (JSON)
 **Objective:** Wire up all 7 commands to their orchestrators.
 
 **Files:**
-- `go/cmd/close-wiki/cmd/init.go`
-- `go/cmd/close-wiki/cmd/scan.go`
-- `go/cmd/close-wiki/cmd/update.go`
-- `go/cmd/close-wiki/cmd/ask.go`
-- `go/cmd/close-wiki/cmd/serve.go`
-- `go/cmd/close-wiki/cmd/embed.go`
-- `go/cmd/close-wiki/cmd/export.go`
+- `go/cmd/rekipedia/cmd/init.go`
+- `go/cmd/rekipedia/cmd/scan.go`
+- `go/cmd/rekipedia/cmd/update.go`
+- `go/cmd/rekipedia/cmd/ask.go`
+- `go/cmd/rekipedia/cmd/serve.go`
+- `go/cmd/rekipedia/cmd/embed.go`
+- `go/cmd/rekipedia/cmd/export.go`
 
 **Flag parity with Python:**
 ```
@@ -791,7 +791,7 @@ export: --format (md|zip|json), --output
 init:   (no flags)
 ```
 
-**Verify:** `cd go && go build ./cmd/close-wiki && ./close-wiki --help`
+**Verify:** `cd go && go build ./cmd/rekipedia && ./rekipedia --help`
 
 ---
 
@@ -807,16 +807,16 @@ cd go
 go test ./... -v -count=1
 
 # Build binary (CGO for sqlite3)
-CGO_ENABLED=1 go build -ldflags "-s -w" -o close-wiki-bin ./cmd/close-wiki
+CGO_ENABLED=1 go build -ldflags "-s -w" -o rekipedia-bin ./cmd/rekipedia
 
 # Smoke test
-./close-wiki-bin --version
-./close-wiki-bin --help
-./close-wiki-bin scan --help
-./close-wiki-bin ask --help
+./rekipedia-bin --version
+./rekipedia-bin --help
+./rekipedia-bin scan --help
+./rekipedia-bin ask --help
 
 # Cross-compile check (macOS)
-GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -o /dev/null ./cmd/close-wiki 2>&1 || true
+GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -o /dev/null ./cmd/rekipedia 2>&1 || true
 ```
 
 **Verify:** All tests green, binary executes, help text matches Python CLI.
@@ -837,13 +837,13 @@ GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -o /dev/null ./cmd/close-wiki 2>
 ```yaml
 # go/.goreleaser.yaml
 version: 2
-project_name: close-wiki
+project_name: rekipedia
 
 builds:
-  - id: close-wiki
-    main: ./cmd/close-wiki
+  - id: rekipedia
+    main: ./cmd/rekipedia
     dir: go
-    binary: close-wiki
+    binary: reki
     env:
       - CGO_ENABLED=1
     ldflags:
@@ -878,21 +878,21 @@ changelog:
     exclude: ['^docs:', '^test:', '^ci:']
 
 brews:
-  - name: close-wiki
+  - name: rekipedia
     repository:
       owner: unrealandychan
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     description: "Your AI tech lead — scan any repo into a knowledge store"
-    homepage: "https://github.com/unrealandychan/close-wiki"
+    homepage: "https://github.com/unrealandychan/rekipedia"
     install: |
-      bin.install "close-wiki"
+      bin.install "rekipedia"
     test: |
-      system "#{bin}/close-wiki --version"
+      system "#{bin}/rekipedia --version"
 
 nfpms:
-  - package_name: close-wiki
-    homepage: https://github.com/unrealandychan/close-wiki
+  - package_name: rekipedia
+    homepage: https://github.com/unrealandychan/rekipedia
     description: "Your AI tech lead — scan any repo into a knowledge store"
     formats: [deb, rpm, apk]
     bindir: /usr/local/bin
@@ -932,18 +932,18 @@ jobs:
 | GitHub Releases | goreleaser auto | tar.gz + checksums per platform |
 | Homebrew | goreleaser `brews:` | Needs `homebrew-tap` repo |
 | apt/deb | goreleaser `nfpms:` | Linux users |
-| Docker | `FROM scratch` + static binary | `docker pull ghcr.io/unrealandychan/close-wiki` |
+| Docker | `FROM scratch` + static binary | `docker pull ghcr.io/unrealandychan/rekipedia` |
 | Script install | `curl -fsSL .../install.sh \| sh` | Universal fallback |
 
 **install.sh pattern:**
 ```bash
 #!/bin/sh
-VERSION=$(curl -s https://api.github.com/repos/unrealandychan/close-wiki/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+VERSION=$(curl -s https://api.github.com/repos/unrealandychan/rekipedia/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m); [ "$ARCH" = "x86_64" ] && ARCH="amd64"; [ "$ARCH" = "aarch64" ] && ARCH="arm64"
-curl -fsSL "https://github.com/unrealandychan/close-wiki/releases/download/${VERSION}/close-wiki_${VERSION}_${OS}_${ARCH}.tar.gz" | tar xz
-sudo mv close-wiki /usr/local/bin/
-echo "close-wiki ${VERSION} installed!"
+curl -fsSL "https://github.com/unrealandychan/rekipedia/releases/download/${VERSION}/rekipedia_${VERSION}_${OS}_${ARCH}.tar.gz" | tar xz
+sudo mv rekipedia /usr/local/bin/
+echo "rekipedia ${VERSION} installed!"
 ```
 
 **Verify:** `cd go && goreleaser check` (dry-run)

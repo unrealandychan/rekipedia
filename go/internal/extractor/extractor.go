@@ -4,7 +4,7 @@
 package extractor
 
 import (
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // Extractor analyses a single file and returns an AnalysisResult.

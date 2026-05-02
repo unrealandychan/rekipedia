@@ -10,10 +10,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/unrealandychan/close-wiki/internal/llm"
-	"github.com/unrealandychan/close-wiki/internal/models"
-	"github.com/unrealandychan/close-wiki/internal/rag"
-	"github.com/unrealandychan/close-wiki/internal/storage"
+	"github.com/unrealandychan/rekipedia/internal/llm"
+	"github.com/unrealandychan/rekipedia/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/rag"
+	"github.com/unrealandychan/rekipedia/internal/storage"
 )
 
 const (
@@ -57,7 +57,7 @@ type AskResult struct {
 func RunAsk(ctx context.Context, question, repoRoot, outputDir string, opts AskOptions) (*AskResult, error) {
 	dbPath := filepath.Join(outputDir, "store.db")
 	if _, err := os.Stat(dbPath); err != nil {
-		return nil, fmt.Errorf("no knowledge store found at %s — run `close-wiki scan .` first", dbPath)
+		return nil, fmt.Errorf("no knowledge store found at %s — run `rekipedia scan .` first", dbPath)
 	}
 
 	store, err := storage.Open(dbPath)
@@ -69,7 +69,7 @@ func RunAsk(ctx context.Context, question, repoRoot, outputDir string, opts AskO
 	// ── 1. Find latest run ───────────────────────────────────────────────
 	runID, err := store.GetLatestRunID(repoRoot)
 	if err != nil || runID == "" {
-		return nil, fmt.Errorf("no successful scan found for this repository — run `close-wiki scan .` first")
+		return nil, fmt.Errorf("no successful scan found for this repository — run `rekipedia scan .` first")
 	}
 
 	// ── 2. Load wiki pages ───────────────────────────────────────────────
@@ -114,7 +114,7 @@ func StreamAsk(ctx context.Context, question, repoRoot, outputDir string, opts A
 
 	runID, err := store.GetLatestRunID(repoRoot)
 	if err != nil || runID == "" {
-		return fmt.Errorf("no successful scan found — run `close-wiki scan .` first")
+		return fmt.Errorf("no successful scan found — run `rekipedia scan .` first")
 	}
 
 	wikiPages := loadWikiPages(outputDir)

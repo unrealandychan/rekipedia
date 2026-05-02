@@ -1,4 +1,4 @@
-# close-wiki — developer Makefile
+# rekipedia — developer Makefile
 # All primary tasks go through make. Use `make help` to list targets.
 
 PYTHON     ?= python3
@@ -42,7 +42,7 @@ test: dev ## Run the test suite (pytest)
 
 .PHONY: test-cov
 test-cov: dev ## Run tests with coverage report
-	$(UV) run pytest --cov=src/close_wiki --cov-report=term-missing
+	$(UV) run pytest --cov=src/rekipedia --cov-report=term-missing
 
 # ─────────────────────────────────────────────
 # Build
@@ -54,7 +54,7 @@ build: ## Build Python wheel + sdist and npm tarball
 
 .PHONY: docker-build
 docker-build: ## Build the sandbox Docker image
-	docker build -f Dockerfile.sandbox -t close-wiki-sandbox:local .
+	docker build -f Dockerfile.sandbox -t rekipedia-sandbox:local .
 
 # ─────────────────────────────────────────────
 # Release
@@ -108,7 +108,7 @@ release-all: ## Full release: build → git tag → push → PyPI → npm  (need
 	@echo "▶  5/5  publish to npm"
 	$(NPM) config set //registry.npmjs.org/:_authToken $(NPM_TOKEN)
 	$(NPM) publish --access public
-	@echo "✅  Done! close-wiki released."
+	@echo "✅  Done! rekipedia released."
 
 # ─────────────────────────────────────────────
 # Housekeeping

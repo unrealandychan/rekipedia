@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/unrealandychan/close-wiki/internal/llm"
-	"github.com/unrealandychan/close-wiki/internal/models"
-	"github.com/unrealandychan/close-wiki/internal/storage"
-	"github.com/unrealandychan/close-wiki/internal/synthesis"
+	"github.com/unrealandychan/rekipedia/internal/llm"
+	"github.com/unrealandychan/rekipedia/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/storage"
+	"github.com/unrealandychan/rekipedia/internal/synthesis"
 )
 
 // finishDigest runs phases 4–7 (diagrams → plan → pages → export).

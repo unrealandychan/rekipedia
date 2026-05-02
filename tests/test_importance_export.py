@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from close_wiki.models.contracts import LLMConfig
-from close_wiki.synthesis.planner import WikiPlan
+from rekipedia.models.contracts import LLMConfig
+from rekipedia.synthesis.planner import WikiPlan
 
 
 # ---------------------------------------------------------------------------
@@ -77,20 +77,20 @@ def test_llm_config_embed_fields_default_empty() -> None:
 
 
 def test_embed_pipeline_uses_provider_prefix(tmp_path: Path) -> None:
-    from close_wiki.rag.embedder import EmbedPipeline
+    from rekipedia.rag.embedder import EmbedPipeline
 
     cfg = LLMConfig(embed_model="nomic-embed-text", embed_provider="ollama")
-    pipe = EmbedPipeline(tmp_path / ".close-wiki", cfg)
+    pipe = EmbedPipeline(tmp_path / ".rekipedia", cfg)
     assert pipe._model == "ollama/nomic-embed-text"
 
 
 def test_embed_pipeline_no_prefix_when_slash_in_model(tmp_path: Path) -> None:
-    from close_wiki.rag.embedder import EmbedPipeline
+    from rekipedia.rag.embedder import EmbedPipeline
     import os
-    os.environ.pop("CLOSE_WIKI_EMBED_MODEL", None)
-    os.environ.pop("CLOSE_WIKI_EMBED_PROVIDER", None)
+    os.environ.pop("REKIPEDIA_EMBED_MODEL", None)
+    os.environ.pop("REKIPEDIA_EMBED_PROVIDER", None)
     cfg = LLMConfig(embed_model="openai/text-embedding-3-small", embed_provider="openai")
-    pipe = EmbedPipeline(tmp_path / ".close-wiki", cfg)
+    pipe = EmbedPipeline(tmp_path / ".rekipedia", cfg)
     # Already has slash — should NOT double-prefix
     assert pipe._model == "openai/text-embedding-3-small"
 
@@ -100,8 +100,8 @@ def test_embed_pipeline_no_prefix_when_slash_in_model(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def _make_wiki_dir(tmp_path: Path, pages: list[tuple[str, str]]) -> tuple[Path, Path]:
-    """Create a minimal .close-wiki/ layout with wiki pages."""
-    out_dir = tmp_path / ".close-wiki"
+    """Create a minimal .rekipedia/ layout with wiki pages."""
+    out_dir = tmp_path / ".rekipedia"
     wiki_dir = out_dir / "wiki"
     wiki_dir.mkdir(parents=True)
 
@@ -133,7 +133,7 @@ def _make_wiki_dir(tmp_path: Path, pages: list[tuple[str, str]]) -> tuple[Path, 
 
 def test_export_md(tmp_path: Path) -> None:
     from click.testing import CliRunner
-    from close_wiki.cli.export import export_cmd
+    from rekipedia.cli.export import export_cmd
 
     pages = [("index", "# Index\n\nWelcome."), ("architecture", "# Architecture\n\nDesign.")]
     out_dir, _ = _make_wiki_dir(tmp_path, pages)
@@ -155,7 +155,7 @@ def test_export_md(tmp_path: Path) -> None:
 
 def test_export_zip(tmp_path: Path) -> None:
     from click.testing import CliRunner
-    from close_wiki.cli.export import export_cmd
+    from rekipedia.cli.export import export_cmd
 
     pages = [("index", "# Index\n\nHello."), ("core", "# Core\n\nDetails.")]
     out_dir, _ = _make_wiki_dir(tmp_path, pages)
@@ -178,7 +178,7 @@ def test_export_zip(tmp_path: Path) -> None:
 
 def test_export_fails_gracefully_without_wiki(tmp_path: Path) -> None:
     from click.testing import CliRunner
-    from close_wiki.cli.export import export_cmd
+    from rekipedia.cli.export import export_cmd
 
     runner = CliRunner()
     result = runner.invoke(export_cmd, [str(tmp_path)])

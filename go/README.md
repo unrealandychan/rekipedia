@@ -1,4 +1,4 @@
-# close-wiki
+# rekipedia
 
 > Agentic repo-to-wiki: scan any repository into a portable SQLite knowledge store with wiki pages, diagrams, and grounded Q&A.
 
@@ -8,45 +8,45 @@
 
 ```bash
 brew tap unrealandychan/tap
-brew install close-wiki
+brew install rekipedia
 ```
 
 ### Download Binary
 
-Download the latest release from [GitHub Releases](https://github.com/unrealandychan/close-wiki/releases).
+Download the latest release from [GitHub Releases](https://github.com/unrealandychan/rekipedia/releases).
 
 | Platform | Architecture | File |
 |----------|-------------|------|
-| macOS    | Apple Silicon (M1/M2/M3) | `close-wiki_darwin_arm64.tar.gz` |
-| macOS    | Intel | `close-wiki_darwin_amd64.tar.gz` |
-| Linux    | x86_64 | `close-wiki_linux_amd64.tar.gz` |
-| Linux    | ARM64 | `close-wiki_linux_arm64.tar.gz` |
-| Windows  | x86_64 | `close-wiki_windows_amd64.zip` |
+| macOS    | Apple Silicon (M1/M2/M3) | `rekipedia_darwin_arm64.tar.gz` |
+| macOS    | Intel | `rekipedia_darwin_amd64.tar.gz` |
+| Linux    | x86_64 | `rekipedia_linux_amd64.tar.gz` |
+| Linux    | ARM64 | `rekipedia_linux_arm64.tar.gz` |
+| Windows  | x86_64 | `rekipedia_windows_amd64.zip` |
 
 Extract and move the binary to your `$PATH`:
 
 ```bash
-tar -xzf close-wiki_darwin_arm64.tar.gz
-mv close-wiki /usr/local/bin/
+tar -xzf rekipedia_darwin_arm64.tar.gz
+mv rekipedia /usr/local/bin/
 ```
 
 ## Usage
 
 ```bash
 # Scan a repository and generate wiki
-close-wiki scan --path /path/to/repo
+rekipedia scan --path /path/to/repo
 
 # Serve the wiki locally
-close-wiki serve --path /path/to/repo
+rekipedia serve --path /path/to/repo
 
 # Ask questions about the codebase
-close-wiki ask --path /path/to/repo "How does the authentication work?"
+rekipedia ask --path /path/to/repo "How does the authentication work?"
 
 # Update wiki after code changes
-close-wiki update --path /path/to/repo
+rekipedia update --path /path/to/repo
 
 # Scan specific languages only
-close-wiki scan --path /path/to/repo --languages go,python,typescript
+rekipedia scan --path /path/to/repo --languages go,python,typescript
 ```
 
 ## Commands
@@ -84,4 +84,4 @@ output_dir: .wiki
 
 ## Full Documentation
 
-See the [main repository](https://github.com/unrealandychan/close-wiki) for full documentation, Python package, and advanced usage.
+See the [main repository](https://github.com/unrealandychan/rekipedia) for full documentation, Python package, and advanced usage.

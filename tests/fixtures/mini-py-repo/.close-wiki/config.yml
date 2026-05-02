@@ -3,7 +3,7 @@ ignore:
 - .git
 - node_modules
 - __pycache__
-- .close-wiki
+- .rekipedia
 languages:
 - python
 - typescript

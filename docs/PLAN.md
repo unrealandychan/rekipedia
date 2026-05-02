@@ -1,4 +1,4 @@
-# close-wiki — Product Plan
+# rekipedia — Product Plan
 
 > Living document. Update this whenever a phase completes or goals shift.
 
@@ -6,7 +6,7 @@
 
 ## Vision
 
-close-wiki turns any repository into a self-maintaining knowledge base. Every developer gets an always-up-to-date AI tech lead they can ask anything about the codebase — grounded entirely in the real source, never hallucinated.
+rekipedia turns any repository into a self-maintaining knowledge base. Every developer gets an always-up-to-date AI tech lead they can ask anything about the codebase — grounded entirely in the real source, never hallucinated.
 
 ---
 
@@ -18,14 +18,14 @@ close-wiki turns any repository into a self-maintaining knowledge base. Every de
 
 | Item | Status |
 |---|---|
-| `close-wiki init` — scaffold `.close-wiki/config.yml`, update `.gitignore` | ✅ |
+| `rekipedia init` — scaffold `.rekipedia/config.yml`, update `.gitignore` | ✅ |
 | SQLite store (`sqlite-utils`, WAL mode, migration runner) | ✅ |
 | LLM client (litellm, env-var overrides) | ✅ |
 | Snapshotter — SHA-256 file walker + pathspec ignore | ✅ |
 | Pydantic v2 contracts (`AnalysisResult`, `Symbol`, `Relationship`, `Shard`, `FileManifest`, `LLMConfig`) | ✅ |
 | JSON Schema for Docker sandbox contract | ✅ |
-| Python package (`hatchling`, `pip install close-wiki`) | ✅ |
-| npm shim (`npx close-wiki` → `uvx` → Python) | ✅ |
+| Python package (`hatchling`, `pip install rekipedia`) | ✅ |
+| npm shim (`npx rekipedia` → `uvx` → Python) | ✅ |
 | Makefile targets: `install`, `dev`, `test`, `lint`, `build`, `release-*` | ✅ |
 | 12 passing tests | ✅ |
 
@@ -33,7 +33,7 @@ close-wiki turns any repository into a self-maintaining knowledge base. Every de
 
 ### Phase 2 — Repository Analysis & Wiki Generation ✅ COMPLETE
 
-**Goal:** `close-wiki scan` works end-to-end; produces 5 wiki pages, Mermaid diagrams, `manifest.json`, populates `knowledge.db`.
+**Goal:** `rekipedia scan` works end-to-end; produces 5 wiki pages, Mermaid diagrams, `manifest.json`, populates `knowledge.db`.
 
 | Item | Status |
 |---|---|
@@ -47,14 +47,14 @@ close-wiki turns any repository into a self-maintaining knowledge base. Every de
 | `DiagramBuilder` — Mermaid flowchart + classDiagram | ✅ |
 | `MarkdownExporter` — `wiki/*.md`, `diagrams/*.md`, respects `pin: true` | ✅ |
 | `JsonExporter` — `exports/symbols.json`, `exports/relationships.json`, `exports/manifest.json` | ✅ |
-| `close-wiki scan` CLI (`--no-docker`, `--output-dir`, `--model`) | ✅ |
+| `rekipedia scan` CLI (`--no-docker`, `--output-dir`, `--model`) | ✅ |
 | `scan_*` tables in SQLite (TEXT pk, no conflict with Phase 1 schema) | ✅ |
 | `prompt_overrides` and `exclude_pages` config keys | ✅ |
 | 37 new tests (49 total) | ✅ |
 
 **Output structure:**
 ```
-.close-wiki/
+.rekipedia/
 ├── store.db
 ├── wiki/
 │   ├── index.md
@@ -75,7 +75,7 @@ close-wiki turns any repository into a self-maintaining knowledge base. Every de
 
 ### Phase 3 — Incremental Update ✅ COMPLETE
 
-**Goal:** `close-wiki update` re-extracts only changed files and refreshes the wiki in seconds, not minutes.
+**Goal:** `rekipedia update` re-extracts only changed files and refreshes the wiki in seconds, not minutes.
 
 | Item | Status |
 |---|---|
@@ -85,7 +85,7 @@ close-wiki turns any repository into a self-maintaining knowledge base. Every de
 | `SqliteStore.copy_unchanged_relationships(from_run_id, to_run_id, exclude_paths)` | ✅ |
 | `run_update()` pipeline — diff-based re-extraction + carry-forward | ✅ |
 | Auto-fallback to full scan when no prior run exists | ✅ |
-| `close-wiki update` CLI (`--no-docker`, `--output-dir`, `--model`) | ✅ |
+| `rekipedia update` CLI (`--no-docker`, `--output-dir`, `--model`) | ✅ |
 | `tests/test_update.py` | ✅ |
 
 **How it works:**
@@ -102,7 +102,7 @@ close-wiki turns any repository into a self-maintaining knowledge base. Every de
 
 ### Phase 4 — Grounded Q&A ✅ COMPLETE
 
-**Goal:** `close-wiki ask "How does auth work?"` returns a grounded, cited answer from the wiki + symbol index — zero hallucinations.
+**Goal:** `rekipedia ask "How does auth work?"` returns a grounded, cited answer from the wiki + symbol index — zero hallucinations.
 
 | Item | Status |
 |---|---|
@@ -110,7 +110,7 @@ close-wiki turns any repository into a self-maintaining knowledge base. Every de
 | `run_ask()` pipeline — context assembly + LLM call | ✅ |
 | Context builder: wiki pages + symbol list + relationships summary | ✅ |
 | Token-budget truncation (keeps context within model limits) | ✅ |
-| `close-wiki ask QUESTION` CLI (rich output, source citations) | ✅ |
+| `rekipedia ask QUESTION` CLI (rich output, source citations) | ✅ |
 | `tests/test_ask.py` | ✅ |
 
 **How it works:**
@@ -126,7 +126,7 @@ close-wiki turns any repository into a self-maintaining knowledge base. Every de
 ## Architecture Overview
 
 ```
-close-wiki scan / update
+rekipedia scan / update
         │
         ▼
  Snapshotter          ← SHA-256 file walk (pathspec ignore)
@@ -146,7 +146,7 @@ close-wiki scan / update
         ├── MarkdownExporter
         └── JsonExporter
 
-close-wiki ask
+rekipedia ask
         │
         ▼
  SqliteStore + wiki/*.md  ← context assembly
@@ -171,7 +171,7 @@ close-wiki ask
 ## Configuration Reference
 
 ```yaml
-# .close-wiki/config.yml
+# .rekipedia/config.yml
 version: 1
 ignore:
   - .git
@@ -182,7 +182,7 @@ languages:
   - typescript
 llm:
   model: ollama/llama4          # any litellm model string
-  api_key: ""                   # or CLOSE_WIKI_API_KEY env var
+  api_key: ""                   # or REKIPEDIA_API_KEY env var
   base_url: ""                  # for local / self-hosted endpoints
   temperature: 0.2
 
@@ -203,7 +203,7 @@ exclude_pages:
 
 | Phase | Feature | Notes |
 |---|---|---|
-| 5 | `close-wiki serve` — local web UI | Read-only wiki browser, search, ask box |
+| 5 | `rekipedia serve` — local web UI | Read-only wiki browser, search, ask box |
 | 6 | Multi-repo federation | Cross-repo symbol references |
 | 7 | CI integration | GitHub Action that runs `update` on push |
 | 8 | Vector search for `ask` | Embedding index for large repos (>100K symbols) |

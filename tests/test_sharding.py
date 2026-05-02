@@ -1,8 +1,8 @@
 """Tests for the sharding module."""
 from __future__ import annotations
 
-from close_wiki.models.contracts import FileManifest, LLMConfig
-from close_wiki.orchestrator.sharding import ShardPlanner
+from rekipedia.models.contracts import FileManifest, LLMConfig
+from rekipedia.orchestrator.sharding import ShardPlanner
 
 _MINI_FILES = [
     FileManifest(path="src/a.py", sha256="aa" * 16, size_bytes=1000),

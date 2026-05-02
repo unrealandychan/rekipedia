@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 func makeTestServer(t *testing.T) (*Server, string) {

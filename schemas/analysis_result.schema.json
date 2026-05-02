@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/your-org/close-wiki/schemas/analysis_result.schema.json",
+  "$id": "https://github.com/your-org/rekipedia/schemas/analysis_result.schema.json",
   "title": "AnalysisResult",
   "description": "JSON contract returned by every Docker sandbox shard run. Must never contain prose — always structured data.",
   "type": "object",

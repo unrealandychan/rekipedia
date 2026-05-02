@@ -15,14 +15,14 @@ import urllib.request
 VERSION = sys.argv[1].lstrip("v")
 PAT = sys.argv[2]
 TAG = f"v{VERSION}"
-BASE_URL = f"https://github.com/unrealandychan/close-wiki-releases/releases/download/{TAG}"
+BASE_URL = f"https://github.com/unrealandychan/rekipedia-releases/releases/download/{TAG}"
 TAP_REPO = "unrealandychan/homebrew-tap"
 
 PLATFORMS = {
-    "darwin_amd64": f"{BASE_URL}/close-wiki_darwin_amd64.tar.gz",
-    "darwin_arm64": f"{BASE_URL}/close-wiki_darwin_arm64.tar.gz",
-    "linux_amd64":  f"{BASE_URL}/close-wiki_linux_amd64.tar.gz",
-    "linux_arm64":  f"{BASE_URL}/close-wiki_linux_arm64.tar.gz",
+    "darwin_amd64": f"{BASE_URL}/rekipedia_darwin_amd64.tar.gz",
+    "darwin_arm64": f"{BASE_URL}/rekipedia_darwin_arm64.tar.gz",
+    "linux_amd64":  f"{BASE_URL}/rekipedia_linux_amd64.tar.gz",
+    "linux_arm64":  f"{BASE_URL}/rekipedia_linux_arm64.tar.gz",
 }
 
 
@@ -52,7 +52,7 @@ def gh_put(path, content, sha, message):
     payload = {
         "message": message,
         "content": base64.b64encode(content.encode()).decode(),
-        "committer": {"name": "HermesBot", "email": "bot@close-wiki.dev"},
+        "committer": {"name": "HermesBot", "email": "bot@rekipedia.dev"},
     }
     if sha:
         payload["sha"] = sha
@@ -73,13 +73,13 @@ for p, s in shas.items():
     print(f"  {p}: {s}")
 
 
-# ── 2. Formula (Formula/close-wiki.rb) ────────────────────────────────────────
+# ── 2. Formula (Formula/rekipedia.rb) ────────────────────────────────────────
 formula = f"""# typed: false
 # frozen_string_literal: true
 
 class CloseWiki < Formula
   desc "Agentic repo-to-wiki — scan any codebase into a structured knowledge base"
-  homepage "https://github.com/unrealandychan/close-wiki"
+  homepage "https://github.com/unrealandychan/rekipedia"
   version "{VERSION}"
   license "MIT"
 
@@ -106,18 +106,18 @@ class CloseWiki < Formula
   end
 
   def install
-    bin.install "close-wiki"
+    bin.install "rekipedia"
   end
 
   test do
-    system "#{{bin}}/close-wiki", "--version"
+    system "#{{bin}}/rekipedia", "--version"
   end
 end
 """
 
-print("\nPushing Formula/close-wiki.rb ...")
-sha = gh_get_sha("Formula/close-wiki.rb")
-commit = gh_put("Formula/close-wiki.rb", formula, sha, f"chore: bump close-wiki to {TAG}")
+print("\nPushing Formula/rekipedia.rb ...")
+sha = gh_get_sha("Formula/rekipedia.rb")
+commit = gh_put("Formula/rekipedia.rb", formula, sha, f"chore: bump rekipedia to {TAG}")
 print(f"  ✓ commit {commit[:7]}")
 
 print(f"\n✅ Homebrew tap updated to {TAG}")

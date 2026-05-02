@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // TypeScript/JavaScript extractor using regex — same patterns as Python's typescript_extractor.py.

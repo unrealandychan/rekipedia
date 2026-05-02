@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from close_wiki.extractors.typescript_extractor import TypeScriptExtractor
+from rekipedia.extractors.typescript_extractor import TypeScriptExtractor
 
 FIXTURES = Path(__file__).parent / "fixtures" / "mini-ts-repo"
 

@@ -1,17 +1,17 @@
-# close-wiki Go rewrite — Makefile
+# rekipedia Go rewrite — Makefile
 # Usage: make [target]
 
-BINARY     := close-wiki
-MODULE     := github.com/unrealandychan/close-wiki
-CMD        := ./cmd/close-wiki
+BINARY     := rekipedia
+MODULE     := github.com/unrealandychan/rekipedia
+CMD        := ./cmd/rekipedia
 BUILD_DIR  := ../dist/go
 VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT     ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
 DATE       ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS    := -s -w \
-              -X $(MODULE)/cmd/close-wiki/cmd.version=$(VERSION) \
-              -X $(MODULE)/cmd/close-wiki/cmd.commit=$(COMMIT) \
-              -X $(MODULE)/cmd/close-wiki/cmd.date=$(DATE)
+              -X $(MODULE)/cmd/rekipedia/cmd.version=$(VERSION) \
+              -X $(MODULE)/cmd/rekipedia/cmd.commit=$(COMMIT) \
+              -X $(MODULE)/cmd/rekipedia/cmd.date=$(DATE)
 
 .PHONY: all build test lint clean check smoke release-dry
 

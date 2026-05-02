@@ -1,16 +1,16 @@
 # Customizing Your Wiki
 
-close-wiki generates pages automatically, but you stay in control.
+rekipedia generates pages automatically, but you stay in control.
 Every generated page is plain Markdown — you can edit, pin, delete, or add pages freely.
 
 ---
 
 ## How pages are generated
 
-When you run `close-wiki scan`, the tool writes Markdown files into `.close-wiki/wiki/`:
+When you run `rekipedia scan`, the tool writes Markdown files into `.rekipedia/wiki/`:
 
 ```
-.close-wiki/wiki/
+.rekipedia/wiki/
 ├── index.md              ← repo overview (generated)
 ├── architecture.md       ← module/component map (generated)
 ├── core-modules.md       ← key classes & functions (generated)
@@ -34,20 +34,20 @@ pin: true
 
 # Auth Flow
 
-My hand-written explanation that close-wiki should never touch...
+My hand-written explanation that rekipedia should never touch...
 ```
 
-close-wiki will skip pinned pages during generation and leave them exactly as you wrote them.
+rekipedia will skip pinned pages during generation and leave them exactly as you wrote them.
 
 ---
 
 ## Option 2 — Add a custom page
 
-Create any `.md` file inside `.close-wiki/wiki/` that does **not** match a generated slug.
-close-wiki will never delete files it did not create.
+Create any `.md` file inside `.rekipedia/wiki/` that does **not** match a generated slug.
+rekipedia will never delete files it did not create.
 
 ```
-.close-wiki/wiki/
+.rekipedia/wiki/
 ├── onboarding.md        ← your custom page, untouched by scans
 ├── adr-001-postgres.md  ← architecture decision record
 └── runbook-deploy.md    ← ops runbook
@@ -57,7 +57,7 @@ close-wiki will never delete files it did not create.
 
 ## Option 3 — Edit and re-pin after a scan
 
-1. Run `close-wiki scan` to get the latest generated version.
+1. Run `rekipedia scan` to get the latest generated version.
 2. Open the page and make your edits.
 3. Add `pin: true` to the frontmatter.
 
@@ -67,11 +67,11 @@ From that point forward, `scan` and `update` will preserve your version.
 
 ## Option 4 — Override the prompt for a page
 
-You can customize *how* close-wiki generates a specific page by adding a
-`prompt_overrides` key to `.close-wiki/config.yml` (keys are page slugs):
+You can customize *how* rekipedia generates a specific page by adding a
+`prompt_overrides` key to `.rekipedia/config.yml` (keys are page slugs):
 
 ```yaml
-# .close-wiki/config.yml
+# .rekipedia/config.yml
 prompt_overrides:
   architecture: |
     Focus on the event-driven parts of the system only.
@@ -93,7 +93,7 @@ Add slugs to the `exclude_pages` list in `config.yml` to prevent certain pages f
 being generated at all:
 
 ```yaml
-# .close-wiki/config.yml
+# .rekipedia/config.yml
 exclude_pages:
   - testing-strategy   # we maintain test docs by hand
 ```
@@ -131,4 +131,4 @@ llm:
 
 ## Resetting a pinned page
 
-To let close-wiki regenerate a pinned page, remove the `pin: true` line and run `close-wiki scan`.
+To let rekipedia regenerate a pinned page, remove the `pin: true` line and run `rekipedia scan`.

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from close_wiki.extractors.python_extractor import PythonExtractor
+from rekipedia.extractors.python_extractor import PythonExtractor
 
 FIXTURES = Path(__file__).parent / "fixtures" / "mini-py-repo"
 

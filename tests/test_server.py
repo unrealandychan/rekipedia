@@ -1,20 +1,20 @@
-"""Integration tests for the close-wiki web server."""
+"""Integration tests for the rekipedia web server."""
 import tempfile
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-from close_wiki.models.contracts import LLMConfig
-from close_wiki.server.app import create_app
-from close_wiki.storage.sqlite_store import SqliteStore
+from rekipedia.models.contracts import LLMConfig
+from rekipedia.server.app import create_app
+from rekipedia.storage.sqlite_store import SqliteStore
 
 
 @pytest.fixture
 def wiki_env():
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp) / "myrepo"
-        output_dir = repo / ".close-wiki"
+        output_dir = repo / ".rekipedia"
         wiki_dir = output_dir / "wiki"
         wiki_dir.mkdir(parents=True)
         (wiki_dir / "index.md").write_text("# Index\n\nHello world.")
@@ -36,7 +36,7 @@ def client(wiki_env):
 def test_index_returns_200(client):
     res = client.get("/")
     assert res.status_code == 200
-    assert "close-wiki" in res.text
+    assert "rekipedia" in res.text
 
 
 def test_index_has_wiki_links(client):

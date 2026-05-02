@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "close-wiki"
+name = "rekipedia"
 version = "0.9.3"
 description = "Agentic repo-to-wiki: scan any repository into a knowledge store with wiki pages, diagrams, and grounded Q&A."
 readme = "README.md"
@@ -57,16 +57,16 @@ dev = [
 ]
 
 [project.scripts]
-close-wiki = "close_wiki.cli:main"
+rekipedia = "rekipedia.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/unrealandychan/close-wiki"
-Repository = "https://github.com/unrealandychan/close-wiki"
-Issues = "https://github.com/unrealandychan/close-wiki/issues"
-Changelog = "https://github.com/unrealandychan/close-wiki/blob/main/RELEASE-NOTES.md"
+Homepage = "https://github.com/unrealandychan/rekipedia"
+Repository = "https://github.com/unrealandychan/rekipedia"
+Issues = "https://github.com/unrealandychan/rekipedia/issues"
+Changelog = "https://github.com/unrealandychan/rekipedia/blob/main/RELEASE-NOTES.md"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/close_wiki"]
+packages = ["src/rekipedia"]
 
 [dependency-groups]
 dev = [
@@ -80,11 +80,11 @@ testpaths = ["tests"]
 addopts = "-v"
 
 [tool.coverage.run]
-source = ["close_wiki"]
+source = ["rekipedia"]
 branch = true
 omit = [
-    "src/close_wiki/sandbox/tasks/analyze_shard.py",  # Docker entrypoint, not importable in tests
-    "src/close_wiki/__main__.py",
+    "src/rekipedia/sandbox/tasks/analyze_shard.py",  # Docker entrypoint, not importable in tests
+    "src/rekipedia/__main__.py",
 ]
 
 [tool.coverage.report]

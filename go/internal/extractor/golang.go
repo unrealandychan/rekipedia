@@ -7,7 +7,7 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // GoExtractor uses go/ast (stdlib) to parse .go files — no CGO or external deps.

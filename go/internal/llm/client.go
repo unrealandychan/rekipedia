@@ -14,7 +14,7 @@ import (
 
 	openai "github.com/sashabaranov/go-openai"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // ErrEmptyResponse is returned when the LLM returns no choices.
@@ -213,7 +213,7 @@ func embedViaHTTP(ctx context.Context, baseURL, apiKey, model string, texts []st
 	}
 
 	// Write payload to temp file
-	tmp, err := os.CreateTemp("", "close-wiki-embed-*.json")
+	tmp, err := os.CreateTemp("", "rekipedia-embed-*.json")
 	if err != nil {
 		return nil, fmt.Errorf("embed tempfile: %w", err)
 	}

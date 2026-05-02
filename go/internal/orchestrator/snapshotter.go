@@ -1,4 +1,4 @@
-// Package orchestrator wires together all close-wiki subsystems.
+// Package orchestrator wires together all rekipedia subsystems.
 //
 // This file provides the Snapshotter, which walks a repository root and
 // produces a list of FileManifest objects with SHA-256 hashes.
@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // languageMap maps file extensions to language names.
@@ -47,7 +47,7 @@ var languageMap = map[string]string{
 }
 
 var defaultIgnore = []string{
-	".git", ".close-wiki", "__pycache__", "node_modules",
+	".git", ".rekipedia", "__pycache__", "node_modules",
 	"dist", "build", ".venv", "venv", ".env",
 	".mypy_cache", ".pytest_cache", ".tox", "htmlcov",
 	"*.pyc", "*.egg-info", ".DS_Store",

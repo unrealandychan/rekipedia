@@ -1,8 +1,8 @@
-# Phase 5 — `close-wiki serve` Web UI Implementation Plan
+# Phase 5 — `rekipedia serve` Web UI Implementation Plan
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
-**Goal:** Add a `close-wiki serve` command that starts a local web server providing a wiki viewer, search, and grounded Q&A with full history stored in SQLite.
+**Goal:** Add a `rekipedia serve` command that starts a local web server providing a wiki viewer, search, and grounded Q&A with full history stored in SQLite.
 
 **Architecture:**
 - FastAPI (Python) server — fits existing Python stack, zero new language deps
@@ -49,11 +49,11 @@
 **Objective:** Create migration SQL that adds a `qa_history` table to `store.db`.
 
 **Files:**
-- Create: `src/close_wiki/storage/migrations/003_qa_history.sql`
+- Create: `src/rekipedia/storage/migrations/003_qa_history.sql`
 
 **Steps:**
 
-1. Create `src/close_wiki/storage/migrations/003_qa_history.sql`:
+1. Create `src/rekipedia/storage/migrations/003_qa_history.sql`:
    ```sql
    CREATE TABLE IF NOT EXISTS qa_history (
        id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,7 +67,7 @@
 
 2. Check existing migrations to confirm naming convention:
    ```bash
-   ls src/close_wiki/storage/migrations/
+   ls src/rekipedia/storage/migrations/
    ```
    Migrations are applied in alphabetical order by filename — `003_` comes after `002_`.
 
@@ -75,7 +75,7 @@
    ```python
    import tempfile
    from pathlib import Path
-   from close_wiki.storage.sqlite_store import SqliteStore
+   from rekipedia.storage.sqlite_store import SqliteStore
 
    def test_qa_history_table_exists():
        with tempfile.TemporaryDirectory() as tmp:
@@ -94,7 +94,7 @@
 
 6. Commit:
    ```bash
-   git add src/close_wiki/storage/migrations/003_qa_history.sql tests/test_qa_history.py
+   git add src/rekipedia/storage/migrations/003_qa_history.sql tests/test_qa_history.py
    git commit -m "feat(serve): add qa_history table migration"
    ```
 
@@ -105,7 +105,7 @@
 **Objective:** Expose read/write methods for Q&A history on SqliteStore.
 
 **Files:**
-- Modify: `src/close_wiki/storage/sqlite_store.py`
+- Modify: `src/rekipedia/storage/sqlite_store.py`
 - Modify: `tests/test_qa_history.py`
 
 **Steps:**
@@ -160,7 +160,7 @@
 
 4. Commit:
    ```bash
-   git add src/close_wiki/storage/sqlite_store.py tests/test_qa_history.py
+   git add src/rekipedia/storage/sqlite_store.py tests/test_qa_history.py
    git commit -m "feat(serve): add save_qa / get_qa_history to SqliteStore"
    ```
 
@@ -168,20 +168,20 @@
 
 ## Task 4: Create the FastAPI app module
 
-**Objective:** Create `src/close_wiki/server/app.py` with all routes.
+**Objective:** Create `src/rekipedia/server/app.py` with all routes.
 
 **Files:**
-- Create: `src/close_wiki/server/__init__.py`
-- Create: `src/close_wiki/server/app.py`
+- Create: `src/rekipedia/server/__init__.py`
+- Create: `src/rekipedia/server/app.py`
 
 **Steps:**
 
-1. Create `src/close_wiki/server/__init__.py` (empty).
+1. Create `src/rekipedia/server/__init__.py` (empty).
 
-2. Create `src/close_wiki/server/app.py`:
+2. Create `src/rekipedia/server/app.py`:
 
 ```python
-"""FastAPI web server for close-wiki serve."""
+"""FastAPI web server for rekipedia serve."""
 from __future__ import annotations
 
 import os
@@ -195,9 +195,9 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from close_wiki.models.contracts import LLMConfig
-from close_wiki.orchestrator.run_ask import run_ask
-from close_wiki.storage.sqlite_store import SqliteStore
+from rekipedia.models.contracts import LLMConfig
+from rekipedia.orchestrator.run_ask import run_ask
+from rekipedia.storage.sqlite_store import SqliteStore
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 _STATIC_DIR = Path(__file__).parent / "static"
@@ -205,7 +205,7 @@ _STATIC_DIR = Path(__file__).parent / "static"
 
 def create_app(repo_root: Path, output_dir: Path, llm_config: LLMConfig) -> FastAPI:
     """Factory — returns a configured FastAPI app."""
-    app = FastAPI(title="close-wiki", docs_url=None, redoc_url=None)
+    app = FastAPI(title="rekipedia", docs_url=None, redoc_url=None)
 
     templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
@@ -301,7 +301,7 @@ def create_app(repo_root: Path, output_dir: Path, llm_config: LLMConfig) -> Fast
 
 3. Commit:
    ```bash
-   git add src/close_wiki/server/
+   git add src/rekipedia/server/
    git commit -m "feat(serve): add FastAPI app factory with wiki + ask routes"
    ```
 
@@ -312,14 +312,14 @@ def create_app(repo_root: Path, output_dir: Path, llm_config: LLMConfig) -> Fast
 **Objective:** Create Jinja2 templates for the three pages.
 
 **Files:**
-- Create: `src/close_wiki/server/templates/base.html`
-- Create: `src/close_wiki/server/templates/index.html`
-- Create: `src/close_wiki/server/templates/wiki.html`
-- Create: `src/close_wiki/server/templates/ask.html`
+- Create: `src/rekipedia/server/templates/base.html`
+- Create: `src/rekipedia/server/templates/index.html`
+- Create: `src/rekipedia/server/templates/wiki.html`
+- Create: `src/rekipedia/server/templates/ask.html`
 
 **Steps:**
 
-1. Create `src/close_wiki/server/templates/base.html`:
+1. Create `src/rekipedia/server/templates/base.html`:
 
 ```html
 <!DOCTYPE html>
@@ -327,7 +327,7 @@ def create_app(repo_root: Path, output_dir: Path, llm_config: LLMConfig) -> Fast
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>close-wiki{% if title %} · {{ title }}{% endif %}</title>
+  <title>rekipedia{% if title %} · {{ title }}{% endif %}</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -375,7 +375,7 @@ def create_app(repo_root: Path, output_dir: Path, llm_config: LLMConfig) -> Fast
 </head>
 <body>
 <nav class="sidebar">
-  <h1>📖 close-wiki</h1>
+  <h1>📖 rekipedia</h1>
   <span class="nav-label">Wiki</span>
   {% for page in pages %}
   <a href="/wiki/{{ page.slug }}"{% if slug is defined and slug == page.slug %} class="active"{% endif %}>{{ page.title }}</a>
@@ -393,24 +393,24 @@ def create_app(repo_root: Path, output_dir: Path, llm_config: LLMConfig) -> Fast
 </html>
 ```
 
-2. Create `src/close_wiki/server/templates/index.html`:
+2. Create `src/rekipedia/server/templates/index.html`:
 
 ```html
 {% extends "base.html" %}
 {% block content %}
 <div class="prose">
-  <h1>close-wiki</h1>
+  <h1>rekipedia</h1>
   <p>Your AI tech lead — always available, always up to date.</p>
   {% if first_slug %}
   <p><a href="/wiki/{{ first_slug }}">→ Open wiki</a> &nbsp; <a href="/ask">→ Ask a question</a></p>
   {% else %}
-  <p style="color:var(--muted)">No wiki pages found. Run <code>close-wiki scan .</code> first.</p>
+  <p style="color:var(--muted)">No wiki pages found. Run <code>rekipedia scan .</code> first.</p>
   {% endif %}
 </div>
 {% endblock %}
 ```
 
-3. Create `src/close_wiki/server/templates/wiki.html`:
+3. Create `src/rekipedia/server/templates/wiki.html`:
 
 ```html
 {% extends "base.html" %}
@@ -419,7 +419,7 @@ def create_app(repo_root: Path, output_dir: Path, llm_config: LLMConfig) -> Fast
 {% endblock %}
 ```
 
-4. Create `src/close_wiki/server/templates/ask.html`:
+4. Create `src/rekipedia/server/templates/ask.html`:
 
 ```html
 {% extends "base.html" %}
@@ -511,7 +511,7 @@ document.getElementById('q-input').addEventListener('keydown', e => {
 
 5. Commit:
    ```bash
-   git add src/close_wiki/server/templates/
+   git add src/rekipedia/server/templates/
    git commit -m "feat(serve): add Jinja2 HTML templates (base, index, wiki, ask)"
    ```
 
@@ -519,18 +519,18 @@ document.getElementById('q-input').addEventListener('keydown', e => {
 
 ## Task 6: Add `serve` CLI command
 
-**Objective:** Wire `close-wiki serve` into the CLI.
+**Objective:** Wire `rekipedia serve` into the CLI.
 
 **Files:**
-- Create: `src/close_wiki/cli/serve.py`
-- Modify: `src/close_wiki/cli/__init__.py`
+- Create: `src/rekipedia/cli/serve.py`
+- Modify: `src/rekipedia/cli/__init__.py`
 
 **Steps:**
 
-1. Create `src/close_wiki/cli/serve.py`:
+1. Create `src/rekipedia/cli/serve.py`:
 
 ```python
-"""`close-wiki serve` command — local web UI."""
+"""`rekipedia serve` command — local web UI."""
 from __future__ import annotations
 
 import os
@@ -540,7 +540,7 @@ from pathlib import Path
 import click
 import yaml
 
-from close_wiki.models.contracts import LLMConfig
+from rekipedia.models.contracts import LLMConfig
 
 
 @click.command("serve")
@@ -553,38 +553,38 @@ from close_wiki.models.contracts import LLMConfig
 @click.option("--port", default=7070, show_default=True, help="Port to listen on.")
 @click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind to.")
 @click.option("--output-dir", default=None, type=click.Path(path_type=Path))
-@click.option("--model", default=None, envvar="CLOSE_WIKI_MODEL")
+@click.option("--model", default=None, envvar="REKIPEDIA_MODEL")
 @click.option("--open/--no-open", "open_browser", default=True, help="Auto-open browser.")
 def serve_cmd(repo: Path, port: int, host: str, output_dir: Path | None, model: str | None, open_browser: bool) -> None:
-    """Start the close-wiki web UI.
+    """Start the rekipedia web UI.
 
     \b
     Examples:
-        close-wiki serve
-        close-wiki serve --port 8080
-        close-wiki serve --repo ./my-project --no-open
+        rekipedia serve
+        rekipedia serve --port 8080
+        rekipedia serve --repo ./my-project --no-open
     """
     import uvicorn  # noqa: PLC0415 — lazy import keeps startup fast
 
     repo = repo.resolve()
-    output_dir = (output_dir or repo / ".close-wiki").resolve()
+    output_dir = (output_dir or repo / ".rekipedia").resolve()
 
-    cfg_path = repo / ".close-wiki" / "config.yml"
+    cfg_path = repo / ".rekipedia" / "config.yml"
     cfg = yaml.safe_load(cfg_path.read_text()) if cfg_path.exists() else {}
     llm_raw = cfg.get("llm", {})
     llm_config = LLMConfig(
-        model=os.environ.get("CLOSE_WIKI_MODEL") or model or llm_raw.get("model", "ollama/llama4"),
-        api_key=os.environ.get("CLOSE_WIKI_API_KEY") or llm_raw.get("api_key", ""),
-        base_url=os.environ.get("CLOSE_WIKI_BASE_URL") or llm_raw.get("base_url", ""),
+        model=os.environ.get("REKIPEDIA_MODEL") or model or llm_raw.get("model", "ollama/llama4"),
+        api_key=os.environ.get("REKIPEDIA_API_KEY") or llm_raw.get("api_key", ""),
+        base_url=os.environ.get("REKIPEDIA_BASE_URL") or llm_raw.get("base_url", ""),
         temperature=llm_raw.get("temperature", 0.2),
     )
 
-    from close_wiki.server.app import create_app  # noqa: PLC0415
+    from rekipedia.server.app import create_app  # noqa: PLC0415
 
     app = create_app(repo_root=repo, output_dir=output_dir, llm_config=llm_config)
 
     url = f"http://{host}:{port}"
-    click.echo(f"  close-wiki serve → {url}")
+    click.echo(f"  rekipedia serve → {url}")
     click.echo(f"  repo       : {repo}")
     click.echo(f"  output-dir : {output_dir}")
     click.echo(f"  model      : {llm_config.model}")
@@ -596,19 +596,19 @@ def serve_cmd(repo: Path, port: int, host: str, output_dir: Path | None, model: 
     uvicorn.run(app, host=host, port=port, log_level="warning")
 ```
 
-2. Open `src/close_wiki/cli/__init__.py`. Find the `main` click group and add:
+2. Open `src/rekipedia/cli/__init__.py`. Find the `main` click group and add:
    ```python
-   from close_wiki.cli.serve import serve_cmd
+   from rekipedia.cli.serve import serve_cmd
    # and inside main group:
    main.add_command(serve_cmd)
    ```
 
-3. Verify: `python -m close_wiki serve --help` shows serve options.
+3. Verify: `python -m rekipedia serve --help` shows serve options.
 
 4. Commit:
    ```bash
-   git add src/close_wiki/cli/serve.py src/close_wiki/cli/__init__.py
-   git commit -m "feat(serve): add close-wiki serve CLI command"
+   git add src/rekipedia/cli/serve.py src/rekipedia/cli/__init__.py
+   git commit -m "feat(serve): add rekipedia serve CLI command"
    ```
 
 ---
@@ -625,23 +625,23 @@ def serve_cmd(repo: Path, port: int, host: str, output_dir: Path | None, model: 
 1. Create `tests/test_server.py`:
 
 ```python
-"""Integration tests for the close-wiki web server."""
+"""Integration tests for the rekipedia web server."""
 import tempfile
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-from close_wiki.models.contracts import LLMConfig
-from close_wiki.server.app import create_app
-from close_wiki.storage.sqlite_store import SqliteStore
+from rekipedia.models.contracts import LLMConfig
+from rekipedia.server.app import create_app
+from rekipedia.storage.sqlite_store import SqliteStore
 
 
 @pytest.fixture
 def wiki_env():
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp) / "myrepo"
-        output_dir = repo / ".close-wiki"
+        output_dir = repo / ".rekipedia"
         wiki_dir = output_dir / "wiki"
         wiki_dir.mkdir(parents=True)
         # seed a wiki page
@@ -664,7 +664,7 @@ def client(wiki_env):
 def test_index_returns_200(client):
     res = client.get("/")
     assert res.status_code == 200
-    assert "close-wiki" in res.text
+    assert "rekipedia" in res.text
 
 
 def test_wiki_page_returns_200(client):
@@ -715,7 +715,7 @@ def test_api_history_empty(client):
 
 2. Check serve starts:
    ```bash
-   timeout 3 python -m close_wiki serve --no-open --port 7070 || true
+   timeout 3 python -m rekipedia serve --no-open --port 7070 || true
    ```
 
 3. Push:

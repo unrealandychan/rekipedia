@@ -1,4 +1,4 @@
-// Package rag provides file chunking, embedding, and vector search for close-wiki.
+// Package rag provides file chunking, embedding, and vector search for rekipedia.
 package rag
 
 import (

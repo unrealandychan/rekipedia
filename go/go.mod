@@ -1,4 +1,4 @@
-module github.com/unrealandychan/close-wiki
+module github.com/unrealandychan/rekipedia
 
 go 1.25.0
 

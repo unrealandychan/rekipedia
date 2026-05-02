@@ -9,7 +9,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // JSONExporter writes structured JSON exports.

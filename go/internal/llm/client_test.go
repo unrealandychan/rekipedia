@@ -10,7 +10,7 @@ import (
 
 	openai "github.com/sashabaranov/go-openai"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // mockOpenAIServer returns a test server that responds to chat completion requests.

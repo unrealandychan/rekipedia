@@ -7,7 +7,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from close_wiki.models.contracts import AnalysisResult, LLMConfig
+from rekipedia.models.contracts import AnalysisResult, LLMConfig
 
 
 # ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ def _make_result(files: list[str]) -> AnalysisResult:
 
 
 def test_planning_summary_counts_impl_files() -> None:
-    from close_wiki.synthesis.planner import _build_planning_summary
+    from rekipedia.synthesis.planner import _build_planning_summary
     r = _make_result([
         "src/app.py", "src/utils.py", "src/models.py",
         "tests/test_app.py",
@@ -35,7 +35,7 @@ def test_planning_summary_counts_impl_files() -> None:
 
 
 def test_planning_summary_counts_test_dirs() -> None:
-    from close_wiki.synthesis.planner import _build_planning_summary
+    from rekipedia.synthesis.planner import _build_planning_summary
     r = _make_result([
         "tests/test_a.py", "tests/test_b.py", "tests/test_c.py",
         "spec/feature_spec.py",
@@ -48,7 +48,7 @@ def test_planning_summary_counts_test_dirs() -> None:
 
 
 def test_planning_summary_counts_config_files() -> None:
-    from close_wiki.synthesis.planner import _build_planning_summary
+    from rekipedia.synthesis.planner import _build_planning_summary
     r = _make_result([
         "pyproject.toml", "setup.toml", ".env", "config.yaml",
         "src/logic.py",
@@ -59,7 +59,7 @@ def test_planning_summary_counts_config_files() -> None:
 
 
 def test_planning_summary_keys_present() -> None:
-    from close_wiki.synthesis.planner import _build_planning_summary
+    from rekipedia.synthesis.planner import _build_planning_summary
     r = _make_result(["src/a.py"])
     s = _build_planning_summary(r, None)
     for key in ("impl_file_count", "test_file_count", "config_file_count"):
@@ -68,7 +68,7 @@ def test_planning_summary_keys_present() -> None:
 
 def test_planning_summary_counts_sum_to_total() -> None:
     """impl + test + config should equal file_count."""
-    from close_wiki.synthesis.planner import _build_planning_summary
+    from rekipedia.synthesis.planner import _build_planning_summary
     files = [
         "src/app.py", "src/db.py",
         "tests/test_app.py",
@@ -86,8 +86,8 @@ def test_planning_summary_counts_sum_to_total() -> None:
 
 def test_embedder_skip_reported_in_progress(tmp_path: Path, monkeypatch) -> None:
     """Progress callback should mention skipped count when files are too large."""
-    from close_wiki.rag.embedder import EmbedPipeline
-    import close_wiki.rag.embedder as emb_mod
+    from rekipedia.rag.embedder import EmbedPipeline
+    import rekipedia.rag.embedder as emb_mod
 
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -96,13 +96,13 @@ def test_embedder_skip_reported_in_progress(tmp_path: Path, monkeypatch) -> None
     # Small file: should be embedded
     (repo / "small.py").write_text("def ok(): pass\n")
 
-    out_dir = tmp_path / ".close-wiki"
+    out_dir = tmp_path / ".rekipedia"
     out_dir.mkdir()
 
     messages: list[str] = []
     monkeypatch.setattr(emb_mod, "_MAX_CODE_CHARS", 1000)  # tiny limit
 
-    with patch("close_wiki.rag.embedder._embed_batch") as mock_embed:
+    with patch("rekipedia.rag.embedder._embed_batch") as mock_embed:
         mock_embed.return_value = np.random.default_rng(1).random((1, 8)).astype(np.float32)
         pipe = EmbedPipeline(out_dir, LLMConfig())
         pipe.build(repo, progress_cb=messages.append)
@@ -114,7 +114,7 @@ def test_embedder_skip_reported_in_progress(tmp_path: Path, monkeypatch) -> None
 
 def test_embedder_default_limits_are_sensible() -> None:
     """Default MAX_CODE_CHARS / MAX_DOC_CHARS should be sensible defaults."""
-    import close_wiki.rag.embedder as emb_mod
+    import rekipedia.rag.embedder as emb_mod
     assert emb_mod._MAX_CODE_CHARS >= 100_000    # at least 100K chars for code
     assert emb_mod._MAX_DOC_CHARS >= 10_000      # at least 10K chars for docs
     assert emb_mod._MAX_CODE_CHARS > emb_mod._MAX_DOC_CHARS  # code > doc
@@ -122,7 +122,7 @@ def test_embedder_default_limits_are_sensible() -> None:
 
 def test_embedder_skips_giant_file_entirely(tmp_path: Path, monkeypatch) -> None:
     """A file larger than limit should produce zero chunks."""
-    import close_wiki.rag.embedder as emb_mod
+    import rekipedia.rag.embedder as emb_mod
 
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -132,7 +132,7 @@ def test_embedder_skips_giant_file_entirely(tmp_path: Path, monkeypatch) -> None
     monkeypatch.setattr(emb_mod, "_MAX_CODE_CHARS", 1000)
     monkeypatch.setattr(emb_mod, "_MAX_DOC_CHARS", 500)
 
-    from close_wiki.rag.embedder import _chunk_file
+    from rekipedia.rag.embedder import _chunk_file
     chunks = _chunk_file(giant, repo)
     # _chunk_file internal limit also applies
     # (module-level constant was patched, but _chunk_file reads it at call time)

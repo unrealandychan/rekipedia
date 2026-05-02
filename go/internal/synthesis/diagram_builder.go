@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 var reNodeSafe = regexp.MustCompile(`[^A-Za-z0-9_]`)

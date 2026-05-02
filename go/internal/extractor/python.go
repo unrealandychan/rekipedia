@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // Python extractor uses regex-based parsing (no cgo / external binary).

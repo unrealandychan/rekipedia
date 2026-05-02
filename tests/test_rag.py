@@ -1,4 +1,4 @@
-"""Tests for close_wiki.rag modules."""
+"""Tests for rekipedia.rag modules."""
 from __future__ import annotations
 
 import json
@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from close_wiki.models.contracts import LLMConfig
-from close_wiki.rag.scan_meta import patch_scan_meta, read_scan_meta, write_scan_meta
+from rekipedia.models.contracts import LLMConfig
+from rekipedia.rag.scan_meta import patch_scan_meta, read_scan_meta, write_scan_meta
 
 
 # ---------------------------------------------------------------------------
@@ -83,15 +83,15 @@ def _make_test_repo(tmp_path: Path) -> Path:
 
 
 def test_embed_pipeline_build_and_search(tmp_path: Path) -> None:
-    from close_wiki.rag.embedder import EmbedPipeline
+    from rekipedia.rag.embedder import EmbedPipeline
 
     repo = _make_test_repo(tmp_path)
-    out_dir = tmp_path / ".close-wiki"
+    out_dir = tmp_path / ".rekipedia"
     out_dir.mkdir()
 
     llm_config = LLMConfig()
 
-    with patch("close_wiki.rag.embedder._embed_batch") as mock_embed:
+    with patch("rekipedia.rag.embedder._embed_batch") as mock_embed:
         mock_embed.side_effect = lambda texts, model, cfg: (
             np.random.default_rng(42).random((len(texts), 8)).astype(np.float32)
         )
@@ -120,16 +120,16 @@ def test_embed_pipeline_build_and_search(tmp_path: Path) -> None:
 
 
 def test_embed_pipeline_search_no_index(tmp_path: Path) -> None:
-    from close_wiki.rag.embedder import EmbedPipeline
+    from rekipedia.rag.embedder import EmbedPipeline
 
-    out_dir = tmp_path / ".close-wiki"
+    out_dir = tmp_path / ".rekipedia"
     out_dir.mkdir()
     pipe = EmbedPipeline(out_dir, LLMConfig())
     assert pipe.search("anything") == []
 
 
 def test_embed_pipeline_skips_large_file(tmp_path: Path) -> None:
-    from close_wiki.rag.embedder import _chunk_file, _MAX_CODE_CHARS
+    from rekipedia.rag.embedder import _chunk_file, _MAX_CODE_CHARS
 
     f = tmp_path / "big.py"
     f.write_text("x = 1\n" * (_MAX_CODE_CHARS // 6 + 100))  # exceeds limit
@@ -138,7 +138,7 @@ def test_embed_pipeline_skips_large_file(tmp_path: Path) -> None:
 
 
 def test_embed_pipeline_chunks_normal_file(tmp_path: Path) -> None:
-    from close_wiki.rag.embedder import _chunk_file
+    from rekipedia.rag.embedder import _chunk_file
 
     f = tmp_path / "small.py"
     f.write_text("def foo():\n    pass\n")
@@ -149,7 +149,7 @@ def test_embed_pipeline_chunks_normal_file(tmp_path: Path) -> None:
 
 
 def test_is_implementation_heuristic() -> None:
-    from close_wiki.rag.embedder import _is_implementation
+    from rekipedia.rag.embedder import _is_implementation
 
     assert _is_implementation("src/core/engine.py") is True
     assert _is_implementation("tests/test_engine.py") is False

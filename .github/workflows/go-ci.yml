@@ -40,7 +40,7 @@ jobs:
 
       - name: Build binary (smoke test)
         run: |
-          CGO_ENABLED=1 go build -ldflags "-s -w" -o /tmp/close-wiki ./cmd/close-wiki
-          /tmp/close-wiki --version
-          /tmp/close-wiki --help
-          /tmp/close-wiki scan --help
+          CGO_ENABLED=1 go build -ldflags "-s -w" -o /tmp/rekipedia ./cmd/rekipedia
+          /tmp/rekipedia --version
+          /tmp/rekipedia --help
+          /tmp/rekipedia scan --help

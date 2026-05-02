@@ -1,9 +1,9 @@
 {
-  "name": "close-wiki",
+  "name": "rekipedia",
   "version": "0.9.3",
   "description": "Agentic repo-to-wiki: scan any repository into a portable SQLite knowledge store with wiki pages, diagrams, and grounded Q&A.",
   "bin": {
-    "close-wiki": "./bin/close-wiki.js"
+    "rekipedia": "./bin/rekipedia.js"
   },
   "engines": {
     "node": ">=18"
@@ -22,9 +22,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/close-wiki.git"
+    "url": "https://github.com/your-org/rekipedia.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/close-wiki/issues"
+    "url": "https://github.com/your-org/rekipedia/issues"
   }
 }

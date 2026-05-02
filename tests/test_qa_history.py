@@ -2,7 +2,7 @@
 import tempfile
 from pathlib import Path
 
-from close_wiki.storage.sqlite_store import SqliteStore
+from rekipedia.storage.sqlite_store import SqliteStore
 
 
 def test_qa_history_table_exists():

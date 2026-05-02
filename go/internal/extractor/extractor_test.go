@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/unrealandychan/close-wiki/internal/models"
+	"github.com/unrealandychan/rekipedia/internal/models"
 )
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -334,7 +334,7 @@ func TestConfigPackageJSON(t *testing.T) {
 func TestConfigPyprojectToml(t *testing.T) {
 	src := `
 [tool.poetry]
-name = "close-wiki"
+name = "rekipedia"
 version = "0.7.3"
 
 [build-system]
@@ -347,8 +347,8 @@ testpaths = ["tests"]
 	e := NewConfigExtractor()
 	r := e.Extract(abs, rel)
 
-	if r.Evidence["package_name"] != "close-wiki" {
-		t.Errorf("expected package_name 'close-wiki', got %q", r.Evidence["package_name"])
+	if r.Evidence["package_name"] != "rekipedia" {
+		t.Errorf("expected package_name 'rekipedia', got %q", r.Evidence["package_name"])
 	}
 	if len(r.BuildCommands) == 0 {
 		t.Error("expected build command for pyproject.toml with build-system")
@@ -361,7 +361,7 @@ WORKDIR /app
 COPY . .
 RUN pip install -e .
 EXPOSE 8000
-CMD ["python", "-m", "close_wiki.server"]
+CMD ["python", "-m", "rekipedia.server"]
 `
 	abs, rel := writeTempFile(t, "dockerfile", src)
 	e := NewConfigExtractor()
@@ -376,7 +376,7 @@ CMD ["python", "-m", "close_wiki.server"]
 }
 
 func TestConfigGoMod(t *testing.T) {
-	src := `module github.com/unrealandychan/close-wiki
+	src := `module github.com/unrealandychan/rekipedia
 
 go 1.22
 
@@ -389,7 +389,7 @@ require (
 	e := NewConfigExtractor()
 	r := e.Extract(abs, rel)
 
-	if r.Evidence["go_module"] != "github.com/unrealandychan/close-wiki" {
+	if r.Evidence["go_module"] != "github.com/unrealandychan/rekipedia" {
 		t.Errorf("expected go_module, got %q", r.Evidence["go_module"])
 	}
 	if len(r.BuildCommands) == 0 {

@@ -13,7 +13,7 @@ import (
 // DefaultIgnoreDirs are always skipped during repo walking.
 var DefaultIgnoreDirs = map[string]bool{
 	".git": true, "node_modules": true, "__pycache__": true,
-	".close-wiki": true, "dist": true, "build": true,
+	".rekipedia": true, "dist": true, "build": true,
 	".venv": true, "venv": true, ".tox": true, ".mypy_cache": true,
 	".pytest_cache": true, "htmlcov": true, ".eggs": true,
 }
