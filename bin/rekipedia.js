@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// close-wiki npm shim
+// rekipedia npm shim
 // Delegates to the Python package (installed via uv or pip).
 // Security: uses execFileSync with an explicit args array — never shell:true
 //           or string interpolation of user-supplied values.
@@ -25,21 +25,21 @@ function tryRun(cmd, cmdArgs) {
 }
 
 // Strategy 1: uvx (preferred — no global install needed)
-if (tryRun("uvx", ["close-wiki", ...args])) process.exit(0);
+if (tryRun("uvx", ["rekipedia", ...args])) process.exit(0);
 
-// Strategy 2: python -m close_wiki (already pip-installed)
-if (tryRun("python3", ["-m", "close_wiki", ...args])) process.exit(0);
-if (tryRun("python", ["-m", "close_wiki", ...args])) process.exit(0);
+// Strategy 2: python -m rekipedia (already pip-installed)
+if (tryRun("python3", ["-m", "rekipedia", ...args])) process.exit(0);
+if (tryRun("python", ["-m", "rekipedia", ...args])) process.exit(0);
 
 // No viable runtime found
 console.error(
   [
     "",
-    "close-wiki: could not find a Python runtime to run the tool.",
+    "rekipedia: could not find a Python runtime to run the tool.",
     "",
     "Please install one of:",
     "  uv  (recommended) — https://docs.astral.sh/uv/getting-started/installation/",
-    "  pip install close-wiki",
+    "  pip install rekipedia",
     "",
   ].join("\n")
 );
