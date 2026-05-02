@@ -2,7 +2,7 @@ name: Go CI
 
 on:
   push:
-    branches: [feat/golang-rewrite, main]
+    branches: [main, feat/rebrand-rekipedia]
     paths: ['go/**']
   pull_request:
     branches: [main]

@@ -106,11 +106,11 @@ class Rekipedia < Formula
   end
 
   def install
-    bin.install "rekipedia"
+    bin.install "reki"
   end
 
   test do
-    system "#{{bin}}/rekipedia", "--version"
+    system "#{bin}/reki", "--version"
   end
 end
 """
