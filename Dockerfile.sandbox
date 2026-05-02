@@ -1,8 +1,8 @@
-# close-wiki Docker Sandbox
+# Rekipedia Docker Sandbox
 #
 # This image is used for isolated static analysis only.
 # It runs with --network none at runtime — NO LLM calls happen inside.
-# Build: docker build -f Dockerfile.sandbox -t close-wiki-sandbox:latest .
+# Build: docker build -f Dockerfile.sandbox -t rekipedia-sandbox:latest .
 # The image is NOT required for normal use; LocalRunner is the fallback.
 
 FROM python:3.12-slim
@@ -13,13 +13,13 @@ RUN pip install --no-cache-dir pydantic>=2.0 pathspec>=0.12 pyyaml>=6.0
 # --- copy only the code needed for static analysis ---
 WORKDIR /app
 
-COPY src/close_wiki/__init__.py         ./close_wiki/__init__.py
-COPY src/close_wiki/models/             ./close_wiki/models/
-COPY src/close_wiki/extractors/         ./close_wiki/extractors/
-COPY src/close_wiki/sandbox/tasks/      ./close_wiki/sandbox/tasks/
+COPY src/rekipedia/__init__.py         ./rekipedia/__init__.py
+COPY src/rekipedia/models/             ./rekipedia/models/
+COPY src/rekipedia/extractors/         ./rekipedia/extractors/
+COPY src/rekipedia/sandbox/tasks/      ./rekipedia/sandbox/tasks/
 
 # Ensure the package is importable
 ENV PYTHONPATH=/app
 
 # Default entrypoint — caller overrides with explicit args
-ENTRYPOINT ["python3", "/app/close_wiki/sandbox/tasks/analyze_shard.py"]
+ENTRYPOINT ["python3", "/app/rekipedia/sandbox/tasks/analyze_shard.py"]
