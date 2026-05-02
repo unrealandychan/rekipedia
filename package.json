@@ -1,6 +1,6 @@
 {
   "name": "rekipedia",
-  "version": "0.9.10",
+  "version": "0.9.11",
   "description": "Agentic repo-to-wiki: scan any repository into a portable SQLite knowledge store with wiki pages, diagrams, and grounded Q&A.",
   "bin": {
     "rekipedia": "./bin/rekipedia.js"
