@@ -51,7 +51,7 @@ def _build_module_graph(rows: list[dict], entry_points: list[str] | None = None)
             # Go stdlib
             "fmt", "strings", "strconv", "bytes", "errors", "sort", "sync",
             "bufio", "reflect", "unicode", "flag", "net", "log", "context",
-            "runtime", "encoding", "crypto", "regexp", "filepath", "http",
+            "runtime", "encoding", "crypto", "regexp", "path/filepath", "http",
             "grpc", "testing",
         )
         if kind == "import":
