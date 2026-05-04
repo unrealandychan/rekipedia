@@ -370,9 +370,22 @@ class SqliteStore:
     def get_all_relationships(self, run_id: str) -> list[dict[str, Any]]:
         if "scan_relationships" not in self._table_names():
             return []
-        return list(self._c.execute(
-            "SELECT * FROM scan_relationships WHERE run_id = ?", [run_id]
-        ).fetchall())
+        rows = self._c.execute(
+            'SELECT from_, "to", kind, file, confidence, evidence_tag'
+            " FROM scan_relationships WHERE run_id = ?",
+            [run_id],
+        ).fetchall()
+        return [
+            {
+                "from_": r[0],
+                "to": r[1],
+                "kind": r[2],
+                "file": r[3],
+                "confidence": r[4],
+                "evidence_tag": r[5],
+            }
+            for r in rows
+        ]
 
     def upsert_rationale_notes(self, run_id: str, notes: list[dict[str, Any]]) -> None:
         if not notes:
