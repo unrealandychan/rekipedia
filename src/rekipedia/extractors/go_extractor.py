@@ -185,7 +185,8 @@ def _extract_embedded_type(node: object, src: bytes) -> str:
     whose named children contain a ``type_identifier`` but no ``field_identifier``.
     Both direct embedding (``Animal``) and pointer embedding (``*Dog``) produce
     a single ``type_identifier`` named child; the pointer ``*`` is an unnamed
-    child token.
+    child token.  Cross-package embeddings (e.g. ``pkg.Type``) produce a
+    ``qualified_type_identifier`` child instead, which is also handled.
     """
     children = list(getattr(node, "named_children", []))
     child_types = {c.type for c in children}  # type: ignore[attr-defined]
