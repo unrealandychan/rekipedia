@@ -103,6 +103,45 @@ class TestGoExtractor:
         assert fn_map["main"].line_start is not None
         assert fn_map["main"].line_start >= 1
 
+    def test_struct_embedding_inherits(self, tmp_path):
+        """Embedded struct fields should produce 'inherits' relationships."""
+        code = '''\
+package main
+
+type Animal struct {
+    Name string
+}
+
+type Dog struct {
+    Animal
+    Breed string
+}
+
+type PoliceDog struct {
+    *Dog
+    Badge int
+}
+'''
+        p = _write(tmp_path, "animals.go", code)
+        result = self.extractor.extract(p, tmp_path)
+        inherits = [(r.from_, r.to) for r in result.relationships if r.kind == "inherits"]
+        assert ("Dog", "Animal") in inherits, f"Expected Dog→Animal, got {inherits}"
+        assert ("PoliceDog", "Dog") in inherits, f"Expected PoliceDog→Dog, got {inherits}"
+
+    def test_struct_no_embedding_no_inherits(self, tmp_path):
+        """Plain struct fields must not produce inherits relationships."""
+        code = '''\
+package main
+
+type Point struct {
+    X float64
+    Y float64
+}
+'''
+        p = _write(tmp_path, "point.go", code)
+        result = self.extractor.extract(p, tmp_path)
+        inherits = [r for r in result.relationships if r.kind == "inherits"]
+        assert inherits == [], f"Expected no inherits, got {inherits}"
 
 # ─────────────────────────────────────────────────────────────
 # RustExtractor tests

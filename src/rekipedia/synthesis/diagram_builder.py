@@ -48,6 +48,11 @@ def _build_module_graph(rows: list[dict], entry_points: list[str] | None = None)
             "httpx", "aiohttp", "numpy", "pandas", "torch", "sklearn", "openai",
             "boto3", "celery", "redis", "pytest", "click", "typer", "rich",
             "starlette", "uvicorn", "gunicorn", "alembic", "litellm", "faiss",
+            # Go stdlib
+            "fmt", "strings", "strconv", "bytes", "errors", "sort", "sync",
+            "bufio", "reflect", "unicode", "flag", "net", "log", "context",
+            "runtime", "encoding", "crypto", "regexp", "filepath", "http",
+            "grpc", "testing",
         )
         if kind == "import":
             # Keep if it looks internal: has path separator, has dot-notation, or

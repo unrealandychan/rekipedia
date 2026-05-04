@@ -19,7 +19,6 @@ def _node_text(node: object, src: bytes) -> str:
     n = node  # type: ignore[assignment]
     return src[n.start_byte : n.end_byte].decode("utf-8", errors="replace")
 
-
 def _walk(node: object):  # type: ignore[override]
     """Yield all descendant nodes (depth-first)."""
     stack = list(getattr(node, "named_children", []))
@@ -133,6 +132,25 @@ class GoExtractor(BaseExtractor):
                                 signature=f"struct {tname}",
                             )
                         )
+                        # Detect struct embedding — Go's form of inheritance/composition.
+                        # An embedded field is a field_declaration with a type_identifier
+                        # but no field_identifier (no explicit name).
+                        for descendant in _walk(type_node):
+                            if descendant.type == "field_declaration":  # type: ignore[attr-defined]
+                                embedded_name = _extract_embedded_type(descendant, src_bytes)
+                                if embedded_name:
+                                    relationships.append(
+                                        Relationship.model_validate(
+                                            {
+                                                "from": tname,
+                                                "to": embedded_name,
+                                                "kind": "inherits",
+                                                "file": rel,
+                                                "confidence": 1.0,
+                                                "evidence_tag": "EXTRACTED",
+                                            }
+                                        )
+                                    )
                     elif ttype == "interface_type":
                         symbols.append(
                             Symbol(
@@ -156,3 +174,26 @@ class GoExtractor(BaseExtractor):
             symbols=symbols,
             relationships=relationships,
         )
+
+
+# ── helpers ──────────────────────────────────────────────────────────
+
+def _extract_embedded_type(node: object, src: bytes) -> str:
+    """Return the embedded type name from a field_declaration node, or '' if not embedded.
+
+    In tree-sitter-go, an embedded (anonymous) field is a ``field_declaration``
+    whose named children contain a ``type_identifier`` but no ``field_identifier``.
+    Both direct embedding (``Animal``) and pointer embedding (``*Dog``) produce
+    a single ``type_identifier`` named child; the pointer ``*`` is an unnamed
+    child token.
+    """
+    children = list(getattr(node, "named_children", []))
+    child_types = {c.type for c in children}  # type: ignore[attr-defined]
+    # A field with an explicit name always has a field_identifier child.
+    if "field_identifier" in child_types:
+        return ""
+    for child in children:
+        ctype = getattr(child, "type", "")
+        if ctype in ("type_identifier", "qualified_type_identifier"):
+            return _node_text(child, src)
+    return ""
