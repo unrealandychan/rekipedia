@@ -2,6 +2,10 @@
 from __future__ import annotations
 from collections import deque
 
+# Relationship kinds that represent a dependency — changing the target
+# may affect the source. Extend this set to widen the blast radius.
+_IMPACT_EDGE_KINDS: frozenset[str] = frozenset({"calls", "imports", "inherits", "uses"})
+
 
 def compute_impact(
     target_file: str,
@@ -27,7 +31,7 @@ def compute_impact(
         frm = rel.from_ if hasattr(rel, "from_") else rel.get("from_", "") or rel.get("from", "")
         to = rel.to if hasattr(rel, "to") else rel.get("to", "")
         kind = rel.kind if hasattr(rel, "kind") else rel.get("kind", "")
-        if kind == "calls" and frm and to:
+        if kind in _IMPACT_EDGE_KINDS and frm and to:
             reverse.setdefault(to, []).append(frm)
 
     # Seed: all symbols in target_file
