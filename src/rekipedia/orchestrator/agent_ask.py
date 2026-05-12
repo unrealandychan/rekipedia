@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import litellm
@@ -330,25 +331,44 @@ class AgentAsk:
                     "tool_calls": [tc.model_dump() for tc in tool_calls],
                 })
 
-            # Dispatch each tool call
-            for tc in tool_calls:
+            # Dispatch tool calls in parallel — calls within one turn are independent
+            finish_answer: str | None = None
+            tool_results: list[tuple[str, str]] = []  # (tool_call_id, result)
+
+            def _dispatch_one(tc) -> tuple[str, str, bool, str]:
+                """Returns (tc_id, result, is_finish, answer)."""
                 fn_name = tc.function.name
                 try:
                     fn_args = json.loads(tc.function.arguments)
                 except json.JSONDecodeError:
                     fn_args = {}
-
                 if fn_name == "finish":
-                    return fn_args.get("answer", "")
-
+                    return tc.id, "", True, fn_args.get("answer", "")
                 result = self._handler.dispatch(fn_name, fn_args)
                 logger.debug("Tool %s(%s) → %d chars", fn_name, fn_args, len(result))
+                return tc.id, result, False, ""
 
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": result,
-                })
+            with ThreadPoolExecutor(max_workers=min(len(tool_calls), 4)) as pool:
+                futures = {pool.submit(_dispatch_one, tc): tc for tc in tool_calls}
+                for fut in as_completed(futures):
+                    tc_id, result, is_finish, answer = fut.result()
+                    if is_finish:
+                        finish_answer = answer
+                    else:
+                        tool_results.append((tc_id, result))
+
+            if finish_answer is not None:
+                return finish_answer
+
+            # Append tool results in original tool_call order for deterministic context
+            id_to_result = dict(tool_results)
+            for tc in tool_calls:
+                if tc.id in id_to_result:
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": id_to_result[tc.id],
+                    })
 
         # Max iterations reached — ask for final answer without tools
         messages.append({
