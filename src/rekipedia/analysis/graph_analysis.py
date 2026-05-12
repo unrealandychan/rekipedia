@@ -1,8 +1,14 @@
 """Graph analysis utilities for rekipedia."""
 from __future__ import annotations
 
+import math
+import os
 from collections import defaultdict
 from typing import TYPE_CHECKING
+
+# Minimum call count for a symbol to be flagged as a knowledge gap.
+# Override with REKIPEDIA_GAP_MIN_CALLS env var.
+_GAP_MIN_CALLS = int(os.environ.get("REKIPEDIA_GAP_MIN_CALLS", "3"))
 
 if TYPE_CHECKING:
     from rekipedia.models.contracts import Relationship
@@ -80,7 +86,7 @@ def _build_knowledge_gaps(combined: "AnalysisResult") -> list[dict]:
     gaps = []
     valid_kinds = {"function", "method", "class"}
     for name, count in call_count.items():
-        if count < 3:
+        if count < _GAP_MIN_CALLS:
             continue
         if name in test_covered:
             continue
