@@ -42,9 +42,18 @@ def _compute_idf(all_symbols: list) -> dict[str, float]:
 def _score_bm25(
     query_tokens: list[str],
     symbol_tokens: list[str],
-    idf: dict[str, float],
+    idf: dict[str, float] | None = None,
 ) -> float:
-    """BM25 scoring with per-corpus IDF weights."""
+    """BM25 scoring with per-corpus IDF weights.
+
+    Args:
+        query_tokens: Tokenised query.
+        symbol_tokens: Tokenised symbol name.
+        idf: Per-corpus IDF map from _compute_idf(). If None, falls back to
+             idf=1.0 for all tokens (original simplified behaviour).
+    """
+    if idf is None:
+        idf = {}
     k1, b, avgdl = 1.5, 0.75, 5.0
     dl = len(symbol_tokens)
     score = 0.0
