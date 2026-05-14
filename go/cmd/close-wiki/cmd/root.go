@@ -11,7 +11,7 @@ import (
 
 // Version is injected at build time via -ldflags.
 var (
-	version = "dev"
+	version = "0.8.2"
 	commit  = "none"
 	date    = "unknown"
 )

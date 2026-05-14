@@ -2,16 +2,32 @@
 package orchestrator
 
 import (
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/unrealandychan/close-wiki/internal/models"
 )
 
 const (
-	bytesPerToken       = 4   // ~4 bytes per token
-	defaultTokenBudget  = 40000 // max tokens per shard
+	bytesPerToken      = 4     // ~4 bytes per token
+	defaultTokenBudget = 40000 // max tokens per shard; aligned with Python runtime
 )
+
+// resolveTokenBudget returns the effective token budget.
+// Checks REKIPEDIA_SHARD_TOKEN_BUDGET env var first; falls back to defaultTokenBudget.
+func resolveTokenBudget(override int) int {
+	if override > 0 {
+		return override
+	}
+	if v := os.Getenv("REKIPEDIA_SHARD_TOKEN_BUDGET"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			return n
+		}
+	}
+	return defaultTokenBudget
+}
 
 // ShardPlanner groups FileManifest entries into shards that fit within a token budget.
 type ShardPlanner struct {
@@ -19,12 +35,9 @@ type ShardPlanner struct {
 }
 
 // NewShardPlanner creates a ShardPlanner with the given token budget.
-// If budget ≤ 0, the default (40 000 tokens) is used.
+// If budget ≤ 0, checks REKIPEDIA_SHARD_TOKEN_BUDGET env var, then falls back to 40 000.
 func NewShardPlanner(budget int) *ShardPlanner {
-	if budget <= 0 {
-		budget = defaultTokenBudget
-	}
-	return &ShardPlanner{budget: budget}
+	return &ShardPlanner{budget: resolveTokenBudget(budget)}
 }
 
 // Plan groups files by top-level directory and splits groups that exceed the budget.

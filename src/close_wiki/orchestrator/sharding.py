@@ -1,14 +1,17 @@
 """Shard planner: partition FileManifest lists into token-budget shards."""
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from close_wiki.models.contracts import FileManifest, LLMConfig, Shard
 
 # Rough tokens-per-byte ratio (4 chars ≈ 1 token for code)
-_BYTES_PER_TOKEN = 4
-# Max tokens per shard before a new shard is started
-_DEFAULT_TOKEN_BUDGET = 12_000
+_BYTES_PER_TOKEN: int = 4
+# Max tokens per shard before a new shard is started.
+# Aligned with Go runtime (was 12 000; raised to 40 000 for modern models).
+# Override via REKIPEDIA_SHARD_TOKEN_BUDGET env var.
+_DEFAULT_TOKEN_BUDGET: int = int(os.environ.get("REKIPEDIA_SHARD_TOKEN_BUDGET", "40000"))
 
 
 class ShardPlanner:

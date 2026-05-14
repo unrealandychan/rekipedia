@@ -1,5 +1,43 @@
 # Release Notes
 
+## v0.8.2 — Unified Shard Token Budget (Issue #87)
+
+### What's new
+
+#### Python + Go shard budget aligned at 40 000 tokens
+- Python `_DEFAULT_TOKEN_BUDGET` raised from **12 000 → 40 000** — matches Go runtime
+- `REKIPEDIA_SHARD_TOKEN_BUDGET` env var now honoured in **both** Python and Go
+- Go: `resolveTokenBudget()` helper checks env var → explicit override → default (40 000)
+- Invalid env var: Python raises `ValueError`; Go silently falls back to default
+- 3 new Python tests + 10 new Go tests — all pass ✅
+
+---
+
+## v0.8.1 — Go AST-Aware Chunking (Issue #95)
+
+### What's new
+
+#### Symbol-boundary chunking for `.go` files
+- `chunkGo()` replaces naive sliding-window; detects `func`/`type`/`var`/`const` boundaries
+- Merges micro-segments < 200 runes; splits oversized via `chunkWindow`
+- `chunkWindow()` extracted as named reusable function
+- 8 new Go unit tests; all 19 `rag` package tests pass ✅
+
+---
+
+## v0.8.0 — Agentic ReAct Ask Loop (Issue #94)
+
+### What's new
+
+#### `reki ask --agentic` / `close-wiki ask --agentic`
+- ReAct loop — LLM iterates up to 5 times before delivering final answer
+- Tools: `search_code`, `get_symbol`, `get_page`, `get_relationships`
+- `LLMClient.call_with_tools()` (Python + Go)
+- `REKIPEDIA_AGENTIC=1` env var support
+- 10 new unit tests ✅
+
+---
+
 ## v0.7.3 — is_implementation Heuristic in Planner & Token-Aware File Skip
 
 ### What's new
