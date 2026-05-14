@@ -1,5 +1,37 @@
 # Release Notes
 
+## v0.8.1 — Go AST-Aware Chunking (Issue #95)
+
+### What's new
+
+#### Symbol-boundary chunking for `.go` files
+- `chunkGo()` in `go/internal/rag/chunker.go` replaces the naive sliding-window for all `.go` files
+- Detects `func` / `type` / `var` / `const` top-level declaration boundaries via regex (no CGO, no tree-sitter dep)
+- Merges segments < 200 runes forward to avoid micro-chunks
+- Oversized segments (> 2000 runes) fall back to `chunkWindow` for sub-splitting
+- Line numbers preserved accurately through boundary offset math
+- `chunkWindow()` extracted as a named, reusable function (used by Python / TS / all other code)
+- 8 new Go unit tests — all 19 `rag` package tests pass ✅
+
+### Why it matters
+Go RAG quality was significantly below Python baseline (naive 2000-rune fixed window often split functions mid-body). Go files now get the same semantic chunking Python has had from day one.
+
+---
+
+## v0.8.0 — Agentic ReAct Ask Loop (Issue #94)
+
+### What's new
+
+#### `reki ask --agentic` / `close-wiki ask --agentic`
+- ReAct tool-calling loop — LLM iterates up to 5 times, calling tools before delivering a final answer
+- Tools exposed: `search_code`, `get_symbol`, `get_page`, `get_relationships`
+- `LLMClient.call_with_tools()` for multi-turn function-calling (Python + Go)
+- `SqliteStore.search_symbols()` + `GetRelationshipsBySymbol()` (Go)
+- `REKIPEDIA_AGENTIC=1` env var as alternative to `--agentic` flag
+- 10 new unit tests (all passing ✅)
+
+---
+
 ## v0.7.3 — is_implementation Heuristic in Planner & Token-Aware File Skip
 
 ### What's new
