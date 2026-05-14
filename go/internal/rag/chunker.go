@@ -95,12 +95,8 @@ func chunkGo(path, content string) []Chunk {
 		}
 		// A top-level declaration starts at column 0 (no leading whitespace)
 		// and matches func/type/var/const.
-		if line[0] != ' ' && line[0] != '\t' && line[0] != '/' &&
-			(reGoTopLevel.MatchString(line) || reGoComment.MatchString(strings.TrimSpace(line))) {
-			// Only add boundary on func/type/var/const, not plain comments
-			if reGoTopLevel.MatchString(line) {
-				boundaries = append(boundaries, i)
-			}
+		if reGoTopLevel.MatchString(line) {
+			boundaries = append(boundaries, i)
 		}
 	}
 	boundaries = append(boundaries, len(lines))
