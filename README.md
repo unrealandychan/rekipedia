@@ -1,5 +1,7 @@
 # close-wiki
 
+**[English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)**
+
 > Your AI tech lead — always available, always up to date.
 
 close-wiki scans any repository into a portable SQLite knowledge store and gives every developer on the team an LLM-powered tech lead they can ask anything: _"How does the auth flow work?", "What's the fastest way to add a new API endpoint?", "What broke the payment service last week?"_
