@@ -94,6 +94,38 @@ def test_executor_get_relationships_empty(wiki_dir, mock_db):
     assert isinstance(result, str)
 
 
+def test_executor_formats_symbol_and_relationship_rows(wiki_dir, mock_db):
+    from close_wiki.storage.sqlite_store import SqliteStore
+
+    with SqliteStore(mock_db) as store:
+        store.upsert_symbols(
+            "run-test",
+            [
+                {
+                    "name": "main",
+                    "kind": "function",
+                    "file": "src/main.py",
+                    "line_start": 12,
+                    "line_end": 20,
+                    "signature": "def main() -> None",
+                    "docstring": "",
+                }
+            ],
+        )
+        store.upsert_relationships(
+            "run-test",
+            [{"from_": "main", "to": "App.run", "kind": "calls", "file": "src/main.py"}],
+        )
+
+    ex = make_executor(wiki_dir, mock_db)
+    symbol_result = ex.execute("get_symbol", {"name": "main"})
+    relationships_result = ex.execute("get_relationships", {"symbol": "main"})
+
+    assert "**main** (function) — `src/main.py` line 12" in symbol_result
+    assert "Signature: `def main() -> None`" in symbol_result
+    assert "- **main** → **App.run** (calls)" in relationships_result
+
+
 def test_executor_unknown_tool(wiki_dir, mock_db):
     ex = make_executor(wiki_dir, mock_db)
     result = ex.execute("nonexistent_tool", {})

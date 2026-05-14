@@ -361,20 +361,42 @@ class SqliteStore:
         if "scan_symbols" not in self._table_names():
             return []
         pattern = f"%{name}%"
-        return list(self._c.execute(
-            "SELECT * FROM scan_symbols WHERE run_id = ? AND name LIKE ? LIMIT ?",
+        rows = self._c.execute(
+            """
+            SELECT name, kind, file, line_start, line_end, signature, docstring
+            FROM scan_symbols
+            WHERE run_id = ? AND name LIKE ?
+            LIMIT ?
+            """,
             [run_id, pattern, limit],
-        ).fetchall())
+        ).fetchall()
+        return [
+            {
+                "name": r[0],
+                "kind": r[1],
+                "file": r[2],
+                "line_start": r[3],
+                "line_end": r[4],
+                "signature": r[5],
+                "docstring": r[6],
+            }
+            for r in rows
+        ]
 
     def get_relationships(self, run_id: str, symbol: str) -> list[dict[str, Any]]:
         """Return all relationships where *symbol* is the source or target."""
         if "scan_relationships" not in self._table_names():
             return []
         pattern = f"%{symbol}%"
-        return list(self._c.execute(
-            "SELECT * FROM scan_relationships WHERE run_id = ? AND (from_ LIKE ? OR to_ LIKE ?)",
+        rows = self._c.execute(
+            """
+            SELECT from_, "to", kind, file
+            FROM scan_relationships
+            WHERE run_id = ? AND (from_ LIKE ? OR "to" LIKE ?)
+            """,
             [run_id, pattern, pattern],
-        ).fetchall())
+        ).fetchall()
+        return [{"from_": r[0], "to": r[1], "kind": r[2], "file": r[3]} for r in rows]
 
     def get_all_symbols(self, run_id: str) -> list[dict[str, Any]]:
         if "scan_symbols" not in self._table_names():
