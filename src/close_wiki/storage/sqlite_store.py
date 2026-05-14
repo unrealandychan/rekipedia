@@ -390,9 +390,9 @@ class SqliteStore:
         pattern = f"%{symbol}%"
         rows = self._c.execute(
             """
-            SELECT from_, "to", kind, file
+            SELECT from_, [to], kind, file
             FROM scan_relationships
-            WHERE run_id = ? AND (from_ LIKE ? OR "to" LIKE ?)
+            WHERE run_id = ? AND (from_ LIKE ? OR [to] LIKE ?)
             """,
             [run_id, pattern, pattern],
         ).fetchall()
