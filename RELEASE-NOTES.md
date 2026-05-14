@@ -1,5 +1,32 @@
 # Release Notes
 
+## v0.8.3 — CocoIndex Spike & IndexBackend Protocol (Issue #79)
+
+### What's new
+
+#### Spike findings doc — `docs/spikes/cocoindex-eval.md`
+- Full evaluation: architecture, Python API, delta detection, blockers, installation plan
+- **Verdict:** CocoIndex is production-ready but requires Postgres (hard dep) — must be opt-in
+- LiteLLM embedding bug documented; `LlmApiType.OPENAI` + custom address workaround noted
+- 5-day effort estimate for Issue #80 (full `CocoIndexBackend` implementation)
+
+#### `IndexBackend` Protocol — `src/close_wiki/backends/protocol.py`
+- `Document`, `SearchResult`, `IndexStats` dataclasses
+- `@runtime_checkable` `IndexBackend` Protocol — clean abstraction over legacy and CocoIndex backends
+- `backends/__init__.py` package exports
+
+#### Config design
+```yaml
+engine: legacy        # default — Python/FAISS/SQLite, zero infra
+# engine: cocoindex  # opt-in — Postgres + pgvector required
+```
+
+### Tests
+- 7 new Python protocol tests — all pass ✅
+- Bump version: 0.8.2 → 0.8.3
+
+---
+
 ## v0.8.1 — Go AST-Aware Chunking (Issue #95)
 
 ### What's new
