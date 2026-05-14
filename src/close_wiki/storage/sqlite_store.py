@@ -356,6 +356,26 @@ class SqliteStore:
     # Read helpers
     # ------------------------------------------------------------------
 
+    def search_symbols(self, run_id: str, name: str, limit: int = 10) -> list[dict[str, Any]]:
+        """Return symbols whose name contains *name* (case-insensitive)."""
+        if "scan_symbols" not in self._table_names():
+            return []
+        pattern = f"%{name}%"
+        return list(self._c.execute(
+            "SELECT * FROM scan_symbols WHERE run_id = ? AND name LIKE ? LIMIT ?",
+            [run_id, pattern, limit],
+        ).fetchall())
+
+    def get_relationships(self, run_id: str, symbol: str) -> list[dict[str, Any]]:
+        """Return all relationships where *symbol* is the source or target."""
+        if "scan_relationships" not in self._table_names():
+            return []
+        pattern = f"%{symbol}%"
+        return list(self._c.execute(
+            "SELECT * FROM scan_relationships WHERE run_id = ? AND (from_ LIKE ? OR to_ LIKE ?)",
+            [run_id, pattern, pattern],
+        ).fetchall())
+
     def get_all_symbols(self, run_id: str) -> list[dict[str, Any]]:
         if "scan_symbols" not in self._table_names():
             return []

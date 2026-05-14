@@ -86,6 +86,46 @@ class LLMClient:
 
         return _with_retry(_call)
 
+    def call_with_tools(
+        self,
+        messages: list[dict],
+        *,
+        tools: list[dict] | None = None,
+    ) -> dict:
+        """Send *messages* (multi-turn) with optional tool schemas.
+
+        Returns a dict with keys:
+          - ``content``: assistant text (may be empty if only tool calls)
+          - ``tool_calls``: list of tool call dicts (may be empty)
+
+        Falls back gracefully if the model doesn't support function calling.
+        """
+        kwargs = {**self._base_kwargs(), "messages": messages}
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
+
+        def _call():
+            response = litellm.completion(**kwargs)
+            msg = response.choices[0].message
+            tool_calls = []
+            if hasattr(msg, "tool_calls") and msg.tool_calls:
+                for tc in msg.tool_calls:
+                    tool_calls.append({
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments,
+                        },
+                    })
+            return {
+                "content": msg.content or "",
+                "tool_calls": tool_calls,
+            }
+
+        return _with_retry(_call)
+
     def stream(self, prompt: str, *, system: str = "") -> Iterator[str]:
         """Stream response tokens as an iterator of text chunks.
 

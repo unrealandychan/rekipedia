@@ -218,6 +218,18 @@ close-wiki ask -q "How does the auth flow work?"
 
 Answers are grounded **entirely** in your wiki pages and symbol index — the LLM cannot hallucinate details that aren't in the scanned knowledge store. Answers are streamed token-by-token with a spinner while waiting.
 
+#### 🤖 Agentic mode (ReAct tool-calling loop) — v0.8.0+
+
+```bash
+# Agentic: LLM can call tools (search_code, get_symbol, get_page, get_relationships)
+# before returning a final answer — much better for multi-hop questions.
+close-wiki ask --agentic -q "Which functions does the auth middleware call?"
+reki ask --agentic                     # Python CLI
+REKIPEDIA_AGENTIC=1 close-wiki ask -q "Trace the data flow from API request to DB write"
+```
+
+In agentic mode the LLM runs up to **5 ReAct iterations** — each iteration may call one or more tools to gather context before synthesising the final answer. This is significantly more accurate for questions that require traversing multiple files or following dependency chains.
+
 Not happy with a generated page? See **[docs/customizing.md](docs/customizing.md)** — you can pin pages, override prompts, change the writing style, or add your own pages that scans will never touch.
 
 ### Serve the wiki

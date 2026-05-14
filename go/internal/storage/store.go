@@ -311,3 +311,52 @@ func (s *Store) GetManifest(path string) (sha256, language string, sizeBytes int
 	}
 	return
 }
+
+// SearchSymbols returns symbols whose name contains the given substring (case-insensitive), up to limit.
+func (s *Store) SearchSymbols(runID, name string, limit int) ([]models.Symbol, error) {
+	pattern := "%" + name + "%"
+	rows, err := s.db.Query(
+		`SELECT name, kind, file, line_start, line_end, signature, docstring
+		 FROM scan_symbols WHERE run_id=? AND name LIKE ? LIMIT ?`,
+		runID, pattern, limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var syms []models.Symbol
+	for rows.Next() {
+		var sym models.Symbol
+		var sig, doc string
+		if err := rows.Scan(&sym.Name, &sym.Kind, &sym.File, &sym.LineStart, &sym.LineEnd, &sig, &doc); err != nil {
+			continue
+		}
+		sym.Signature = sig
+		sym.Docstring = doc
+		syms = append(syms, sym)
+	}
+	return syms, rows.Err()
+}
+
+// GetRelationshipsBySymbol returns all edges where the symbol name appears in from or to.
+func (s *Store) GetRelationshipsBySymbol(runID, symbol string) ([]models.Relationship, error) {
+	pattern := "%" + symbol + "%"
+	rows, err := s.db.Query(
+		`SELECT from_, to_, kind, file FROM scan_relationships
+		 WHERE run_id=? AND (from_ LIKE ? OR to_ LIKE ?)`,
+		runID, pattern, pattern,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var rels []models.Relationship
+	for rows.Next() {
+		var rel models.Relationship
+		if err := rows.Scan(&rel.From, &rel.To, &rel.Kind, &rel.File); err != nil {
+			continue
+		}
+		rels = append(rels, rel)
+	}
+	return rels, rows.Err()
+}

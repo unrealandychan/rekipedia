@@ -4,6 +4,7 @@ package llm
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -180,6 +181,88 @@ func (c *Client) Embed(ctx context.Context, texts []string) ([][]float32, error)
 		vectors[i] = v
 	}
 	return vectors, nil
+}
+
+// ToolCallResponse holds the result of a CallWithTools call.
+type ToolCallResponse struct {
+	Content   string
+	ToolCalls []map[string]any
+}
+
+// CallWithTools sends a multi-turn conversation with optional tool schemas.
+// Returns ToolCallResponse with Content and ToolCalls.
+// If tools is nil or the model doesn't support function calling, Content is returned directly.
+func (c *Client) CallWithTools(ctx context.Context, messages []map[string]any, tools []map[string]any) (*ToolCallResponse, error) {
+	// Convert generic messages to go-openai format
+	var oaiMsgs []openai.ChatCompletionMessage
+	for _, m := range messages {
+		role, _ := m["role"].(string)
+		content, _ := m["content"].(string)
+		msg := openai.ChatCompletionMessage{Role: role, Content: content}
+
+		// Handle tool_call_id for tool results
+		if tcID, ok := m["tool_call_id"].(string); ok {
+			msg.ToolCallID = tcID
+		}
+
+		// Handle tool_calls in assistant messages
+		if tcs, ok := m["tool_calls"].([]map[string]any); ok {
+			for _, tc := range tcs {
+				id, _ := tc["id"].(string)
+				fn, _ := tc["function"].(map[string]any)
+				name, _ := fn["name"].(string)
+				args, _ := fn["arguments"].(string)
+				msg.ToolCalls = append(msg.ToolCalls, openai.ToolCall{
+					ID:   id,
+					Type: openai.ToolTypeFunction,
+					Function: openai.FunctionCall{
+						Name:      name,
+						Arguments: args,
+					},
+				})
+			}
+		}
+		oaiMsgs = append(oaiMsgs, msg)
+	}
+
+	req := openai.ChatCompletionRequest{
+		Model:       c.model,
+		Messages:    oaiMsgs,
+		Temperature: c.temp,
+	}
+
+	// Add tool schemas if provided
+	if len(tools) > 0 {
+		b, _ := json.Marshal(tools)
+		var oaiTools []openai.Tool
+		if err := json.Unmarshal(b, &oaiTools); err == nil {
+			req.Tools = oaiTools
+			req.ToolChoice = "auto"
+		}
+	}
+
+	resp, err := c.oc.CreateChatCompletion(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("llm call with tools: %w", err)
+	}
+	if len(resp.Choices) == 0 {
+		return nil, ErrEmptyResponse
+	}
+
+	msg := resp.Choices[0].Message
+	result := &ToolCallResponse{Content: msg.Content}
+
+	for _, tc := range msg.ToolCalls {
+		result.ToolCalls = append(result.ToolCalls, map[string]any{
+			"id":   tc.ID,
+			"type": "function",
+			"function": map[string]any{
+				"name":      tc.Function.Name,
+				"arguments": tc.Function.Arguments,
+			},
+		})
+	}
+	return result, nil
 }
 
 // Model returns the effective model name (without provider prefix).

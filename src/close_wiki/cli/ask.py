@@ -52,6 +52,38 @@ def _build_llm_config(repo: Path, model: str | None) -> LLMConfig:
     )
 
 
+def _answer_agentic(question: str, repo: Path, output_dir: Path, llm_config: LLMConfig) -> None:
+    """Run one Q&A turn via the ReAct agentic loop (non-streaming, with tool-call indicator)."""
+    from close_wiki.orchestrator.agentic_ask import agentic_ask  # noqa: PLC0415
+
+    console.print(Rule(style="dim"))
+    console.print(f"[bold bright_yellow]❯[/bold bright_yellow] {question}\n")
+
+    spinner_text = Spinner("dots", text=Text(" Agentic reasoning (may call tools)…", style="dim"))
+    answer = None
+    error = None
+
+    def _run() -> None:
+        nonlocal answer, error
+        try:
+            answer = agentic_ask(question, repo, output_dir, llm_config)
+        except Exception as exc:  # noqa: BLE001
+            error = exc
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    with Live(spinner_text, console=console, refresh_per_second=12, transient=True):
+        t.join()
+
+    if error:
+        console.print(f"[bold red]Error:[/bold red] {error}")
+        return
+
+    console.print(Rule("[bold bright_green]◆ Answer[/bold bright_green]", style="bright_green"))
+    console.print(answer or "")
+    console.rule(style="dim")
+
+
 def _answer_streaming(question: str, repo: Path, output_dir: Path, llm_config: LLMConfig) -> None:
     """Run one Q&A turn: spinner while waiting, then stream tokens."""
     from close_wiki.orchestrator.run_ask import stream_ask  # noqa: PLC0415
@@ -112,39 +144,51 @@ def _answer_streaming(question: str, repo: Path, output_dir: Path, llm_config: L
 )
 @click.option("--model", default=None, envvar="CLOSE_WIKI_MODEL", help="LLM model override.")
 @click.option("--output-dir", default=None, type=click.Path(path_type=Path), help="Output directory.")
-def ask_cmd(question: str | None, repo: Path, model: str | None, output_dir: Path | None) -> None:
+@click.option(
+    "--agentic",
+    is_flag=True,
+    default=False,
+    envvar="REKIPEDIA_AGENTIC",
+    help="Enable ReAct agentic loop (tool-calling). Falls back to single-shot if model doesn't support tools.",
+)
+def ask_cmd(question: str | None, repo: Path, model: str | None, output_dir: Path | None, agentic: bool) -> None:
     """Interactive grounded Q&A about the scanned repository.
 
     Starts a REPL loop — ask questions until you press Ctrl+C.
     Answers are streamed in real-time from the LLM.
 
-    \b
+    \\b
     Examples:
-        close-wiki ask
-        close-wiki ask --repo ./my-project
-        close-wiki ask -q "What are the entry points?"   # single-shot
+        reki ask
+        reki ask --repo ./my-project
+        reki ask -q "What are the entry points?"       # single-shot
+        reki ask -q "Trace the auth flow" --agentic    # ReAct tool-calling loop
     """
     repo = repo.resolve()
     output_dir = (output_dir or repo / ".close-wiki").resolve()
     llm_config = _build_llm_config(repo, model)
 
+    _answer_fn = _answer_agentic if agentic else _answer_streaming
+
     if question:
         # Single-shot mode
         _print_banner()
-        _answer_streaming(question, repo, output_dir, llm_config)
+        _answer_fn(question, repo, output_dir, llm_config)
         return
 
     # Interactive REPL
     _print_banner()
 
     wiki_dir = output_dir / "wiki"
+    mode_label = "[bold magenta]agentic[/bold magenta]" if agentic else "[bold cyan]streaming[/bold cyan]"
     panel_content = (
         f"[bold]Model[/bold]   [cyan]{llm_config.model}[/cyan]\n"
         f"[bold]Repo[/bold]    [cyan]{repo}[/cyan]\n"
-        f"[bold]Wiki[/bold]    [cyan]{wiki_dir}/[/cyan]\n\n"
+        f"[bold]Wiki[/bold]    [cyan]{wiki_dir}/[/cyan]\n"
+        f"[bold]Mode[/bold]    {mode_label}\n\n"
         "[dim]Ask anything about the codebase. Type 'exit' or Ctrl+C to quit.[/dim]"
     )
-    console.print(Panel(panel_content, title=" close-wiki ask ", border_style="cyan"))
+    console.print(Panel(panel_content, title=" reki ask ", border_style="cyan"))
     console.print()
 
     while True:
@@ -160,4 +204,4 @@ def ask_cmd(question: str | None, repo: Path, model: str | None, output_dir: Pat
             console.print("\n[dim]── session ended ──[/dim]")
             break
 
-        _answer_streaming(user_input, repo, output_dir, llm_config)
+        _answer_fn(user_input, repo, output_dir, llm_config)
