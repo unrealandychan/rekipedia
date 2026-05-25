@@ -246,9 +246,25 @@ def ask_cmd(
     import datetime
     import json as _json
 
+    import sys
+
     repo = repo.resolve()
     output_dir = (output_dir or repo / ".rekipedia").resolve()
     llm_config = _build_llm_config(repo, model)
+
+    # ── Early API key validation (issue #156) ────────────────────────────────
+    _has_api_key = (
+        os.environ.get("REKIPEDIA_API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or llm_config.api_key
+    )
+    if not _has_api_key:
+        console.print("[bold red]✗[/bold red]  No LLM API key found.")
+        console.print("   Set [bold]REKIPEDIA_API_KEY[/bold] (or [bold]OPENAI_API_KEY[/bold]) before running [bold]reki ask[/bold].")
+        console.print("   Other providers: [bold]REKIPEDIA_MODEL[/bold]=claude-... [bold]REKIPEDIA_API_KEY[/bold]=sk-ant-... reki ask ...")
+        console.print("   Tip: run [bold]`reki scan . --no-llm`[/bold] for static analysis without an API key.")
+        sys.exit(1)
+    # ─────────────────────────────────────────────────────────────────────────
 
     if no_rewrite:
         import os
