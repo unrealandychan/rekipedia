@@ -259,6 +259,9 @@ def ask_cmd(
     _has_api_key = bool(
         os.environ.get("REKIPEDIA_API_KEY")
         or os.environ.get("OPENAI_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY")
+        or os.environ.get("GEMINI_API_KEY")
+        or os.environ.get("GOOGLE_API_KEY")
         or llm_config.api_key
     )
     _needs_api_key = not model_name.startswith("ollama/") and not bool(base_url)
@@ -277,7 +280,6 @@ def ask_cmd(
     # ─────────────────────────────────────────────────────────────────────────
 
     if no_rewrite:
-        import os
         os.environ["REKIPEDIA_QUERY_REWRITE"] = "0"
 
     # Resolve streaming preference: --no-stream flag OR REKIPEDIA_STREAM=0
