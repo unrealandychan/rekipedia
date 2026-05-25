@@ -27,6 +27,24 @@ pip install "rekipedia[rag]"   # + semantic search (FAISS)
 
 ---
 
+## Quick Start — No API Key Needed
+
+Run a full static analysis without any LLM API key:
+
+```bash
+pip install rekipedia
+reki scan . --no-llm   # ~5-10s, zero API calls
+reki onboard .         # architecture overview
+reki tour .            # guided walkthrough by dependency depth
+reki domain .          # business domain layer map
+reki diff .            # impact analysis on changed files
+reki export . --format md  # export full wiki to markdown
+```
+
+> **Note:** `reki ask` (AI Q&A) requires an LLM API key. See [LLM Setup](#llm-setup) below.
+
+---
+
 ## Core commands
 
 | Command | What it does |
@@ -50,7 +68,18 @@ pip install "rekipedia[rag]"   # + semantic search (FAISS)
 
 ---
 
-## LLM configuration
+## LLM Setup
+
+rekipedia uses [litellm](https://github.com/BerriAI/litellm) and supports any provider:
+
+| Provider | Example |
+|---|---|
+| OpenAI | `OPENAI_API_KEY=sk-... reki scan .` |
+| Anthropic Claude | `REKIPEDIA_MODEL=claude-3-5-sonnet-20241022 REKIPEDIA_API_KEY=sk-ant-... reki scan .` |
+| Google Gemini | `REKIPEDIA_MODEL=gemini/gemini-2.0-flash REKIPEDIA_API_KEY=AIza... reki scan .` |
+| OpenRouter | `REKIPEDIA_MODEL=openrouter/anthropic/claude-3.5-sonnet REKIPEDIA_API_KEY=sk-or-... reki scan .` |
+| Local Ollama (default) | `REKIPEDIA_MODEL=ollama/llama4 reki scan .` |
+| Azure OpenAI | `REKIPEDIA_MODEL=azure/gpt-4o REKIPEDIA_BASE_URL=https://your-resource.openai.azure.com REKIPEDIA_API_KEY=... reki scan .` |
 
 After `reki init`, edit `.rekipedia/config.yml`:
 
@@ -64,7 +93,11 @@ llm:
 
 Supported providers: Ollama, OpenAI, Anthropic, Gemini, any OpenAI-compatible endpoint.
 
-Key env vars: `REKIPEDIA_MODEL`, `REKIPEDIA_API_KEY`, `REKIPEDIA_BASE_URL`
+Environment variables:
+- `REKIPEDIA_MODEL` — litellm model string (default: `ollama/llama4`)
+- `REKIPEDIA_API_KEY` — API key for the chosen provider
+- `REKIPEDIA_BASE_URL` — custom base URL (for Azure, Ollama, proxies)
+- `REKIPEDIA_TIMEOUT` — LLM call timeout in seconds (default: 180)
 
 ---
 

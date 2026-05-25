@@ -62,6 +62,24 @@ brew install rekipedia
 
 ---
 
+## 快速开始——无需 API 密钥
+
+无需任何 LLM API 密钥即可执行完整静态分析：
+
+```bash
+pip install rekipedia
+reki scan . --no-llm   # ~5-10 秒，零 API 调用
+reki onboard .         # 架构总览
+reki tour .            # 依赖深度导览
+reki domain .          # 业务领域层次图
+reki diff .            # 变更影响分析
+reki export . --format md  # 导出完整 wiki 为 Markdown
+```
+
+> **注意：** `reki ask`（AI 问答）需要 LLM API 密钥。请参阅下方 [LLM 配置](#llm-配置)。
+
+---
+
 ## Python API
 
 在 Jupyter Notebook、CI 流水线或任意 Python 应用中以编程方式使用 rekipedia：
@@ -120,6 +138,23 @@ answer = await rekipedia.ask_async("/path/to/repo", "What is the entry point?")
 ---
 
 ## LLM 配置
+
+rekipedia 使用 [litellm](https://github.com/BerriAI/litellm)，支持任何提供商：
+
+| 提供商 | 示例 |
+|---|---|
+| OpenAI | `OPENAI_API_KEY=sk-... reki scan .` |
+| Anthropic Claude | `REKIPEDIA_MODEL=claude-3-5-sonnet-20241022 REKIPEDIA_API_KEY=sk-ant-... reki scan .` |
+| Google Gemini | `REKIPEDIA_MODEL=gemini/gemini-2.0-flash REKIPEDIA_API_KEY=AIza... reki scan .` |
+| OpenRouter | `REKIPEDIA_MODEL=openrouter/anthropic/claude-3.5-sonnet REKIPEDIA_API_KEY=sk-or-... reki scan .` |
+| 本地 Ollama（默认） | `REKIPEDIA_MODEL=ollama/llama4 reki scan .` |
+| Azure OpenAI | `REKIPEDIA_MODEL=azure/gpt-4o REKIPEDIA_BASE_URL=https://your-resource.openai.azure.com REKIPEDIA_API_KEY=... reki scan .` |
+
+环境变量：
+- `REKIPEDIA_MODEL` — litellm 模型字符串（默认：`ollama/llama4`）
+- `REKIPEDIA_API_KEY` — 所选提供商的 API 密钥
+- `REKIPEDIA_BASE_URL` — 自定义基础 URL（用于 Azure、Ollama、代理）
+- `REKIPEDIA_TIMEOUT` — LLM 调用超时秒数（默认：180）
 
 运行 `rekipedia init` 后，编辑 `.rekipedia/config.yml`：
 

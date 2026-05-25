@@ -50,7 +50,7 @@ def _run_with_refactor(repo: Path, output_dir: Path, verbose: bool) -> None:
 @click.option("--embed-provider", default=None, envvar="REKIPEDIA_EMBED_PROVIDER", help="Embedding provider prefix (e.g. openai, ollama, azure). Combined with --embed-model as 'provider/model'.")
 @click.option("--languages", "-l", default=None, help="Comma-separated list of languages to include, e.g. python,typescript,go. Default: all.")
 @click.option("--force", "-f", is_flag=True, default=False, help="Force re-scan even if a completed scan already exists in the DB.")
-@click.option("--no-llm", is_flag=True, default=False, help="Skip LLM enrichment for refactoring issues (static analysis only).")
+@click.option("--no-llm", is_flag=True, default=False, help="Skip all LLM calls — run static analysis only (zero API calls, ~5-10s). All commands except `reki ask` work without an API key.")
 @click.option("--stdout", "stdout_refactor", is_flag=True, default=False, help="Print REFACTOR.md to stdout after scan (useful for piping to Claude Code).")
 @click.option("--with-refactor", is_flag=True, default=False, help="Auto-generate REFACTOR.md after scan completes.")
 @click.option(
