@@ -253,17 +253,27 @@ def ask_cmd(
     llm_config = _build_llm_config(repo, model)
 
     # ── Early API key validation (issue #156) ────────────────────────────────
-    _has_api_key = (
+    model_name = os.environ.get("REKIPEDIA_MODEL") or llm_config.model
+    base_url = os.environ.get("REKIPEDIA_BASE_URL") or llm_config.base_url
+
+    _has_api_key = bool(
         os.environ.get("REKIPEDIA_API_KEY")
         or os.environ.get("OPENAI_API_KEY")
         or llm_config.api_key
     )
-    if not _has_api_key:
+    _needs_api_key = not model_name.startswith("ollama/") and not bool(base_url)
+
+    if _needs_api_key and not _has_api_key:
         console.print("[bold red]✗[/bold red]  No LLM API key found.")
-        console.print("   Set [bold]REKIPEDIA_API_KEY[/bold] (or [bold]OPENAI_API_KEY[/bold]) before running [bold]reki ask[/bold].")
-        console.print("   Other providers: [bold]REKIPEDIA_MODEL[/bold]=claude-... [bold]REKIPEDIA_API_KEY[/bold]=sk-ant-... reki ask ...")
+        console.print(
+            "   Set [bold]REKIPEDIA_API_KEY[/bold] (or [bold]OPENAI_API_KEY[/bold]) before running [bold]reki ask[/bold]."
+        )
+        console.print(
+            "   Other providers: [bold]REKIPEDIA_MODEL[/bold]=anthropic/claude-... [bold]REKIPEDIA_API_KEY[/bold]=sk-ant-... reki ask ..."
+        )
         console.print("   Tip: run [bold]`reki scan . --no-llm`[/bold] for static analysis without an API key.")
         sys.exit(1)
+    # ─────────────────────────────────────────────────────────────────────────
     # ─────────────────────────────────────────────────────────────────────────
 
     if no_rewrite:
