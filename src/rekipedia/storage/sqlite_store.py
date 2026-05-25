@@ -63,8 +63,8 @@ class SqliteStore:
             store.upsert_run(run_id, repo_path)
     """
 
-    def __init__(self, path: Path) -> None:
-        self._path = path
+    def __init__(self, path: str | Path) -> None:
+        self._path = Path(path)
         self._conn: _Conn | None = None
         self._known_tables: set | None = None
 

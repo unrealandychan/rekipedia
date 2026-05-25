@@ -30,3 +30,12 @@ node_modules/
 .rekipedia/store.db
 .rekipedia/config.yml
 .mcp.json
+
+# rekipedia generated output (keep config and db entries already present)
+.rekipedia/wiki/
+.rekipedia/diagrams/
+.rekipedia/exports/
+.rekipedia/REFACTOR.md
+.rekipedia/refactor_report.json
+.rekipedia/scan_meta.json
+.rekipedia/export.md
