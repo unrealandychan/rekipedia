@@ -37,6 +37,9 @@ reki scan . --no-llm   # ~5-10s, zero API calls
 reki onboard .         # architecture overview
 reki tour .            # guided walkthrough by dependency depth
 reki domain .          # business domain layer map
+reki hotspots .        # find architectural hotspots (hub & bridge nodes)
+reki hotspots . --top 20 --format md > ARCHITECTURE.md  # export to markdown
+reki scan . --hotspots # auto-generate ARCHITECTURE.md after scan
 reki diff .            # impact analysis on changed files
 reki export . --format md  # export full wiki to markdown
 ```

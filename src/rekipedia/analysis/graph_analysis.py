@@ -162,3 +162,114 @@ def _build_hub_nodes(
 
     scored.sort(key=lambda x: x["score"], reverse=True)
     return scored[:top_n]
+
+
+def get_hub_nodes(store, run_id: str, top_n: int = 10) -> list[dict]:
+    """Return top N symbols by combined in+out degree.
+
+    Args:
+        store: SqliteStore instance (opened).
+        run_id: The scan run ID to query.
+        top_n: Number of top hub nodes to return.
+
+    Returns:
+        List of dicts with name, file, kind, in_degree, out_degree, total_degree.
+    """
+    from collections import defaultdict
+    relationships = store.get_all_relationships(run_id)
+    symbols = store.get_all_symbols(run_id)
+
+    in_deg: dict[str, int] = defaultdict(int)
+    out_deg: dict[str, int] = defaultdict(int)
+
+    for rel in relationships:
+        from_name = rel.get("from_", "") if isinstance(rel, dict) else (rel.from_ if hasattr(rel, "from_") else "")
+        to_name = rel.get("to", "") if isinstance(rel, dict) else (rel.to if hasattr(rel, "to") else "")
+        if from_name:
+            out_deg[from_name] += 1
+        if to_name:
+            in_deg[to_name] += 1
+
+    sym_lookup: dict[str, dict] = {}
+    for s in symbols:
+        name = s.get("name", "") if isinstance(s, dict) else (s.name if hasattr(s, "name") else "")
+        sym_lookup[name] = {
+            "file": s.get("file", "") if isinstance(s, dict) else (s.file if hasattr(s, "file") else ""),
+            "kind": s.get("kind", "") if isinstance(s, dict) else (s.kind if hasattr(s, "kind") else ""),
+        }
+
+    all_nodes = set(in_deg) | set(out_deg)
+    scored = []
+    for node in all_nodes:
+        i = in_deg[node]
+        o = out_deg[node]
+        sym = sym_lookup.get(node, {})
+        scored.append({
+            "name": node,
+            "file": sym.get("file", ""),
+            "kind": sym.get("kind", ""),
+            "in_degree": i,
+            "out_degree": o,
+            "total_degree": i + o,
+        })
+
+    scored.sort(key=lambda x: x["total_degree"], reverse=True)
+    return scored[:top_n]
+
+
+def get_bridge_nodes(store, run_id: str, top_n: int = 10) -> list[dict]:
+    """Approximate bridge nodes: symbols with high in-degree AND out-degree.
+
+    Uses in_degree * out_degree as an approximation for betweenness centrality.
+
+    Args:
+        store: SqliteStore instance (opened).
+        run_id: The scan run ID to query.
+        top_n: Number of top bridge nodes to return.
+
+    Returns:
+        List of dicts with name, file, kind, in_degree, out_degree, bridge_score.
+    """
+    from collections import defaultdict
+    relationships = store.get_all_relationships(run_id)
+    symbols = store.get_all_symbols(run_id)
+
+    in_deg: dict[str, int] = defaultdict(int)
+    out_deg: dict[str, int] = defaultdict(int)
+
+    for rel in relationships:
+        from_name = rel.get("from_", "") if isinstance(rel, dict) else (rel.from_ if hasattr(rel, "from_") else "")
+        to_name = rel.get("to", "") if isinstance(rel, dict) else (rel.to if hasattr(rel, "to") else "")
+        if from_name:
+            out_deg[from_name] += 1
+        if to_name:
+            in_deg[to_name] += 1
+
+    sym_lookup: dict[str, dict] = {}
+    for s in symbols:
+        name = s.get("name", "") if isinstance(s, dict) else (s.name if hasattr(s, "name") else "")
+        sym_lookup[name] = {
+            "file": s.get("file", "") if isinstance(s, dict) else (s.file if hasattr(s, "file") else ""),
+            "kind": s.get("kind", "") if isinstance(s, dict) else (s.kind if hasattr(s, "kind") else ""),
+        }
+
+    all_nodes = set(in_deg) | set(out_deg)
+    scored = []
+    for node in all_nodes:
+        i = in_deg[node]
+        o = out_deg[node]
+        if i < 1 or o < 1:
+            continue  # must have both in and out edges
+        bridge_score = i * o
+        sym = sym_lookup.get(node, {})
+        scored.append({
+            "name": node,
+            "file": sym.get("file", ""),
+            "kind": sym.get("kind", ""),
+            "in_degree": i,
+            "out_degree": o,
+            "bridge_score": bridge_score,
+        })
+
+    scored.sort(key=lambda x: x["bridge_score"], reverse=True)
+    return scored[:top_n]

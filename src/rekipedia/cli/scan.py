@@ -53,6 +53,7 @@ def _run_with_refactor(repo: Path, output_dir: Path, verbose: bool) -> None:
 @click.option("--no-llm", is_flag=True, default=False, help="Skip all LLM calls — run static analysis only (zero API calls, ~5-10s). All commands except `reki ask` work without an API key.")
 @click.option("--stdout", "stdout_refactor", is_flag=True, default=False, help="Print REFACTOR.md to stdout after scan (useful for piping to Claude Code).")
 @click.option("--with-refactor", is_flag=True, default=False, help="Auto-generate REFACTOR.md after scan completes.")
+@click.option("--hotspots", "with_hotspots", is_flag=True, default=False, help="Auto-generate ARCHITECTURE.md with hotspot analysis after scan completes.")
 @click.option(
     "--doc-type",
     "doc_type",
@@ -95,6 +96,7 @@ def scan_cmd(
     no_llm: bool,
     stdout_refactor: bool,
     with_refactor: bool,
+    with_hotspots: bool,
     focus: tuple[str, ...],
     doc_type: str,
     workers: int | None,
@@ -270,3 +272,32 @@ def scan_cmd(
         console.rule()
         console.print("[bold cyan]rekipedia refactor[/bold cyan] (triggered by --with-refactor)")
         _run_with_refactor(repo, output_dir, verbose)
+
+    # ── Optional: generate ARCHITECTURE.md with hotspot analysis ──────────────
+    if with_hotspots:
+        console.rule()
+        console.print("[bold cyan]rekipedia hotspots[/bold cyan] (triggered by --hotspots)")
+        try:
+            from rekipedia.analysis.graph_analysis import get_bridge_nodes, get_hub_nodes
+            from rekipedia.cli.hotspots import _render_md
+            from rekipedia.storage.sqlite_store import SqliteStore
+
+            db_path = output_dir / "store.db"
+            with SqliteStore(db_path) as store:
+                run_id = store.get_latest_run_id(str(repo))
+                if run_id:
+                    hubs = get_hub_nodes(store, run_id, top_n=20)
+                    bridges = get_bridge_nodes(store, run_id, top_n=20)
+                    md = _render_md(hubs, bridges, 20)
+                    wiki_dir = output_dir / "wiki"
+                    wiki_dir.mkdir(parents=True, exist_ok=True)
+                    arch_path = wiki_dir / "ARCHITECTURE.md"
+                    arch_path.write_text(md, encoding="utf-8")
+                    console.print(f"  ARCHITECTURE.md : {arch_path}")
+                else:
+                    console.print("[yellow]  No scan runs found — skipping hotspots.[/yellow]")
+        except Exception as exc:
+            if verbose:
+                console.print_exception(show_locals=True)
+            else:
+                console.print(f"[yellow]  --hotspots failed: {exc}[/yellow]")

@@ -8,6 +8,7 @@ from rekipedia.cli.ask import ask_cmd
 from rekipedia.cli.context import context_cmd
 from rekipedia.cli.diff import diff_cmd
 from rekipedia.cli.domain import domain_cmd
+from rekipedia.cli.hotspots import hotspots_cmd
 from rekipedia.cli.embed import embed_cmd
 from rekipedia.cli.export import export_cmd
 from rekipedia.cli.hook import hook_cmd
@@ -53,5 +54,6 @@ main.add_command(note_cmd)
 main.add_command(review_cmd)
 main.add_command(setup_cmd)
 main.add_command(domain_cmd)
+main.add_command(hotspots_cmd)
 main.add_command(tour_cmd)
 main.add_command(onboard_cmd)
