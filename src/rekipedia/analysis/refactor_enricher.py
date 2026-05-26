@@ -34,7 +34,8 @@ _LARGE_FILE_SYMBOL_THRESHOLD = 30
 _LARGE_FILE_BYTES_THRESHOLD = 500_000   # 500 KB — flag files that are simply too big
 _HIGH_COUPLING_OUT_THRESHOLD = 10
 _DEAD_CODE_MIN_FILE_SYMBOLS = 3  # ignore tiny files; only flag in larger files
-_MAX_ENRICHER_WORKERS = 4
+_MAX_ENRICHER_WORKERS = 16
+_MAX_ISSUES_TO_ENRICH = 60   # cap LLM calls — enrich only the most severe issues
 
 # ── Data model ───────────────────────────────────────────────────────────────
 
@@ -320,6 +321,39 @@ def _find_cycles(adj: dict[str, set[str]]) -> list[frozenset[str]]:
 # ── Helpers: attach callers & notes ─────────────────────────────────────────
 
 
+def _sort_by_severity(issues: list[RefactorIssue]) -> list[RefactorIssue]:
+    """Sort issues by severity descending so the worst problems are enriched first.
+
+    Priority order (highest first):
+    1. circular_dep   — blocks modular deployment
+    2. god_class      — by degree (higher = worse)
+    3. high_coupling  — by out_degree
+    4. large_file     — by symbol_count
+    5. dead_code      — lowest priority (informational)
+    """
+    _KIND_PRIORITY = {
+        "circular_dep": 0,
+        "god_class": 1,
+        "high_coupling": 2,
+        "large_file": 3,
+        "dead_code": 4,
+    }
+
+    def _score(issue: RefactorIssue) -> tuple[int, int]:
+        kind_score = _KIND_PRIORITY.get(issue.kind, 9)
+        # Secondary sort by the most relevant metric (larger = worse, so negate)
+        metric_score = -(
+            issue.metrics.get("degree", 0)
+            or issue.metrics.get("out_degree", 0)
+            or issue.metrics.get("symbol_count", 0)
+            or issue.metrics.get("cycle_length", 0)
+        )
+        return (kind_score, metric_score)
+
+    return sorted(issues, key=_score)
+
+
+
 def _attach_callers(
     issues: list[RefactorIssue],
     combined: AnalysisResult,
@@ -413,7 +447,19 @@ class RefactorEnricher:
         _attach_callers(issues, combined)
         if notes:
             _attach_notes(issues, notes)
-        return self.enrich(issues, progress_cb=progress_cb)
+
+        # Sort by severity then cap to bound LLM call count on large repos.
+        issues = _sort_by_severity(issues)
+        to_enrich = issues[:_MAX_ISSUES_TO_ENRICH]
+        skipped = issues[_MAX_ISSUES_TO_ENRICH:]
+        if skipped and progress_cb:
+            progress_cb(
+                f"Capping enrichment at {_MAX_ISSUES_TO_ENRICH} issues "
+                f"({len(skipped)} lower-severity issues skipped — use --max-refactor-issues to raise)"
+            )
+
+        enriched = self.enrich(to_enrich, progress_cb=progress_cb)
+        return enriched + skipped  # skipped issues have empty LLM fields
 
     def enrich(self, issues: list[RefactorIssue], *, progress_cb: Callable[[str], None] | None = None) -> list[RefactorIssue]:
         """Enrich *issues* with LLM explanations (batch, concurrent).
