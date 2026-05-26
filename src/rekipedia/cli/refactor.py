@@ -240,6 +240,95 @@ def _filter_llm_report(content: str, severity: str) -> str:
     return "".join(out)
 
 
+def _run_apply_mode(repo: Path, *, apply_fixes: bool, dry_run: bool) -> None:
+    """Handle --apply and/or --dry-run execution paths."""
+    from rekipedia.analysis.refactor_applier import apply_all
+    import datetime
+
+    # Collect large-file smells from static walk
+    large_file_smells: list[dict] = []
+    for path in sorted(repo.rglob("*")):
+        if any(part in _SKIP_DIRS for part in path.parts):
+            continue
+        if not path.is_file() or path.suffix.lower() not in _TEXT_EXTENSIONS:
+            continue
+        try:
+            line_count = sum(1 for _ in path.open(encoding="utf-8", errors="ignore"))
+        except OSError:
+            continue
+        if line_count > 500:
+            large_file_smells.append({
+                "type": "large_file",
+                "file": str(path),
+                "symbol": path.name,
+                "metrics": {"line_count": line_count},
+                "description": f"{line_count} lines",
+            })
+
+    # Collect annotation smells for guidance
+    findings = _static_walk(repo)
+    annotation_smells = [
+        {
+            "type": f.get("type", "annotation").lower(),
+            "kind": f.get("type", "annotation").lower(),
+            "file": str(repo / f["file"]),
+            "symbol": f.get("description", ""),
+            "line": f.get("line"),
+            "description": f.get("description", ""),
+            "severity": f.get("severity", "medium"),
+        }
+        for f in findings
+    ]
+
+    all_smells = large_file_smells + annotation_smells
+
+    if apply_fixes:
+        label = "[DRY RUN] reki refactor --apply" if dry_run else "reki refactor --apply"
+    else:
+        label = "[DRY RUN] reki refactor"
+
+    console.print(f"\n[bold cyan]{label}[/bold cyan]\n")
+
+    results = apply_all(all_smells, dry_run=dry_run)
+
+    ready = 0
+    skipped = 0
+    for res, smell in zip(results, all_smells):
+        rel_file = smell.get("file", "")
+        try:
+            rel_file = str(Path(rel_file).relative_to(repo))
+        except ValueError:
+            pass
+        symbol = smell.get("symbol", "")
+        desc = smell.get("description", "")
+        line = smell.get("line", "")
+        loc = f"{rel_file}:{line}" if line else rel_file
+
+        if res.action == "skipped":
+            skipped += 1
+            console.print(f"  [dim]{loc}[/dim]  [yellow]{res.smell_type}[/yellow]  {desc}")
+            console.print(f"  [dim]→ (manual fix required — skipped)[/dim]\n")
+        else:
+            ready += 1
+            action_verb = "Would add" if dry_run else "Added"
+            today = datetime.date.today().isoformat()
+            if res.smell_type == "dead_code":
+                note = f"# reki: dead-code (flagged {today})"
+            else:
+                note = "comment block suggesting split"
+            console.print(f"  [cyan]{loc}[/cyan]  [green]{res.smell_type}[/green]  `{symbol}`  {desc}")
+            console.print(f"  [bold]→ {action_verb}:[/bold] {note}\n")
+
+    console.rule()
+    if dry_run:
+        console.print(
+            f"[bold]{ready} change(s) ready, {skipped} skipped.[/bold] "
+            "Run without --dry-run to apply."
+        )
+    else:
+        console.print(f"[bold green]✓ {ready} change(s) applied, {skipped} skipped.[/bold green]")
+
+
 def _emit(content: str, to_stdout: bool, out_path: Path, *, is_done_msg: bool = True) -> None:
     """Write *content* to *out_path* or print to stdout."""
     if to_stdout:
@@ -276,6 +365,8 @@ def _emit(content: str, to_stdout: bool, out_path: Path, *, is_done_msg: bool = 
 @click.option("--no-docker", is_flag=True, default=False, help="Skip Docker, run extractors in-process.")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable debug logging.")
 @click.option("--languages", "-l", default=None, help="Comma-separated languages to analyse, e.g. python,go.")
+@click.option("--dry-run", "dry_run", is_flag=True, default=False, help="Preview changes without writing files.")
+@click.option("--apply", "apply_fixes", is_flag=True, default=False, help="Auto-apply safe smells (dead_code, large_file).")
 def refactor_cmd(
     repo: Path,
     no_llm: bool,
@@ -287,6 +378,8 @@ def refactor_cmd(
     no_docker: bool,
     verbose: bool,
     languages: str | None,
+    dry_run: bool,
+    apply_fixes: bool,
 ) -> None:
     """Analyse REPO and produce a REFACTOR.md with prioritised improvement suggestions.
 
@@ -300,7 +393,7 @@ def refactor_cmd(
 
     Pass --no-llm to run phase 1 only (fast, no API key required).
 
-    \b
+    \\b
     Examples:
         rekipedia refactor .
         rekipedia refactor . --no-llm
@@ -308,9 +401,19 @@ def refactor_cmd(
         rekipedia refactor . --severity high
         rekipedia refactor . --json
         REKIPEDIA_MODEL=gpt-4o rekipedia refactor .
+        rekipedia refactor . --dry-run
+        rekipedia refactor . --apply
+        rekipedia refactor . --apply --dry-run
     """
     repo = repo.resolve()
     output_dir = (output_dir or repo / ".rekipedia").resolve()
+
+    # ------------------------------------------------------------------ #
+    # --dry-run / --apply mode                                             #
+    # ------------------------------------------------------------------ #
+    if dry_run or apply_fixes:
+        _run_apply_mode(repo, apply_fixes=apply_fixes, dry_run=dry_run)
+        return
 
     cfg = _load_config(repo)
     llm_cfg_raw = cfg.get("llm", {})

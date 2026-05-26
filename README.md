@@ -62,6 +62,9 @@ reki export . --format md  # export full wiki to markdown
 | `reki onboard .` | Static onboarding guide for new developers |
 | `reki review` | LLM PR review grounded in wiki context |
 | `reki refactor .` | Detect code smells → `REFACTOR.md` |
+| `reki refactor . --dry-run` | Preview refactor suggestions without writing files |
+| `reki refactor . --apply` | Auto-apply safe fixes (dead code markers, split suggestions) |
+| `reki refactor . --apply --dry-run` | Preview what `--apply` would do |
 | `reki watch .` | Auto-index on file change (OS watcher) |
 | `reki hook install` | Git post-commit auto-rebuild |
 | `reki mcp` | MCP stdio server for AI coding assistants |
