@@ -53,7 +53,7 @@ def get_formula_from_script() -> str:
     script_path = pathlib.Path(__file__).parent.parent / ".github" / "scripts" / "update-homebrew-tap.py"
     source = script_path.read_text()
     # Extract the formula f-string content between triple quotes
-    match = re.search(r'formula\s*=\s*f"""(.*?)"""', source, re.DOTALL)
+    match = re.search(r'formula\s*=\s*r?f"""(.*?)"""', source, re.DOTALL)
     assert match, "Could not find formula template in update-homebrew-tap.py"
     return match.group(1)
 
