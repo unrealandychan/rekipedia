@@ -8,27 +8,49 @@ _REKIPEDIA_SECTION = """\
 ## rekipedia Codebase Knowledge Base
 
 This repository has been scanned by [rekipedia](https://github.com/unrealandychan/rekipedia).
-A structured wiki, symbol index, and RAG embeddings are in `.rekipedia/`.
+A structured wiki, symbol index, and RAG knowledge store live in `.rekipedia/`.
 
-### Ask questions about this codebase
+> **You MUST query rekipedia before answering architecture questions, tracing flows, or \
+locating code.** Do not guess — ask rekipedia first.
+
+### When to use rekipedia (mandatory)
+
+| Situation | Run this first |
+|-----------|---------------|
+| "How does X work?" / "Explain the auth flow" | `reki ask "how does X work?"` |
+| "Where is Y implemented?" | `reki ask "where is Y implemented?"` |
+| "What calls this?" / "What depends on X?" | `reki ask "what calls X?"` |
+| Implementing a new feature | `reki ask "what modules are related to <feature area>?"` |
+| Fixing a bug | `reki ask "how does <affected subsystem> work?"` |
+| After editing multiple files | `reki update .` |
+
+Always include the file:line citations that rekipedia returns in your answer.
+
+### Commands
 
 ```bash
-reki ask "<your question>"
-# Examples:
-reki ask "how does authentication work?"
-reki ask "what is the entry point of the application?"
-reki ask "which modules are most critical?"
+reki ask "<question>"   # grounded Q&A with file:line citations  ← use this most
+reki update .           # incremental refresh after code changes
+reki diff .             # impact analysis for uncommitted changes
+reki onboard .          # onboarding guide for new contributors
+reki tour .             # guided walkthrough ordered by dependency
+reki serve .            # local web UI at http://127.0.0.1:7070
 ```
 
-### MCP server (for Claude Code, Cursor, and other MCP-aware agents)
+### MCP server (Claude Code / Cursor — auto-configured via .mcp.json)
 
 ```bash
 reki mcp
 ```
 
-Available MCP tools: `ask`, `search_nodes`, `get_context`, `get_relationships`, `get_hub_nodes`, `get_impact`
-
-> Tip: `.mcp.json` in the repo root auto-configures the MCP server for Claude Code.
+| Tool | Use when |
+|------|---------|
+| `ask` | Architecture / flow questions |
+| `search_nodes` | Find symbols, classes, functions |
+| `get_context` | Full context for a file or symbol |
+| `get_relationships` | Trace call graphs and import chains |
+| `get_hub_nodes` | Most critical / highly-connected modules |
+| `get_impact` | What breaks if I change this file? |
 """
 
 _MARKER = "## rekipedia Codebase Knowledge Base"

@@ -64,34 +64,67 @@ _GITIGNORE_ENTRY = ".rekipedia/store.db\n"
 _AGENT_CONTENT_TEMPLATE = """\
 # rekipedia — AI Codebase Intelligence
 
-This repository uses [rekipedia](https://github.com/unrealandychan/rekipedia) to maintain a structured wiki and answer questions about the codebase.
+This repository uses [rekipedia](https://github.com/unrealandychan/rekipedia) to maintain a \
+structured wiki, symbol index, and RAG knowledge store in `.rekipedia/`.
 
-## Available commands
+> **You MUST use rekipedia tools before answering architecture questions, tracing flows, or \
+locating code.** Do not guess — ask rekipedia first.
+
+## Mandatory Usage Rules
+
+**Before you answer ANY of the following, run the corresponding reki command:**
+
+| Situation | Command to run FIRST |
+|-----------|---------------------|
+| "How does X work?" / "Explain the auth flow" | `reki ask "how does X work?"` |
+| "Where is Y implemented?" / "Find the payment handler" | `reki ask "where is Y implemented?"` |
+| "What calls this function?" / "What depends on X?" | `reki ask "what calls X?"` |
+| Implementing a new feature | `reki ask "what modules are related to <feature area>?"` |
+| Fixing a bug | `reki ask "how does <affected subsystem> work?"` |
+| Onboarding to an unfamiliar area | `reki ask "give me an overview of <module>"` |
+| After editing multiple files | `reki update .` |
+
+**Never answer architecture or flow questions from memory alone.** Always ground your answer \
+with rekipedia output — include the file:line citations it provides.
+
+## Commands
 
 | Command | What it does |
 |---------|-------------|
-| `reki scan .` | Full scan — extract symbols, generate wiki pages, build knowledge store |
+| `reki ask "<question>"` | Ask anything — grounded answers with file:line citations |
+| `reki scan .` | Full scan — extract symbols, generate wiki, build knowledge store |
 | `reki update .` | Incremental refresh — only re-processes changed files |
-| `reki ask "<question>"` | Ask anything about the codebase — grounded answers with file:line citations |
-| `reki serve .` | Start local web UI at http://127.0.0.1:7070 to browse wiki & ask questions |
-| `reki embed .` | Build / rebuild the semantic search index (FAISS) for hybrid RAG |
-| `reki export .` | Export wiki to a single file (--format md|zip|json) |
+| `reki serve .` | Start local web UI at http://127.0.0.1:7070 |
+| `reki embed .` | Build / rebuild semantic search index (FAISS) for RAG |
+| `reki export .` | Export wiki (--format md|zip|json) |
+| `reki onboard .` | Generate onboarding guide for new contributors |
+| `reki diff .` | Impact analysis for uncommitted git changes |
+| `reki tour .` | Guided learning walkthrough ordered by dependency depth |
+| `reki domain .` | Classify codebase into business domains |
 
-## When to use rekipedia
+## MCP Server (Recommended for Claude Code / Cursor)
 
-- Before answering questions about the codebase architecture, run `reki ask "<your question>"` to get grounded context
-- After making significant changes, run `reki update .` to keep the wiki current
-- When asked to understand how a feature works, check the wiki first with `reki ask`
-- When onboarding to an unfamiliar part of the codebase, use `reki ask` for guided explanation
+`.mcp.json` in this repo auto-configures the MCP server. Available tools:
+
+| MCP Tool | When to use |
+|----------|------------|
+| `ask` | Any architecture / flow question |
+| `search_nodes` | Find symbols, classes, functions by name or description |
+| `get_context` | Get full context for a file or symbol |
+| `get_relationships` | Trace call graphs and import chains |
+| `get_hub_nodes` | Find the most critical / highly-connected modules |
+| `get_impact` | What breaks if I change this file? |
+
+Start the MCP server: `reki mcp`
 
 ## Setup (first time)
 
 ```bash
-reki scan .          # generates the wiki and knowledge store
-reki embed .         # builds semantic search index (optional, for RAG)
+reki scan .     # generates wiki + knowledge store (~30s for most repos)
 ```
 
 The knowledge store lives in `.rekipedia/store.db` — portable, local, no cloud required.
+Commit `.rekipedia/wiki/` to share knowledge with teammates.
 """
 
 
