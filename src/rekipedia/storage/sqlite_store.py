@@ -458,9 +458,22 @@ class SqliteStore:
     def get_all_symbols(self, run_id: str) -> list[dict[str, Any]]:
         if "scan_symbols" not in self._table_names():
             return []
-        return list(self._c.execute(
-            "SELECT * FROM scan_symbols WHERE run_id = ?", [run_id]
-        ).fetchall())
+        rows = self._c.execute(
+            "SELECT name, kind, file, line_start, line_end, signature, docstring"
+            " FROM scan_symbols WHERE run_id = ?", [run_id]
+        ).fetchall()
+        return [
+            {
+                "name": r[0],
+                "kind": r[1],
+                "file": r[2],
+                "line_start": r[3],
+                "line_end": r[4],
+                "signature": r[5],
+                "docstring": r[6],
+            }
+            for r in rows
+        ]
 
     def get_all_relationships(self, run_id: str) -> list[dict[str, Any]]:
         if "scan_relationships" not in self._table_names():

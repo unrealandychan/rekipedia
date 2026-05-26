@@ -162,3 +162,25 @@ def _build_hub_nodes(
 
     scored.sort(key=lambda x: x["score"], reverse=True)
     return scored[:top_n]
+
+
+def get_hub_nodes(store: "SqliteStore", run_id: str, top_n: int = 10) -> list[dict]:
+    """Return top N hub nodes (most connected symbols) from the stored graph."""
+    relationships = store.get_all_relationships(run_id)
+    symbols = store.get_all_symbols(run_id)
+    all_scored = _build_hub_nodes(relationships, symbols, top_n=top_n * 3)
+    for n in all_scored:
+        n.setdefault("total_degree", n.get("score", n["in_degree"] + n["out_degree"]))
+    return all_scored[:top_n]
+
+
+def get_bridge_nodes(store: "SqliteStore", run_id: str, top_n: int = 10) -> list[dict]:
+    """Return top N bridge nodes (cross-boundary connectors: high in AND high out degree)."""
+    relationships = store.get_all_relationships(run_id)
+    symbols = store.get_all_symbols(run_id)
+    all_scored = _build_hub_nodes(relationships, symbols, top_n=9999)
+    bridges = [n for n in all_scored if n.get("is_bridge")]
+    bridges.sort(key=lambda x: x["in_degree"] * x["out_degree"], reverse=True)
+    for b in bridges:
+        b["bridge_score"] = b["in_degree"] * b["out_degree"]
+    return bridges[:top_n]

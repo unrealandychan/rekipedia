@@ -59,7 +59,8 @@ def _compute_impact_affected_files(
             symbols=all_symbols_raw,
             depth=5,
         )
-        affected.update(result.get("affected_files", []))
+        if isinstance(result, dict):
+            affected.update(result.get("affected_files", []))
 
     return affected
 
