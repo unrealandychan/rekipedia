@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rekipedia"
-version = "0.17.18"
+version = "0.17.19"
 description = "AI-powered wiki generator for any codebase"
 requires-python = ">=3.11"
 dependencies = [

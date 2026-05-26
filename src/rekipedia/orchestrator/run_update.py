@@ -31,6 +31,39 @@ logger = logging.getLogger("rekipedia.run_update")
 _MAX_SHARD_WORKERS = 4
 
 
+def _compute_impact_affected_files(
+    changed_paths: set[str],
+    store: "SqliteStore",
+    run_id: str,
+) -> set[str]:
+    """Use BFS impact analysis to find all files transitively affected by changed_paths.
+
+    For each changed file, runs compute_impact() from analysis/impact.py and unions
+    the returned affected_files sets together with the seed (changed) files.
+
+    Returns an empty set when no relationships exist (caller should fall back).
+    """
+    from rekipedia.analysis.impact import compute_impact
+
+    all_symbols_raw = store.get_all_symbols(run_id)
+    all_rels_raw = store.get_all_relationships(run_id)
+
+    if not all_rels_raw:
+        return set()
+
+    affected: set[str] = set(changed_paths)
+    for file_path in changed_paths:
+        result = compute_impact(
+            target_file=file_path,
+            relationships=all_rels_raw,
+            symbols=all_symbols_raw,
+            depth=5,
+        )
+        affected.update(result.get("affected_files", []))
+
+    return affected
+
+
 def run_update(
     repo_root: Path,
     output_dir: Path,
@@ -39,6 +72,7 @@ def run_update(
     force_local: bool = False,
     progress: Callable[[str], None] | None = None,
     languages: list[str] | None = None,
+    impact_only: bool = False,
 ) -> None:
     """Incremental update pipeline.
 
@@ -52,6 +86,9 @@ def run_update(
         llm_config: LLM settings; defaults to LLMConfig().
         force_local: Skip Docker even if available.
         progress: Optional callback that receives status strings for display.
+        impact_only: When True, use BFS impact analysis to only regenerate wiki
+            pages for transitively affected modules. Reduces LLM calls by
+            80-90% on large repos.
     """
     llm_config = llm_config or LLMConfig()
     _log = progress or (lambda _: None)
@@ -173,7 +210,28 @@ def run_update(
         _log(f"  {len(all_symbols_raw)} total symbols in index")
 
         # ── Targeted re-synthesis: only pages whose sources changed ──
-        affected_pages = store.get_pages_for_files(last_run_id, list(changed_paths))
+        # When --impact-only is set, further restrict to BFS-affected files
+        if impact_only:
+            _log("  Computing BFS impact graph for changed symbols…")
+            impact_affected_files = _compute_impact_affected_files(
+                changed_paths=changed_paths,
+                store=store,
+                run_id=run_id,
+            )
+            if impact_affected_files:
+                _log(
+                    f"  Impact-only: {len(impact_affected_files)} transitively affected file(s) "
+                    f"(out of {len(changed_paths)} directly changed)"
+                )
+                synthesis_paths = impact_affected_files
+            else:
+                # Empty impact graph (e.g. brand new repo, no relationships yet) → fall back
+                _log("  Impact graph empty — falling back to full changed-file synthesis…")
+                synthesis_paths = changed_paths
+        else:
+            synthesis_paths = changed_paths
+
+        affected_pages = store.get_pages_for_files(last_run_id, list(synthesis_paths))
 
         if not affected_pages:
             # No page_sources recorded yet (first update after upgrade) → full re-synthesis

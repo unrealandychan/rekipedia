@@ -52,6 +52,7 @@ reki export . --format md  # export full wiki to markdown
 | `reki init .` | Scaffold config |
 | `reki scan .` | Full analysis → wiki + knowledge store |
 | `reki update .` | Incremental refresh (changed files only) |
+| `reki update . --impact-only` | Impact-aware mode — only regenerates wiki pages for affected modules |
 | `reki serve .` | Local web UI — browse, search, ask AI |
 | `reki ask` | Interactive Q&A REPL (streamed) |
 | `reki embed .` | Build FAISS semantic index for hybrid RAG |
