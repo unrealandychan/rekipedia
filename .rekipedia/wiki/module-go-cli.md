@@ -1,143 +1,220 @@
 ---
 slug: module-go-cli
-title: "Go CLI Application"
+title: "Rekipedia Go CLI Command Reference"
 section: core-components
 tags: [modules, cli, reference]
 pin: false
 importance: 90
-created_at: 2026-05-05T04:58:13Z
-rekipedia_version: 0.10.3
+created_at: 2026-05-26T09:15:48Z
+rekipedia_version: 0.17.25
 ---
 
-# Go CLI Application
+# Rekipedia Go CLI Command Reference
 
-## Package layout and command structure
+## Subcommand Tree
 
-The Go command-line application lives under `go/cmd/rekipedia`, with a conventional Cobra-based layout: a small `main.go` entrypoint delegates immediately into the `cmd` package, and the real CLI surface is split across per-command files such as `ask.go`, `diff.go`, `export.go`, `hook.go`, `impact.go`, `init.go`, `refactor.go`, `scan.go`, `search.go`, `serve.go`, `update.go`, and `watch.go`. The root package is initialized in [`main`](go/cmd/rekipedia/main.go#L6) and hands control to [`Execute`](go/cmd/rekipedia/cmd/root.go#L44), which is the canonical top-level entry for command parsing and dispatch.
+The Go CLI lives under `go/cmd/rekipedia` and is rooted in [`Execute`](go/cmd/rekipedia/cmd/root.go#L44), which wires the Cobra command tree together and is invoked by [`main`](go/cmd/rekipedia/main.go#L6) through the package entry point [`main()`](go/cmd/rekipedia/main.go#L6). The command hierarchy is composed by `init` functions spread across the command files, which register subcommands like `scan`, `search`, `diff`, `refactor`, `hook`, `serve`, `update`, `export`, `embed`, `note`, `impact`, and `ask` onto the root command in [`root.go`](go/cmd/rekipedia/cmd/root.go#L50-L78).
 
-This layout keeps the CLI cohesive while still separating responsibilities by subcommand. Each file defines one command or a small family of related commands, and each command imports only the internal subsystem it needs: for example, `ask` talks to the orchestrator, `export` talks to storage and exporters, and `serve` talks to the HTTP server. The result is a thin CLI layer that adapts user-facing flags and arguments into structured internal operations.
+At a high level, the CLI groups fall into three functional areas:
 
-The root command also defines the visible startup behavior. [`printRootBanner`](go/cmd/rekipedia/cmd/root.go#L36) is responsible for the banner shown before dispatch, and [`Execute`](go/cmd/rekipedia/cmd/root.go#L44) acts as the single entry point used by `main.go`. The command registration itself happens in package initialization, which is a typical Cobra pattern: each `init()` adds its command to the root command tree so the CLI is ready once `Execute` is called.
-
-### Observable package split
-
-| Path | Responsibility |
-|---|---|
-| `go/cmd/rekipedia/main.go` | Process entrypoint; calls `cmd.Execute()` |
-| `go/cmd/rekipedia/cmd/root.go` | Root command, banner, global flags, dispatch |
-| `go/cmd/rekipedia/cmd/*.go` | Individual subcommands and their flags/handlers |
-| `go/cmd/rekipedia/cmd/watch.go` | Watch-mode configuration and persistence helpers |
-
-> **Sources:** `go/cmd/rekipedia/main.go` · L6–L8 · [`main`](go/cmd/rekipedia/main.go#L6)  
-> **Sources:** `go/cmd/rekipedia/cmd/root.go` · L36–L77 · [`printRootBanner`](go/cmd/rekipedia/cmd/root.go#L36), [`Execute`](go/cmd/rekipedia/cmd/root.go#L44)
-
-## Root command responsibilities
-
-The root command is the CLI’s control plane. It owns global concerns such as version output, banner display, and the registration of subcommands. The [`Execute`](go/cmd/rekipedia/cmd/root.go#L44) function is the only symbol that `main.go` needs to know about; everything else is internal wiring.
-
-[`printRootBanner`](go/cmd/rekipedia/cmd/root.go#L36) is particularly important because it establishes the “welcome” behavior before any actual subcommand work begins. From the analysis data, the root command also imports `cobra`, `pterm`, `fmt`, `os`, and `path/filepath`, which is consistent with a command that prints text, resolves paths, and manages process-level concerns. The root command’s `init()` function (defined in the same file) is where the command tree is assembled.
-
-A useful way to think about the root command is as a router: it does not implement the domain actions itself, but it decides which subcommand should handle the requested operation and ensures consistent startup behavior around them.
-
-> **Sources:** `go/cmd/rekipedia/cmd/root.go` · L36–L77 · [`printRootBanner`](go/cmd/rekipedia/cmd/root.go#L36), [`Execute`](go/cmd/rekipedia/cmd/root.go#L44)
-
-## Subcommands and their purpose
-
-The CLI exposes a fairly broad toolset, but the commands are grouped around a few recurring workflows: asking questions, inspecting diffs, exporting artifacts, managing Git hooks, analyzing impact, running refactors, scanning repositories, searching the knowledge base, serving the UI/API, and watching for changes.
-
-| Subcommand | Purpose |
-|---|---|
-| `ask` | Interactive question/answer flow over repository context |
-| `diff` | Generate and format repository diffs between snapshots |
-| `export` | Export stored analysis data and wiki artifacts |
-| `hook` | Install, uninstall, and inspect Git hook integration |
-| `impact` | Compute impact summaries from stored symbols/relationships |
-| `refactor` | Run refactor-oriented static analysis and reports |
-| `scan` | Scan a repository and build its analysis state |
-| `search` | Search stored symbols and content |
-| `serve` | Run the HTTP server for the wiki/application |
-| `watch` | Load or persist watch-mode configuration and trigger watching workflows |
-| `init` | Initialize local project/configuration state |
-| `update` | Refresh or update the repository’s stored analysis |
-| `embed` | Build embeddings / RAG data for the scanned repository |
-
-The task asks for the root command dispatch to the major operational subcommands; those are the ones shown in the diagram below. Note that the CLI also contains other commands such as `embed`, `init`, and `update`, but the core user-facing flow is centered on the listed commands.
-
-> **Sources:** `go/cmd/rekipedia/cmd/ask.go` · L87–L174 · [`runInteractiveAsk`](go/cmd/rekipedia/cmd/ask.go#L87)  
-> **Sources:** `go/cmd/rekipedia/cmd/diff.go` · L175–L214 · [`formatDiffMd`](go/cmd/rekipedia/cmd/diff.go#L175)  
-> **Sources:** `go/cmd/rekipedia/cmd/watch.go` · L18–L35 · [`loadWatchConfig`](go/cmd/rekipedia/cmd/watch.go#L18)
-
-## Command dispatch flow
-
-The following diagram captures the root command’s dispatch role and the main subcommands requested in the task.
+- **Indexing and analysis**: `scan`, `refactor`, `impact`, `search`, `diff`
+- **Persistence and lifecycle**: `update`, `export`, `embed`, `note`, `hook`
+- **Interactive and web UX**: `ask`, `serve`
 
 ```mermaid
 flowchart TD
-    mainGo[main_go] --> execute[Execute]
-    execute --> rootCmd[root_command]
-    rootCmd --> ask[ask]
-    rootCmd --> diff[diff]
-    rootCmd --> export[export]
-    rootCmd --> hook[hook]
-    rootCmd --> impact[impact]
-    rootCmd --> refactor[refactor]
-    rootCmd --> scan[scan]
-    rootCmd --> search[search]
-    rootCmd --> serve[serve]
-    rootCmd --> watch[watch]
+    Main[main.go main] --> Execute[cmd/root.go Execute]
+    Execute --> RootCmd[root Cobra command]
+    RootCmd --> Scan[scan]
+    RootCmd --> Search[search]
+    RootCmd --> Diff[diff]
+    RootCmd --> Refactor[refactor]
+    RootCmd --> Hook[hook]
+    RootCmd --> Serve[serve]
+    RootCmd --> Update[update]
+    RootCmd --> Export[export]
+    RootCmd --> Embed[embed]
+    RootCmd --> Note[note]
+    RootCmd --> Impact[impact]
+    RootCmd --> Ask[ask]
 ```
 
-At runtime, the process starts in `main.go`, which immediately delegates to [`Execute`](go/cmd/rekipedia/cmd/root.go#L44). After the root command is constructed, Cobra’s command parsing selects the appropriate subcommand based on the user’s arguments. In practice, this means the root command owns the shell-level UX, while the subcommands own behavior.
+The tree is intentionally Cobra-based, so most behavior is attached via `init` registration rather than a single monolithic dispatcher. That makes each command independently testable and easier to extend.  
+> **Sources:** `go/cmd/rekipedia/main.go` · L6–L8 · [`main`](go/cmd/rekipedia/main.go#L6) · `go/cmd/rekipedia/cmd/root.go` · L44–L78 · [`Execute`](go/cmd/rekipedia/cmd/root.go#L44)
 
-> **Sources:** `go/cmd/rekipedia/main.go` · L6–L8 · [`main`](go/cmd/rekipedia/main.go#L6)  
-> **Sources:** `go/cmd/rekipedia/cmd/root.go` · L44–L77 · [`Execute`](go/cmd/rekipedia/cmd/root.go#L44)
+## Command Groups Overview
 
-## Notable subcommand implementations
+The following table summarizes the visible subcommands in this Go CLI, based on the registered command files under `go/cmd/rekipedia/cmd`. Where the analysis exposed implementation symbols, those are linked directly.
 
-### `ask`
+| Subcommand | Purpose | Primary symbols | Notable flags / outputs |
+|---|---|---|---|
+| `root` | Top-level entry point, version/help banner, global initialization | [`Execute`](go/cmd/rekipedia/cmd/root.go#L44), [`printRootBanner`](go/cmd/rekipedia/cmd/root.go#L36), [`loadLLMConfig`](go/cmd/rekipedia/cmd/scan.go#L143), [`splitLanguages`](go/cmd/rekipedia/cmd/scan.go#L165) | Global flags include version display; banner printed on startup |
+| `scan` | Scan repo, configure LLM, select languages, run orchestration | [`loadLLMConfig`](go/cmd/rekipedia/cmd/scan.go#L143), [`splitLanguages`](go/cmd/rekipedia/cmd/scan.go#L165) | Language/model selection, scan configuration |
+| `search` | Full-text-like ranking over stored symbols | [`tokenizeSymbol`](go/cmd/rekipedia/cmd/search.go#L20), [`scoreBM25`](go/cmd/rekipedia/cmd/search.go#L54) | Ranked search results, relevance scores |
+| `diff` | Compare current repo state with stored analysis | [`runGit`](go/cmd/rekipedia/cmd/diff.go#L119), [`loadSymbolsJSON`](go/cmd/rekipedia/cmd/diff.go#L126), [`formatDiffMd`](go/cmd/rekipedia/cmd/diff.go#L175), [`formatDiffText`](go/cmd/rekipedia/cmd/diff.go#L216) | Markdown/text diff outputs |
+| `refactor` | Detect refactor candidates and generate reports | [`staticWalk`](go/cmd/rekipedia/cmd/refactor.go#L75), [`applyFilter`](go/cmd/rekipedia/cmd/refactor.go#L130), [`buildStaticReport`](go/cmd/rekipedia/cmd/refactor.go#L148) | Markdown/JSON reports, severity filtering |
+| `hook` | Manage Git hook installation and status | `init` in [`hook.go`](go/cmd/rekipedia/cmd/hook.go#L79-L82) | Install/uninstall/status for hooks |
+| `serve` | Start the local web server | [`printServeBanner`](go/cmd/rekipedia/cmd/serve.go#L29) | HTTP server banner, host/port startup logs |
+| `update` | Refresh derived data / stored artifacts | `init` in [`update.go`](go/cmd/rekipedia/cmd/update.go#L47-L53) | Update status output |
+| `export` | Export store contents to JSON/Markdown | `init` in [`export.go`](go/cmd/rekipedia/cmd/export.go#L101-L105) | Output files under export directory |
+| `embed` | Build embeddings for stored chunks | `init` in [`embed.go`](go/cmd/rekipedia/cmd/embed.go#L56-L63) | Embedding batch outputs, progress logs |
+| `note` | Add/list/delete annotations in storage | [`openStore`](go/cmd/rekipedia/cmd/note.go#L101), `init` in [`note.go`](go/cmd/rekipedia/cmd/note.go#L110-L116) | Persistent note records |
+| `impact` | Inspect impact relationships / blast radius | [`qitem`](go/cmd/rekipedia/cmd/impact.go#L62-L65), `init` in [`impact.go`](go/cmd/rekipedia/cmd/impact.go#L124-L127) | Impact summaries and queues |
+| `ask` | Interactive QA over repo knowledge | [`runInteractiveAsk`](go/cmd/rekipedia/cmd/ask.go#L87-L174) | Interactive prompt/response, streamed output |
 
-The `ask` command is the most interactive CLI path. [`runInteractiveAsk`](go/cmd/rekipedia/cmd/ask.go#L87) is the central implementation symbol called out in the task. Its placement in `ask.go` and its imports tell us that it orchestrates interactive terminal behavior using `bufio`, `os/signal`, `syscall`, and rich terminal output via `pterm`. The command bridges user input and the orchestrator layer, making it the main conversational interface for the CLI.
+> **Sources:** `go/cmd/rekipedia/cmd/root.go` · L36–L78 · [`printRootBanner`](go/cmd/rekipedia/cmd/root.go#L36) · [`Execute`](go/cmd/rekipedia/cmd/root.go#L44) · `go/cmd/rekipedia/cmd/scan.go` · L143–L180 · [`loadLLMConfig`](go/cmd/rekipedia/cmd/scan.go#L143) · [`splitLanguages`](go/cmd/rekipedia/cmd/scan.go#L165) · `go/cmd/rekipedia/cmd/search.go` · L20–L71 · [`tokenizeSymbol`](go/cmd/rekipedia/cmd/search.go#L20) · `go/cmd/rekipedia/cmd/diff.go` · L119–L252 · [`runGit`](go/cmd/rekipedia/cmd/diff.go#L119) · [`buildStaticReport`](go/cmd/rekipedia/cmd/refactor.go#L148)
 
-### `diff`
+## Root Command
 
-The `diff` command’s main formatting behavior is concentrated in [`formatDiffMd`](go/cmd/rekipedia/cmd/diff.go#L175). The surrounding helpers in the same file—`runGit`, `loadSymbolsJSON`, `symbolKey`, `isInChangedFiles`, and `formatDiffText`—show that this command compares repository snapshots, loads symbol metadata from JSON, filters what changed, and renders the result as markdown or text. The function name itself is a strong indicator that markdown output is a first-class format for this command.
+The root command is the CLI’s entry point and bootstrapping layer. It is responsible for user-facing startup behavior, global flags, and ensuring subcommands are registered. The key observable symbols are [`printRootBanner`](go/cmd/rekipedia/cmd/root.go#L36-L41) and [`Execute`](go/cmd/rekipedia/cmd/root.go#L44-L48).
 
-### `watch`
+`printRootBanner` provides the first piece of output users see; it is a presentation helper rather than a business-logic routine. `Execute` is the actual invocation surface used by `main`, which means any error handling or Cobra execution semantics converge there. The root file also exposes the `init` registration block, which is where the command tree is assembled. The tests in [`root_test.go`](go/cmd/rekipedia/cmd/root_test.go#L9-L110) confirm the presence of subcommands and configuration behavior, including language splitting and LLM config loading.
 
-[`loadWatchConfig`](go/cmd/rekipedia/cmd/watch.go#L18) is the most important observable helper for `watch`. The file also defines [`watchConfig`](go/cmd/rekipedia/cmd/watch.go#L14), [`saveWatchConfig`](go/cmd/rekipedia/cmd/watch.go#L28), and an `init()` at the bottom of the file, suggesting that watch mode persists configuration to disk and reloads it when needed. This is a stateful command rather than a purely transient one.
+A practical implication of this structure is that the root command is a coordination point, not a feature endpoint. Its responsibility is to bind the command tree and global UX together.
 
-### `export`, `hook`, `impact`, `refactor`, `scan`, `search`, `serve`
+```mermaid
+sequenceDiagram
+    participant User
+    participant Main as main()
+    participant Execute as cmd.Execute
+    participant Cobra as Root Cobra Command
+    User->>Main: run rekipedia
+    Main->>Execute: call Execute()
+    Execute->>Cobra: Execute()
+    Cobra-->>User: dispatch subcommand or show help/version
+```
 
-These commands are all registered as individual Cobra commands and each has a narrow focus:
+> **Sources:** `go/cmd/rekipedia/cmd/root.go` · L36–L78 · [`printRootBanner`](go/cmd/rekipedia/cmd/root.go#L36) · [`Execute`](go/cmd/rekipedia/cmd/root.go#L44) · `go/cmd/rekipedia/main.go` · L6–L8 · [`main`](go/cmd/rekipedia/main.go#L6)
 
-- `export` reads stored data and writes it to external formats.
-- `hook` manages repository hook installation and status.
-- `impact` calculates impact trees and dependency reachability from stored symbols.
-- `refactor` identifies refactor candidates and writes reports.
-- `scan` prepares repository state and orchestrates analysis inputs.
-- `search` provides symbol/content search over the stored index.
-- `serve` starts the web server and prints a startup banner.
+## Scan Command
 
-The task only asked to name these commands and show their place in dispatch, so the most important thing to observe is that they are all siblings under the same root command rather than separate tools.
+`scan` is the primary repo ingestion command. The analysis data shows it depends on [`loadLLMConfig`](go/cmd/rekipedia/cmd/scan.go#L143-L161) and [`splitLanguages`](go/cmd/rekipedia/cmd/scan.go#L165-L180), which indicates two important responsibilities: resolving model/runtime settings and translating CLI language input into a normalized list.
 
-> **Sources:** `go/cmd/rekipedia/cmd/diff.go` · L119–L252 · [`runGit`](go/cmd/rekipedia/cmd/diff.go#L119), [`loadSymbolsJSON`](go/cmd/rekipedia/cmd/diff.go#L126), [`formatDiffMd`](go/cmd/rekipedia/cmd/diff.go#L175)  
-> **Sources:** `go/cmd/rekipedia/cmd/watch.go` · L14–L35 · [`watchConfig`](go/cmd/rekipedia/cmd/watch.go#L14), [`loadWatchConfig`](go/cmd/rekipedia/cmd/watch.go#L18), [`saveWatchConfig`](go/cmd/rekipedia/cmd/watch.go#L28)  
-> **Sources:** `go/cmd/rekipedia/cmd/serve.go` · L29–L51 · [`printServeBanner`](go/cmd/rekipedia/cmd/serve.go#L29)
+`loadLLMConfig` likely bridges CLI flags and configuration defaults into an [`LLMConfig`](go/internal/models/contracts.go#L6-L15) value. The associated tests in [`root_test.go`](go/cmd/rekipedia/cmd/root_test.go#L91-L110) explicitly validate config loading and default behavior. `splitLanguages` is a normalization helper that accepts user input and produces a language list suitable for the orchestrator. That is consistent with the command needing to support multi-language repository scans.
 
-## CLI design characteristics
+The `scan` command also imports the storage, orchestrator, rag, and models packages, which suggests it is the command most likely to trigger the end-to-end pipeline: scan filesystem state, build analysis artifacts, persist them, and possibly prepare RAG metadata.
 
-The Go CLI follows a clear “thin shell, rich subsystems” pattern. The command package handles:
+> **Sources:** `go/cmd/rekipedia/cmd/scan.go` · L128–L180 · [`loadLLMConfig`](go/cmd/rekipedia/cmd/scan.go#L143) · [`splitLanguages`](go/cmd/rekipedia/cmd/scan.go#L165) · `go/cmd/rekipedia/cmd/root_test.go` · L91–L110 · `go/internal/models/contracts.go` · L6–L15 · [`LLMConfig`](go/internal/models/contracts.go#L6)
 
-- argument parsing and flags,
-- user interaction and terminal output,
-- command registration and dispatch,
-- lightweight file/path resolution,
-- and formatting of results for human consumption.
+## Search Command
 
-The substantive logic is delegated into internal packages such as orchestrator, storage, server, exporter, and analysis. Even when a command performs local work, it usually does so by composing lower-level services rather than directly manipulating data structures itself.
+The `search` command implements local relevance ranking over stored symbols. The core implementation symbols are [`tokenizeSymbol`](go/cmd/rekipedia/cmd/search.go#L20-L51) and [`scoreBM25`](go/cmd/rekipedia/cmd/search.go#L54-L71). The presence of BM25 scoring is the strongest observable clue that search is lexical rather than embedding-first.
 
-This makes the application easy to extend: adding a new command typically means adding a new file under `go/cmd/rekipedia/cmd`, registering a Cobra command in `init()`, and calling into the relevant internal package from the handler. The existing subcommands demonstrate a consistent style that keeps the CLI layer readable and maintainable.
+`tokenizeSymbol` almost certainly breaks symbol names into comparable tokens, handling cases such as camelCase, snake_case, and punctuation normalization. The relationship data for the repo’s Python-side analogue also shows token-based symbol processing, reinforcing the intent of this helper. `scoreBM25` then ranks candidate symbols using token frequencies and document length information. The `result` struct at [`search.go`](go/cmd/rekipedia/cmd/search.go#L97-L102) packages search hits for output.
 
-> **Sources:** `go/cmd/rekipedia/cmd/root.go` · L44–L77 · [`Execute`](go/cmd/rekipedia/cmd/root.go#L44)  
-> **Sources:** `go/cmd/rekipedia/cmd/ask.go` · L87–L174 · [`runInteractiveAsk`](go/cmd/rekipedia/cmd/ask.go#L87)  
-> **Sources:** `go/cmd/rekipedia/cmd/watch.go` · L18–L35 · [`loadWatchConfig`](go/cmd/rekipedia/cmd/watch.go#L18)
+In practical terms, `search` is a deterministic retrieval command: it reads from storage, tokenizes symbol metadata, scores candidates, and emits ranked results to stdout.
+
+> **Sources:** `go/cmd/rekipedia/cmd/search.go` · L20–L102 · [`tokenizeSymbol`](go/cmd/rekipedia/cmd/search.go#L20) · [`scoreBM25`](go/cmd/rekipedia/cmd/search.go#L54) · [`result`](go/cmd/rekipedia/cmd/search.go#L97)
+
+## Diff Command
+
+`diff` is the command that compares the current repository state to stored analysis artifacts. The key helpers are [`runGit`](go/cmd/rekipedia/cmd/diff.go#L119-L124), [`loadSymbolsJSON`](go/cmd/rekipedia/cmd/diff.go#L126-L147), [`symbolKey`](go/cmd/rekipedia/cmd/diff.go#L149-L157), [`isInChangedFiles`](go/cmd/rekipedia/cmd/diff.go#L159-L173), [`formatDiffMd`](go/cmd/rekipedia/cmd/diff.go#L175-L214), and [`formatDiffText`](go/cmd/rekipedia/cmd/diff.go#L216-L252).
+
+The pipeline is straightforward:
+
+1. `runGit` shells out to Git to determine changed files.
+2. `loadSymbolsJSON` loads the persisted symbol snapshot.
+3. `symbolKey` creates stable lookup keys.
+4. `isInChangedFiles` filters affected symbols.
+5. `formatDiffMd` / `formatDiffText` render the result.
+
+This command is especially useful for review workflows because it translates raw source changes into affected symbols and human-readable summaries. Unlike `search`, which is query-driven, `diff` is change-driven and likely operates on the most recent stored run or snapshot.
+
+> **Sources:** `go/cmd/rekipedia/cmd/diff.go` · L119–L252 · [`runGit`](go/cmd/rekipedia/cmd/diff.go#L119) · [`loadSymbolsJSON`](go/cmd/rekipedia/cmd/diff.go#L126) · [`formatDiffMd`](go/cmd/rekipedia/cmd/diff.go#L175) · [`formatDiffText`](go/cmd/rekipedia/cmd/diff.go#L216)
+
+## Refactor Command
+
+`refactor` is the most analysis-heavy command in the CLI. Its implementation centers on [`staticWalk`](go/cmd/rekipedia/cmd/refactor.go#L75-L127), [`applyFilter`](go/cmd/rekipedia/cmd/refactor.go#L130-L145), and [`buildStaticReport`](go/cmd/rekipedia/cmd/refactor.go#L148-L175). The associated types [`Finding`](go/cmd/rekipedia/cmd/refactor.go#L57-L63) and the internal analysis package symbols under `go/internal/analysis` show that refactor detection is structured as a multi-stage pipeline.
+
+`staticWalk` performs filesystem traversal and detection of textual smells such as TODO/FIXME markers, while intentionally skipping folders like `.git` and `node_modules` per the tests in [`refactor_test.go`](go/cmd/rekipedia/cmd/refactor_test.go#L65-L139). `applyFilter` then drops findings below a severity threshold. Finally, `buildStaticReport` converts the collected findings into the report structure that users actually consume.
+
+The command supports two important modes reflected in tests: a non-LLM path that writes a file without model assistance, and a JSON output path that serializes findings. This makes `refactor` suitable both for local cleanup and machine-consumable automation.
+
+> **Sources:** `go/cmd/rekipedia/cmd/refactor.go` · L57–L305 · [`Finding`](go/cmd/rekipedia/cmd/refactor.go#L57) · [`staticWalk`](go/cmd/rekipedia/cmd/refactor.go#L75) · [`applyFilter`](go/cmd/rekipedia/cmd/refactor.go#L130) · [`buildStaticReport`](go/cmd/rekipedia/cmd/refactor.go#L148) · `go/cmd/rekipedia/cmd/refactor_test.go` · L65–L312
+
+## Hook, Serve, Update, Export, and Embed
+
+These commands cover lifecycle and operational workflows.
+
+- **`hook`** manages Git hook installation/status. The registration in [`hook.go`](go/cmd/rekipedia/cmd/hook.go#L79-L82) implies commands such as install/uninstall/status; the tests in [`hook_test.go`](go/cmd/rekipedia/cmd/hook_test.go#L20-L114) show that the implementation handles idempotent install, missing hooks, and “not ours” guardrails.
+- **`serve`** starts the HTTP server through [`printServeBanner`](go/cmd/rekipedia/cmd/serve.go#L29-L51) and the server package. It is the UI endpoint for browsing wiki pages, ask pages, graph pages, and health routes.
+- **`update`** is a maintenance command whose init registration is in [`update.go`](go/cmd/rekipedia/cmd/update.go#L47-L53). The visible behavior is orchestration-oriented rather than analysis-oriented.
+- **`export`** uses the exporter package to write JSON and Markdown artifacts to disk. Its imports show dependencies on [`internal/exporter`](go/internal/exporter/json_exporter.go) and [`internal/storage`](go/internal/storage/store.go).
+- **`embed`** triggers embedding generation via the RAG pipeline and emits progress output using `pterm`.
+
+Together these commands represent the “operational shell” around the core analysis engine.
+
+> **Sources:** `go/cmd/rekipedia/cmd/hook.go` · L79–L82 · `go/cmd/rekipedia/cmd/hook_test.go` · L20–L114 · `go/cmd/rekipedia/cmd/serve.go` · L29–L84 · [`printServeBanner`](go/cmd/rekipedia/cmd/serve.go#L29) · `go/cmd/rekipedia/cmd/update.go` · L47–L53 · `go/cmd/rekipedia/cmd/export.go` · L101–L105 · `go/cmd/rekipedia/cmd/embed.go` · L56–L63
+
+## Note and Impact
+
+`note` and `impact` are storage-aware analytical commands.
+
+`note` uses [`openStore`](go/cmd/rekipedia/cmd/note.go#L101-L108) to connect to persistence before operating on notes. The presence of `storage` imports implies that notes are first-class records in the SQLite-backed store rather than ephemeral annotations.
+
+`impact` defines the queue item type [`qitem`](go/cmd/rekipedia/cmd/impact.go#L62-L65), which suggests a traversal or priority-based workflow for collecting impact candidates. In the broader repository, “impact” is a meaningful concept: the internal analysis packages include graph and dependency utilities, and the CLI command likely surfaces blast radius or dependency reachability in a user-facing way.
+
+These commands are narrower than `scan` or `refactor`, but they are important for day-to-day analysis and documentation workflows.
+
+> **Sources:** `go/cmd/rekipedia/cmd/note.go` · L101–L116 · [`openStore`](go/cmd/rekipedia/cmd/note.go#L101) · `go/cmd/rekipedia/cmd/impact.go` · L62–L127 · [`qitem`](go/cmd/rekipedia/cmd/impact.go#L62)
+
+## Ask Command
+
+`ask` is the interactive QA command and one of the most UX-heavy paths in the CLI. Its central implementation is [`runInteractiveAsk`](go/cmd/rekipedia/cmd/ask.go#L87-L174), which is paired with package-level initialization in [`ask.go`](go/cmd/rekipedia/cmd/ask.go#L77-L84).
+
+The command imports `bufio`, `context`, `os/signal`, `syscall`, and `pterm`, which strongly suggests it supports:
+
+- interactive terminal input
+- graceful interrupt handling
+- formatted prompt/response output
+- possibly streamed answers
+
+The implementation likely coordinates with the orchestrator layer to assemble question context, call the LLM, and emit an answer while allowing the user to interrupt or continue. This is the only command in the tree that is clearly interactive by design, and it complements the non-interactive analysis commands by turning stored repository knowledge into conversational assistance.
+
+> **Sources:** `go/cmd/rekipedia/cmd/ask.go` · L77–L174 · [`runInteractiveAsk`](go/cmd/rekipedia/cmd/ask.go#L87)
+
+## Module Coupling and Call Chains
+
+The CLI is not isolated; it is the outer orchestration layer over several internal packages. The strongest call chains visible from the analysis data are:
+
+- `main()` → [`Execute`](go/cmd/rekipedia/cmd/root.go#L44) → Cobra subcommand
+- `scan` → [`loadLLMConfig`](go/cmd/rekipedia/cmd/scan.go#L143) → orchestrator / RAG / storage
+- `diff` → [`runGit`](go/cmd/rekipedia/cmd/diff.go#L119) → symbol loading / rendering
+- `refactor` → [`staticWalk`](go/cmd/rekipedia/cmd/refactor.go#L75) → [`buildStaticReport`](go/cmd/rekipedia/cmd/refactor.go#L148)
+- `ask` → [`runInteractiveAsk`](go/cmd/rekipedia/cmd/ask.go#L87) → orchestrator / storage / LLM
+
+```mermaid
+flowchart LR
+    Main --> Execute
+    Execute --> Scan
+    Execute --> Search
+    Execute --> Diff
+    Execute --> Refactor
+    Execute --> Hook
+    Execute --> Serve
+    Execute --> Update
+    Execute --> Export
+    Execute --> Embed
+    Execute --> Note
+    Execute --> Impact
+    Execute --> Ask
+    Scan --> Orchestrator
+    Ask --> Orchestrator
+    Refactor --> Analysis
+    Export --> Storage
+    Embed --> Rag
+    Serve --> Server
+```
+
+From the visible import graph, the CLI has especially strong ties to:
+
+- `go/internal/orchestrator`
+- `go/internal/storage`
+- `go/internal/rag`
+- `go/internal/analysis`
+- `go/internal/server`
+- `go/internal/exporter`
+
+This coupling is expected for a command-line application that coordinates scanning, persistence, retrieval, and serving. The implementation is relatively modular because each command file binds only the packages it needs, but the shared data model in [`go/internal/models/contracts.go`](go/internal/models/contracts.go#L6-L169) keeps the command layer and the internal engines consistent.
+
+> **Sources:** `go/cmd/rekipedia/cmd/root.go` · L44–L78 · `go/cmd/rekipedia/cmd/scan.go` · L128–L180 · `go/cmd/rekipedia/cmd/diff.go` · L119–L252 · `go/cmd/rekipedia/cmd/refactor.go` · L75–L175 · `go/cmd/rekipedia/cmd/ask.go` · L87–L174 · `go/internal/models/contracts.go` · L6–L169

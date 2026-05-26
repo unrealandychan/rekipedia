@@ -1,46 +1,106 @@
 {
-  "run_id": "71290b0b-2560-47ae-b5eb-559ce39d4cf9",
-  "generated_at": "2026-05-22T07:17:57.613907+00:00",
-  "file_count": 365,
-  "symbol_count": 2561,
-  "relationship_count": 11185,
+  "run_id": "feb16502-de25-4ad5-a4c7-c946401395f9",
+  "generated_at": "2026-05-26T09:15:49.504057+00:00",
+  "file_count": 389,
+  "symbol_count": 2653,
+  "relationship_count": 12034,
   "nav_order": [
     "index",
-    "cli-and-api",
-    "architecture",
-    "core-modules",
-    "testing",
     "installation-and-setup",
-    "technical-debt"
+    "repository-structure",
+    "configuration",
+    "architecture-overview",
+    "data-flow",
+    "module-benchmarks",
+    "module-fixtures",
+    "cli-reference",
+    "python-api",
+    "module-python-core",
+    "algorithms",
+    "technical-debt",
+    "testing",
+    "ci-cd",
+    "contributing",
+    "deployment",
+    "integrations",
+    "module-go-cli"
   ],
   "pages": [
     {
       "slug": "index",
-      "title": "Project Overview"
-    },
-    {
-      "slug": "cli-and-api",
-      "title": "CLI & API Reference"
-    },
-    {
-      "slug": "architecture",
-      "title": "Architecture"
-    },
-    {
-      "slug": "core-modules",
-      "title": "Core Modules"
-    },
-    {
-      "slug": "testing",
-      "title": "Testing"
+      "title": "Repository Overview"
     },
     {
       "slug": "installation-and-setup",
-      "title": "Installation & Setup"
+      "title": "Getting Started: Build and Run"
+    },
+    {
+      "slug": "repository-structure",
+      "title": "Repository Map"
+    },
+    {
+      "slug": "configuration",
+      "title": "Configuration and Runtime Knobs"
+    },
+    {
+      "slug": "architecture-overview",
+      "title": "Architecture Overview"
+    },
+    {
+      "slug": "data-flow",
+      "title": "Data Flow Through the Repository"
+    },
+    {
+      "slug": "module-benchmarks",
+      "title": "Benchmark Harness and Fixture Sets"
+    },
+    {
+      "slug": "module-fixtures",
+      "title": "Test and Benchmark Fixture Repositories"
+    },
+    {
+      "slug": "cli-reference",
+      "title": "Rekipedia CLI Reference"
+    },
+    {
+      "slug": "python-api",
+      "title": "Public Python-Callable API Surface"
+    },
+    {
+      "slug": "module-python-core",
+      "title": "Python Core Modules Overview"
+    },
+    {
+      "slug": "algorithms",
+      "title": "Core Algorithms and Scoring Logic"
     },
     {
       "slug": "technical-debt",
-      "title": "Technical Debt"
+      "title": "Code Debt, Test Gaps, and Maintenance Risks"
+    },
+    {
+      "slug": "testing",
+      "title": "Test Strategy Across Python and Go"
+    },
+    {
+      "slug": "ci-cd",
+      "title": "Automation and Release Pipeline"
+    },
+    {
+      "slug": "contributing",
+      "title": "Contributing Safely and Efficiently"
+    },
+    {
+      "slug": "deployment",
+      "title": "Deployment and Packaging Overview"
+    },
+    {
+      "slug": "integrations",
+      "title": "External Integrations and Ecosystem Touchpoints"
+    },
+    {
+      "slug": "module-go-cli",
+      "title": "Rekipedia Go CLI Command Reference"
     }
   ],
   "diagrams": [

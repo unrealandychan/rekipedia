@@ -1,11 +1,11 @@
 {
-  "rekipedia_version": "0.17.3",
-  "scanned_at": "2026-05-22T07:17:57.615292+00:00",
-  "repo_path": "/tmp/workspace/unrealandychan/rekipedia",
-  "run_id": "71290b0b-2560-47ae-b5eb-559ce39d4cf9",
-  "model": "ollama/llama4",
-  "file_count": 365,
-  "page_count": 7,
+  "rekipedia_version": "0.17.25",
+  "scanned_at": "2026-05-26T09:15:49.506063+00:00",
+  "repo_path": "/Users/eddiechan/PycharmProjects/rekipedia",
+  "run_id": "feb16502-de25-4ad5-a4c7-c946401395f9",
+  "model": "gpt-5.4-mini",
+  "file_count": 389,
+  "page_count": 19,
   "embed_model": "",
   "embedded": false
 }

@@ -1,198 +1,218 @@
 ---
 slug: module-python-core
-title: "Python Implementation Area: Core Analysis and Runtime Support"
+title: "Python Core Modules Overview"
 section: core-components
-tags: [modules, overview, internals]
+tags: [modules, overview]
 pin: false
-importance: 84
-created_at: 2026-05-05T04:58:25Z
-rekipedia_version: 0.10.3
+importance: 88
+created_at: 2026-05-26T09:14:43Z
+rekipedia_version: 0.17.25
 ---
 
-# Python Implementation Area: Core Analysis and Runtime Support
+# Python Core Modules Overview
 
-## Overview
+## Scope and purpose
 
-The Python code under `src/rekipedia` forms the repository’s analysis/runtime support layer: it is responsible for reading repository metadata, analyzing source relationships, enriching findings, exporting graph and wiki artifacts, and powering the Python-facing CLI surface. The package boundary is clearly organized around a few top-level namespaces:
+This page documents the Python implementation under `src/rekipedia`, with emphasis on the main package groups that make up the Python-side pipeline:
 
-- `rekipedia.analysis` for static and semantic analysis
-- `rekipedia.cli` for Click-based commands
-- `rekipedia.models` for shared contracts and dataclasses
-- `rekipedia.orchestrator` for higher-level workflow coordination
-- `rekipedia.rag` for retrieval/indexing support
-- `rekipedia.storage` for persistence adapters
+- **Sandbox tasks** for one-off analysis jobs and repository-specific experiments
+- **Analysis and extraction utilities** that inspect source trees, derive relationships, and prepare structured outputs
+- **Repository processing** helpers that traverse repositories, build snapshots, and manage search/index-friendly data
+- **Shared helpers and contracts** used across multiple Python modules
 
-The sandbox task entry point, [`src/rekipedia/sandbox/tasks/analyze_shard.py`](src/rekipedia/sandbox/tasks/analyze_shard.py), is part of the runtime execution path for isolated shard analysis. Although the symbol index does not expose internals for this file, its placement under `sandbox/tasks` indicates that it is intended as an execution boundary for analyzing a single shard in a controlled environment, rather than as a user-facing CLI. In practice, that makes it the likely adapter between a shard descriptor and the lower-level analysis/orchestration stack described below.
+The repository analysis data shows a fairly broad Python surface area, but the most clearly observable core lives in `src/rekipedia/analysis`, `src/rekipedia/api.py`, `src/rekipedia/models/contracts.py`, `src/rekipedia/orchestrator/*`, `src/rekipedia/storage/sqlite_store.py`, and `src/rekipedia/llm/client.py`. The Go implementation is present in the repository, but this page intentionally focuses on Python; Go entrypoints are only mentioned where they call into Python-oriented core paths.
 
-At a high level, the runtime flow is:
+A useful way to think about the Python implementation is as a layered pipeline:
 
-1. CLI or task entry point collects input.
-2. Orchestrator components build context, snapshots, and shards.
-3. Analysis modules detect structural issues and enrich them.
-4. Storage persists runs, symbols, relationships, pages, and QA history.
-5. Export/synthesis layers render Markdown, graphs, and wiki pages.
+1. repository content is discovered and summarized,
+2. analysis functions infer structure and relationships,
+3. enriched results are formatted or stored,
+4. API/orchestrator functions expose those results to callers.
 
-### Package boundary summary
+> **Sources:** `src/rekipedia/__init__.py` · L1–L1 · [`rekipedia.__init__`](src/rekipedia/__init__.py#L1) · `src/rekipedia/analysis/biz_domain.py` · L1–L154 · [`rekipedia.analysis.biz_domain`](src/rekipedia/analysis/biz_domain.py#L1)
 
-| Package | Responsibility | Representative symbols |
-|---|---|---|
-| `rekipedia.analysis` | Detects issues, computes graph-oriented metrics, exports structural views | [`compute_god_nodes`](src/rekipedia/analysis/graph_analysis.py), [`detect_issues`](src/rekipedia/analysis/refactor_enricher.py), [`write_refactor_outputs`](src/rekipedia/analysis/refactor_writer.py) |
-| `rekipedia.cli` | User-facing command entry points | [`ask_cmd`](src/rekipedia/cli/ask.py), [`embed_cmd`](src/rekipedia/cli/embed.py), [`export_cmd`](src/rekipedia/cli/export.py) |
-| `rekipedia.orchestrator` | Coordinates repository scanning, sharding, digesting, and ask workflows | [`RunDigest`](src/rekipedia/orchestrator/run_digest.py), [`RunUpdate`](src/rekipedia/orchestrator/run_update.py), [`ShardPlanner`](src/rekipedia/orchestrator/sharding.py) |
-| `rekipedia.rag` | Chunking and vector storage for retrieval-augmented workflows | [`EmbedPipeline`](src/rekipedia/rag/embedder.py), [`ChunkFile`](src/rekipedia/rag/chunker.py), [`VectorStore`](src/rekipedia/rag/vector_store.py) |
-| `rekipedia.storage` | SQLite-backed persistence and aliases | `SqliteStore` methods and aliases in `src/rekipedia/storage` |
-| `rekipedia.models` | Shared schemas/contracts | dataclasses and records in `src/rekipedia/models/contracts.py` |
+## Python package map
 
-> **Sources:** `src/rekipedia/sandbox/tasks/analyze_shard.py` · `src/rekipedia/analysis/graph_analysis.py` · `src/rekipedia/analysis/refactor_enricher.py` · `src/rekipedia/analysis/refactor_writer.py` · `src/rekipedia/cli/ask.py` · `src/rekipedia/cli/embed.py` · `src/rekipedia/cli/export.py` · `src/rekipedia/orchestrator/run_digest.py` · `src/rekipedia/orchestrator/run_update.py` · `src/rekipedia/orchestrator/sharding.py`
+The observed Python packages fall into a few responsibility clusters.
 
-## Core runtime layers
+### Analysis package
 
-The implementation area under `src` is layered rather than monolithic. The most important internal layers are:
+The `src/rekipedia/analysis` package contains the richest Python logic. The analysis modules include:
 
-1. **Extraction and model contracts** — normalize repository content into `Symbol`, `Relationship`, `AnalysisResult`, and related structures.
-2. **Analysis and enrichment** — compute refactor smells, graph metrics, and supporting metadata.
-3. **Orchestration** — sequence scanning, sharding, digesting, and ask/update workflows.
-4. **Persistence** — store runs, snapshots, wiki pages, and QA artifacts.
-5. **Presentation/export** — generate Markdown/wiki pages and visual outputs.
+- [`rekipedia.analysis.biz_domain`](src/rekipedia/analysis/biz_domain.py#L1) — business-domain extraction and graph modeling
+- [`rekipedia.analysis.cross_repo_search`](src/rekipedia/analysis/cross_repo_search.py#L1) — tokenization, BM25-style ranking, and multi-repo search
+- [`rekipedia.analysis.domain`](src/rekipedia/analysis/domain.py#L1) — file-level domain classification
+- [`rekipedia.analysis.graph_analysis`](src/rekipedia/analysis/graph_analysis.py#L1) — graph-oriented derived views such as hubs and knowledge gaps
+- [`rekipedia.analysis.graph_export`](src/rekipedia/analysis/graph_export.py#L1) — GraphML / Cypher / Obsidian-style exports
+- [`rekipedia.analysis.impact`](src/rekipedia/analysis/impact.py#L1) — direct and transitive impact analysis
+- [`rekipedia.analysis.onboard`](src/rekipedia/analysis/onboard.py#L1) — onboarding guide generation
+- [`rekipedia.analysis.refactor_applier`](src/rekipedia/analysis/refactor_applier.py#L1) — applying refactor actions to files
+- [`rekipedia.analysis.refactor_detector`](src/rekipedia/analysis/refactor_detector.py#L1) — detecting refactor smells
+- [`rekipedia.analysis.refactor_enricher`](src/rekipedia/analysis/refactor_enricher.py#L1) — enriching findings with callers/notes/LLM context
+- [`rekipedia.analysis.refactor_writer`](src/rekipedia/analysis/refactor_writer.py#L1) — producing Markdown/JSON outputs
+- [`rekipedia.analysis.resolution`](src/rekipedia/analysis/resolution.py#L1) — resolving relationships into concrete records
+- [`rekipedia.analysis.tour`](src/rekipedia/analysis/tour.py#L1) — generating a repository tour
 
-The call graph crosses package boundaries frequently. For example, `RunDigest` depends on the extractor, LLM client, analysis, synthesis, and storage layers; `RefactorEnricher` depends on the LLM client and analysis contracts; and the CLI commands are thin adapters around these runtime functions.
+A key point from the relationship data is that these modules mostly depend on shared models (`rekipedia.models.contracts`) and, in a few places, on the storage and LLM layers. The analysis layer is therefore the main place where semantic work happens.
+
+### API and orchestration
+
+The Python API layer is centered on [`rekipedia.api`](src/rekipedia/api.py#L1), which imports the orchestrator routines and store access. This is a thin integration layer rather than the main algorithmic surface, but it is important because it exposes the results of analysis and orchestration in structured form.
+
+The orchestration layer is represented in the analysis data by files such as:
+
+- `src/rekipedia/orchestrator/run_digest.py`
+- `src/rekipedia/orchestrator/run_ask.py`
+
+These modules are more about coordinating the analysis pipeline than implementing core extraction logic themselves.
+
+### Models, storage, and LLM
+
+Shared data contracts live in [`rekipedia.models.contracts`](src/rekipedia/models/contracts.py#L1), while persistence is handled by [`rekipedia.storage.sqlite_store`](src/rekipedia/storage/sqlite_store.py#L1). LLM connectivity is encapsulated in [`rekipedia.llm.client`](src/rekipedia/llm/client.py#L1). Together these form the support infrastructure used by the analysis modules.
+
+> **Sources:** `src/rekipedia/analysis/biz_domain.py` · L1–L154 · [`rekipedia.analysis.biz_domain`](src/rekipedia/analysis/biz_domain.py#L1); `src/rekipedia/analysis/cross_repo_search.py` · L1–L43 · [`rekipedia.analysis.cross_repo_search`](src/rekipedia/analysis/cross_repo_search.py#L1); `src/rekipedia/analysis/domain.py` · L1–L1 · [`rekipedia.analysis.domain`](src/rekipedia/analysis/domain.py#L1); `src/rekipedia/api.py` · L1–L1 · [`rekipedia.api`](src/rekipedia/api.py#L1)
+
+## Responsibilities by package
+
+### Sandbox tasks
+
+The task entrypoint explicitly names [`src/rekipedia/sandbox/tasks/analyze_shard.py`](src/rekipedia/sandbox/tasks/analyze_shard.py) as an entry point. The analysis payload does not provide symbol-level detail for that file, so the only safe conclusion is that it acts as a sandboxed task runner for shard-focused analysis. It should be treated as an operational wrapper rather than core algorithmic logic.
+
+What is observable from the broader Python implementation is that shard-oriented work in the codebase aligns with orchestration and analysis modules that accept repository slices, structured models, and store handles. In other words, `analyze_shard.py` likely sits at the edge of the pipeline and invokes the core analysis routines rather than implementing them.
+
+### Analysis and extraction utilities
+
+This is the most important Python area. Several modules do focused analytical work:
+
+- [`rekipedia.analysis.domain`](src/rekipedia/analysis/domain.py#L1) classifies files into higher-level domains.
+- [`rekipedia.analysis.graph_analysis`](src/rekipedia/analysis/graph_analysis.py#L1) computes graph-derived views such as hubs and knowledge gaps.
+- [`rekipedia.analysis.cross_repo_search`](src/rekipedia/analysis/cross_repo_search.py#L1) tokenizes symbols and ranks matches across repositories.
+- [`rekipedia.analysis.impact`](src/rekipedia/analysis/impact.py#L1) computes impact sets.
+- [`rekipedia.analysis.refactor_detector`](src/rekipedia/analysis/refactor_detector.py#L1) and [`rekipedia.analysis.refactor_enricher`](src/rekipedia/analysis/refactor_enricher.py#L1) identify and enrich refactor opportunities.
+
+These modules are data-driven and mostly operate on the shared model layer rather than on concrete storage or UI concerns. They are also where most of the utility-style helper functions live, for example:
+
+- [`_tokenize_symbol`](src/rekipedia/analysis/cross_repo_search.py#L11) in cross-repo search
+- [`_classify_file`](src/rekipedia/analysis/domain.py#L11) in domain classification
+- [`detect_god_nodes`](src/rekipedia/analysis/refactor_detector.py#L62) in refactor detection
+- [`_build_prompt`](src/rekipedia/analysis/refactor_enricher.py#L469) in enrichment
+- [`_build_markdown`](src/rekipedia/analysis/refactor_writer.py#L156) in output generation
+
+### Repository processing
+
+The repository-processing story is split across several modules:
+
+- [`rekipedia.analysis.onboard`](src/rekipedia/analysis/onboard.py#L1) generates a human-readable onboarding guide from repository structure.
+- [`rekipedia.analysis.tour`](src/rekipedia/analysis/tour.py#L1) builds a tour of symbols and relationships.
+- [`rekipedia.analysis.resolution`](src/rekipedia/analysis/resolution.py#L1) resolves relationships into richer records.
+- [`rekipedia.api`](src/rekipedia/api.py#L1) aggregates wiki pages and citations for downstream use.
+- [`rekipedia.storage.sqlite_store`](src/rekipedia/storage/sqlite_store.py#L1) persists runs, symbols, relationships, pages, notes, manifests, and trees.
+
+This layer is where the code turns extracted facts into durable project state. The storage module is especially central because many analysis and orchestration functions expect a `SqliteStore`-style backend or equivalent store facade.
+
+### Shared helpers and contracts
+
+Shared types are declared in [`rekipedia.models.contracts`](src/rekipedia/models/contracts.py#L1). These contracts define the common vocabulary used across analysis, storage, API, and synthesis-like functionality. The analysis data confirms the presence of types such as `LLMConfig`, `Symbol`, `Relationship`, `AnalysisResult`, `Shard`, `WikiPageSpec`, `WikiPlan`, and `ScanMeta` in the shared contract layer.
+
+Two helper categories recur throughout the code:
+
+1. **string/path helpers** — parsing slugs, titles, and file paths
+2. **collection helpers** — deduplication, sorting, grouping, and filtering
+
+The result is a Python core that is relatively compact at the contract boundary but quite rich in derived-logic functions.
+
+> **Sources:** `src/rekipedia/analysis/domain.py` · L1–L1 · [`rekipedia.analysis.domain`](src/rekipedia/analysis/domain.py#L1); `src/rekipedia/analysis/graph_analysis.py` · L1–L1 · [`rekipedia.analysis.graph_analysis`](src/rekipedia/analysis/graph_analysis.py#L1); `src/rekipedia/analysis/impact.py` · L1–L1 · [`rekipedia.analysis.impact`](src/rekipedia/analysis/impact.py#L1); `src/rekipedia/models/contracts.py` · L1–L1 · [`rekipedia.models.contracts`](src/rekipedia/models/contracts.py#L1)
+
+## Python processing pipeline
+
+The Python-side flow can be summarized as a narrow pipeline from repository facts to enriched analysis outputs.
 
 ```mermaid
-flowchart LR
-  AnalyzeShard[analyze_shard.py]
-  Orchestrator[orchestrator]
-  Analysis[analysis]
-  RAG[rag]
-  Storage[storage]
-  Models[models]
-  CLI[cli]
-
-  AnalyzeShard --> Orchestrator
-  Orchestrator --> Analysis
-  Orchestrator --> RAG
-  Orchestrator --> Storage
-  Analysis --> Models
-  RAG --> Models
-  CLI --> Orchestrator
-  CLI --> Storage
+flowchart TD
+    RepoInput[Repository files] --> ExtractorLayer[Extraction / analysis utilities]
+    ExtractorLayer --> DomainMods[Domain / graph / impact analysis]
+    DomainMods --> RefactorMods[Refactor detection + enrichment]
+    RefactorMods --> Writers[Markdown / JSON writers]
+    Writers --> Store[SQLite store / persisted outputs]
+    Store --> ApiLayer[Python API / orchestration consumers]
 ```
 
-### Cross-module dependency table
+This diagram is intentionally high level. The analysis data shows that the real implementations are split across many modules, but the dependency pattern is clear: analysis produces structured results, writers and storage persist them, and the API/orchestrator layer consumes them.
+
+> **Sources:** `src/rekipedia/analysis/refactor_writer.py` · L1–L263 · [`_build_markdown`](src/rekipedia/analysis/refactor_writer.py#L156) · [`write_refactor_outputs`](src/rekipedia/analysis/refactor_writer.py#L54); `src/rekipedia/api.py` · L1–L1 · [`rekipedia.api`](src/rekipedia/api.py#L1); `src/rekipedia/storage/sqlite_store.py` · L1–L1 · [`rekipedia.storage.sqlite_store`](src/rekipedia/storage/sqlite_store.py#L1)
+
+## Cross-module dependency table
+
+The table below summarizes the major Python module relationships visible in the analysis data. For compactness, it focuses on the main implementation modules under `src/rekipedia`.
 
 | Module | Imports From | Called By | Calls Into | Inherits From |
-|---|---|---|---|---|
-| `rekipedia.analysis.graph_analysis` | `collections`, `typing`, `rekipedia.models.contracts` | orchestrator and export/presentation code | model dataclasses | — |
-| `rekipedia.analysis.refactor_detector` | `collections`, `dataclasses`, `rekipedia.models.contracts` | writer/enricher/orchestrator paths | model contracts | — |
-| `rekipedia.analysis.refactor_enricher` | `logging`, `collections`, `concurrent.futures`, `rekipedia.llm.client`, `rekipedia.models.contracts` | orchestrator runtime | LLM client and model contracts | — |
-| `rekipedia.analysis.refactor_writer` | `json`, `datetime`, `pathlib`, `rekipedia.models.contracts` | CLI and runtime output paths | model contracts and filesystem writes | — |
-| `rekipedia.orchestrator.run_digest` | `uuid`, `errgroup`, `analysis`, `extractor`, `llm`, `storage`, `synthesis` | CLI `scan`/`update` flows | extraction, analysis, storage, synthesis | — |
-| `rekipedia.orchestrator.run_ask` | `llm`, `rag`, `storage`, `models` | CLI `ask` flow | RAG search and context building | — |
-| `rekipedia.rag.embedder` | `llm`, `models`, `pkg/fsutil` | CLI `embed` | vector store and chunking helpers | — |
-| `rekipedia.storage.store` | `database/sql`, `modernc.org/sqlite`, `rekipedia.models.contracts` | orchestrator and CLI read/write paths | SQLite persistence | — |
+|--------|-------------|-----------|------------|---------------|
+| `rekipedia.analysis.biz_domain` | `rekipedia.models.contracts`, `rekipedia.llm.client` | API/orchestrator consumers | LLM client, model validation | `BaseModel` types |
+| `rekipedia.analysis.cross_repo_search` | `rekipedia.storage.sqlite_store`, `rekipedia.watcher.watcher` | multi-repo search consumers | store lookups, token scoring | — |
+| `rekipedia.analysis.domain` | shared contracts/models | onboarding and analysis consumers | symbol/relationship scans | — |
+| `rekipedia.analysis.graph_analysis` | shared contracts/models | graph-related analysis consumers | symbol/relationship aggregation | — |
+| `rekipedia.analysis.graph_export` | shared contracts/models | graph export callers | GraphML/Cypher/Markdown-style serialization | — |
+| `rekipedia.analysis.impact` | shared contracts/models | impact analysis consumers | BFS-style traversal helpers | — |
+| `rekipedia.analysis.onboard` | `rekipedia.analysis.domain`, `rekipedia.storage.sqlite_store` | task/pipeline callers | repository classification, store queries | — |
+| `rekipedia.analysis.refactor_applier` | shared contracts/models | refactor workflow callers | file rewrite helpers | — |
+| `rekipedia.analysis.refactor_detector` | shared contracts/models | refactor enrichment/writers | relationship scans, smell detectors | — |
+| `rekipedia.analysis.refactor_enricher` | `rekipedia.llm.client`, shared contracts/models | refactor writers / orchestration | LLM calls, cycle detection | — |
+| `rekipedia.analysis.refactor_writer` | shared contracts/models | orchestration / output writers | Markdown/JSON file emission | — |
+| `rekipedia.analysis.resolution` | shared contracts/models | analysis pipelines | relationship normalization | — |
+| `rekipedia.analysis.tour` | shared contracts/models, `rekipedia.analysis.domain` | repository tour generation | symbol formatting, description building | — |
+| `rekipedia.api` | `rekipedia.orchestrator.*`, `rekipedia.storage.sqlite_store` | external callers | page collection, citation parsing | — |
 
-> **Sources:** `src/rekipedia/analysis/graph_analysis.py` · `src/rekipedia/analysis/refactor_detector.py` · `src/rekipedia/analysis/refactor_enricher.py` · `src/rekipedia/analysis/refactor_writer.py` · `src/rekipedia/orchestrator/run_digest.py` · `src/rekipedia/orchestrator/run_ask.py` · `src/rekipedia/rag/embedder.py` · `src/rekipedia/storage/store.py`
+This matrix shows that the Python core is deliberately centralized around shared contracts and a small number of service modules. The biggest practical dependency hubs are the shared models, the storage layer, and the LLM client.
 
-## Sandbox task entry point
+> **Sources:** `src/rekipedia/analysis/biz_domain.py` · L1–L154 · [`BizDomainAnalyzer`](src/rekipedia/analysis/biz_domain.py#L54); `src/rekipedia/analysis/cross_repo_search.py` · L1–L43 · [`search_all_repos`](src/rekipedia/analysis/cross_repo_search.py#L43); `src/rekipedia/analysis/onboard.py` · L1–L1 · [`build_onboard_guide`](src/rekipedia/analysis/onboard.py); `src/rekipedia/api.py` · L1–L1 · [`rekipedia.api`](src/rekipedia/api.py#L1)
 
-The sandbox task entry point [`src/rekipedia/sandbox/tasks/analyze_shard.py`](src/rekipedia/sandbox/tasks/analyze_shard.py) is the most clearly isolated runtime hook in the Python tree. Even though its symbol body is not surfaced in the index, its role is inferable from the repository structure: it is the task-level boundary for running analysis on a single shard in a sandboxed environment.
+## Important implementation-only symbols
 
-That boundary matters for the rest of the Python runtime:
+The table below highlights the most important implementation-only Python classes and functions evidenced in the analysis data. It intentionally excludes benchmark fixtures and Go-side logic except where they are indirectly relevant to Python core behavior.
 
-- It likely receives shard metadata or a file set from an outer scheduler.
-- It likely invokes orchestrator/analysis functions rather than implementing analysis itself.
-- It provides a natural seam for retry, logging, and controlled execution outside the primary CLI.
+| Symbol | Kind | File | Responsibility |
+|--------|------|------|----------------|
+| [`BizDomainGraph`](src/rekipedia/analysis/biz_domain.py#L54) | class | `src/rekipedia/analysis/biz_domain.py` | Pydantic model for extracted business-domain graph data |
+| [`BizDomainAnalyzer`](src/rekipedia/analysis/biz_domain.py#L54) | class | `src/rekipedia/analysis/biz_domain.py` | Builds prompts, calls the LLM, parses responses, and saves results |
+| [`_build_prompt`](src/rekipedia/analysis/biz_domain.py#L100) | function | `src/rekipedia/analysis/biz_domain.py` | Constructs the LLM prompt from repository context |
+| [`_parse_response`](src/rekipedia/analysis/biz_domain.py#L135) | function | `src/rekipedia/analysis/biz_domain.py` | Parses and validates model output into `BizDomainGraph` |
+| [`_now`](src/rekipedia/analysis/biz_domain.py#L154) | function | `src/rekipedia/analysis/biz_domain.py` | Timestamp helper used by the analyzer |
+| [`_tokenize_symbol`](src/rekipedia/analysis/cross_repo_search.py#L11) | function | `src/rekipedia/analysis/cross_repo_search.py` | Splits symbol names into searchable tokens |
+| [`_compute_idf`](src/rekipedia/analysis/cross_repo_search.py#L21) | function | `src/rekipedia/analysis/cross_repo_search.py` | Computes inverse document frequency scores |
+| [`_score_bm25`](src/rekipedia/analysis/cross_repo_search.py#L43) | function | `src/rekipedia/analysis/cross_repo_search.py` | Scores symbol matches with a BM25-like heuristic |
+| [`_classify_file`](src/rekipedia/analysis/domain.py#L11) | function | `src/rekipedia/analysis/domain.py#L11` | Classifies a file into a high-level domain |
+| [`compute_god_nodes`](src/rekipedia/analysis/graph_analysis.py#L1) | function | `src/rekipedia/analysis/graph_analysis.py` | Computes top-degree or “god” nodes from graph data |
+| [`_build_knowledge_gaps`](src/rekipedia/analysis/graph_analysis.py#L1) | function | `src/rekipedia/analysis/graph_analysis.py` | Derives likely knowledge gaps from graph relationships |
+| [`_tokenize_symbol`](src/rekipedia/analysis/cross_repo_search.py#L11) | function | `src/rekipedia/analysis/cross_repo_search.py` | Tokenization helper for repo search |
+| [`detect_god_nodes`](src/rekipedia/analysis/refactor_detector.py#L62) | function | `src/rekipedia/analysis/refactor_detector.py` | Detects overly central symbols |
+| [`detect_circular_deps`](src/rekipedia/analysis/refactor_detector.py#L134) | function | `src/rekipedia/analysis/refactor_detector.py` | Detects cycles in relationship graphs |
+| [`detect_dead_code`](src/rekipedia/analysis/refactor_detector.py#L199) | function | `src/rekipedia/analysis/refactor_detector.py` | Flags unreferenced symbols with heuristics for exported names |
+| [`detect_high_fan_in`](src/rekipedia/analysis/refactor_detector.py#L229) | function | `src/rekipedia/analysis/refactor_detector.py` | Detects high fan-in symbols |
+| [`detect_high_fan_out`](src/rekipedia/analysis/refactor_detector.py#L266) | function | `src/rekipedia/analysis/refactor_detector.py` | Detects high fan-out symbols |
+| [`detect_deep_inheritance`](src/rekipedia/analysis/refactor_detector.py#L303) | function | `src/rekipedia/analysis/refactor_detector.py` | Detects deep inheritance chains |
+| [`RefactorEnricher`](src/rekipedia/analysis/refactor_enricher.py#L296) | class | `src/rekipedia/analysis/refactor_enricher.py` | Coordinates enrichment of detected findings |
+| [`_build_prompt`](src/rekipedia/analysis/refactor_enricher.py#L469) | function | `src/rekipedia/analysis/refactor_enricher.py` | Builds LLM prompts for enrichment |
+| [`_parse_enrichment`](src/rekipedia/analysis/refactor_enricher.py#L492) | function | `src/rekipedia/analysis/refactor_enricher.py` | Parses enrichment responses |
+| [`_attach_callers`](src/rekipedia/analysis/refactor_enricher.py#L323) | function | `src/rekipedia/analysis/refactor_enricher.py` | Adds caller information to findings |
+| [`_attach_notes`](src/rekipedia/analysis/refactor_enricher.py#L352) | function | `src/rekipedia/analysis/refactor_enricher.py` | Attaches note records to findings |
+| [`_build_markdown`](src/rekipedia/analysis/refactor_writer.py#L156) | function | `src/rekipedia/analysis/refactor_writer.py` | Formats detected issues as Markdown |
+| [`write_refactor_outputs`](src/rekipedia/analysis/refactor_writer.py#L54) | function | `src/rekipedia/analysis/refactor_writer.py` | Writes JSON and Markdown outputs |
+| [`resolve_relationships`](src/rekipedia/analysis/resolution.py#L1) | function | `src/rekipedia/analysis/resolution.py` | Normalizes relationships into resolved records |
+| [`build_tour`](src/rekipedia/analysis/tour.py#L18) | function | `src/rekipedia/analysis/tour.py` | Builds a repository tour from symbols and relationships |
+| [`AskResult`](src/rekipedia/api.py#L83) | class | `src/rekipedia/api.py` | Wrapper/response model used by API-side ask flows |
+| [`_parse_citations`](src/rekipedia/api.py#L83) | function | `src/rekipedia/api.py` | Extracts citation markers from generated text |
+| [`_collect_wiki_pages`](src/rekipedia/api.py#L83) | function | `src/rekipedia/api.py` | Collects rendered wiki pages from storage/output |
 
-This design keeps the lower-level analysis code reusable from both CLI and non-CLI entry points. The rest of the Python packages are built to support exactly that style of composition: data contracts in `rekipedia.models`, analyzers in `rekipedia.analysis`, and persistence/export code in `rekipedia.storage` and synthesis modules.
+> **Sources:** `src/rekipedia/analysis/biz_domain.py` · L54–L154 · [`BizDomainAnalyzer`](src/rekipedia/analysis/biz_domain.py#L54); `src/rekipedia/analysis/cross_repo_search.py` · L11–L43 · [`_tokenize_symbol`](src/rekipedia/analysis/cross_repo_search.py#L11); `src/rekipedia/analysis/refactor_detector.py` · L62–L303 · [`detect_all`](src/rekipedia/analysis/refactor_detector.py#L303); `src/rekipedia/analysis/refactor_enricher.py` · L296–L492 · [`RefactorEnricher`](src/rekipedia/analysis/refactor_enricher.py#L296); `src/rekipedia/analysis/refactor_writer.py` · L54–L263 · [`write_refactor_outputs`](src/rekipedia/analysis/refactor_writer.py#L54)
 
-Because the analysis data does not expose the internal symbols for `analyze_shard.py`, the safest conclusion is that it acts as an adapter rather than a core algorithmic module.
+## Key observations and gaps
 
-> **Sources:** `src/rekipedia/sandbox/tasks/analyze_shard.py`
+A few limitations are worth calling out honestly:
 
-## Main subsystems
+- The analysis payload is much richer for Python analysis utilities than for sandbox tasks, so `src/rekipedia/sandbox/tasks/analyze_shard.py` cannot be described in depth beyond its observed role as a task entrypoint.
+- Some symbol names in the payload are only partially line-resolved or have truncated line ends; citations therefore point to the best available start line and file.
+- The benchmark fixtures under `benchmarks/fixtures/*` are intentionally omitted here except where they are referenced by benchmark code that exercises the Python core.
 
-### Analysis and refactor detection
+Even with those gaps, the observable architecture is clear: Python implements the domain logic, search/ranking, refactor analysis, and output formatting, while storage and orchestration provide the durable and operational scaffolding around those algorithms.
 
-The analysis subsystem provides the repository’s deeper structural reasoning. [`compute_god_nodes`](src/rekipedia/analysis/graph_analysis.py) and [`compute_impact`](src/rekipedia/analysis/impact.py) operate on graph-like relationships to identify important nodes and dependency reach. The refactor subsystem is more specific:
-
-- [`detect_god_nodes`](src/rekipedia/analysis/refactor_detector.py) identifies heavy hub-like symbols.
-- [`detect_circular_deps`](src/rekipedia/analysis/refactor_detector.py) identifies cycles.
-- [`detect_dead_code`](src/rekipedia/analysis/refactor_detector.py) identifies unused symbols.
-- [`detect_high_fan_in`](src/rekipedia/analysis/refactor_detector.py) and [`detect_high_fan_out`](src/rekipedia/analysis/refactor_detector.py) score coupling intensity.
-- [`detect_deep_inheritance`](src/rekipedia/analysis/refactor_detector.py) finds inheritance chains that exceed expected depth.
-- [`detect_all`](src/rekipedia/analysis/refactor_detector.py) aggregates all detection passes.
-
-The enrichment layer expands those raw findings with context. [`detect_issues`](src/rekipedia/analysis/refactor_enricher.py) is the central coordinator, while helpers such as [`_attach_callers`](src/rekipedia/analysis/refactor_enricher.py), [`_attach_notes`](src/rekipedia/analysis/refactor_enricher.py), [`_build_prompt`](src/rekipedia/analysis/refactor_enricher.py), and [`_parse_enrichment`](src/rekipedia/analysis/refactor_enricher.py) shape human-readable output and LLM-assisted annotations.
-
-### Orchestration and workflow control
-
-The orchestration layer ties together scanning, sharding, context creation, and user workflows. Important symbols include:
-
-- [`ShardPlanner`](src/rekipedia/orchestrator/sharding.py)
-- [`Snapshotter`](src/rekipedia/orchestrator/snapshotter.py)
-- [`RunDigest`](src/rekipedia/orchestrator/run_digest.py)
-- [`RunUpdate`](src/rekipedia/orchestrator/run_update.py)
-- [`RunAsk`](src/rekipedia/orchestrator/run_ask.py)
-
-These modules are where the repository turns “analysis functions” into “a complete run.” For example, `RunDigest` imports the extractor, LLM, storage, and synthesis layers, and the `run_ask` flow uses RAG search plus stored wiki pages to construct context.
-
-### Retrieval and embedding support
-
-The RAG subsystem is comparatively self-contained. [`ChunkFile`](src/rekipedia/rag/chunker.py) slices content into chunks, [`EmbedPipeline`](src/rekipedia/rag/embedder.py) builds embeddings and searches them, [`VectorStore`](src/rekipedia/rag/vector_store.py) stores embeddings in Chromem-backed collections, and [`ScanMeta`](src/rekipedia/rag/scan_meta.py) tracks scan metadata.
-
-This layer is important to the runtime, but it is not the main focus of the sandbox task entry point. It is best understood as supporting search, not as core analysis.
-
-### Storage and export/presentation
-
-The persistence layer in [`Store`](src/rekipedia/storage/store.py) provides SQLite-backed state for runs, symbols, relationships, wiki pages, QA records, and manifests. This storage layer is heavily used by orchestration, CLI commands, and cross-repo search.
-
-Presentation is handled by synthesis and exporter code. [`DiagramBuilder`](src/rekipedia/synthesis/diagram_builder.py) builds module graphs and class hierarchies; [`PageBuilder`](src/rekipedia/synthesis/page_builder.py) assembles wiki pages; [`PlannerAgent`](src/rekipedia/synthesis/planner.py) generates page plans. These are downstream of the core analysis/runtime support, but they are part of the same execution chain.
-
-> **Sources:** `src/rekipedia/analysis/graph_analysis.py` · `src/rekipedia/analysis/impact.py` · `src/rekipedia/analysis/refactor_detector.py` · `src/rekipedia/analysis/refactor_enricher.py` · `src/rekipedia/orchestrator/sharding.py` · `src/rekipedia/orchestrator/snapshotter.py` · `src/rekipedia/orchestrator/run_digest.py` · `src/rekipedia/orchestrator/run_update.py` · `src/rekipedia/orchestrator/run_ask.py` · `src/rekipedia/rag/chunker.py` · `src/rekipedia/rag/embedder.py` · `src/rekipedia/rag/vector_store.py` · `src/rekipedia/rag/scan_meta.py` · `src/rekipedia/storage/store.py` · `src/rekipedia/synthesis/diagram_builder.py` · `src/rekipedia/synthesis/page_builder.py` · `src/rekipedia/synthesis/planner.py`
-
-## Important implementation symbols
-
-The table below highlights the most important implementation symbols surfaced by the index, with emphasis on the sandbox entry point and the core runtime helpers that support it.
-
-| Symbol | File | Purpose |
-|---|---|---|
-| `analyze_shard.py` | `src/rekipedia/sandbox/tasks/analyze_shard.py` | Sandbox task entry point for shard-level analysis |
-| [`detect_issues`](src/rekipedia/analysis/refactor_enricher.py) | `src/rekipedia/analysis/refactor_enricher.py` | Builds enriched refactor issue sets |
-| [`detect_all`](src/rekipedia/analysis/refactor_detector.py) | `src/rekipedia/analysis/refactor_detector.py` | Runs all refactor detectors |
-| [`detect_god_nodes`](src/rekipedia/analysis/refactor_detector.py) | `src/rekipedia/analysis/refactor_detector.py` | Flags hub-like symbols |
-| [`detect_circular_deps`](src/rekipedia/analysis/refactor_detector.py) | `src/rekipedia/analysis/refactor_detector.py` | Detects dependency cycles |
-| [`detect_dead_code`](src/rekipedia/analysis/refactor_detector.py) | `src/rekipedia/analysis/refactor_detector.py` | Identifies unused symbols |
-| [`compute_god_nodes`](src/rekipedia/analysis/graph_analysis.py) | `src/rekipedia/analysis/graph_analysis.py` | Computes high-degree nodes |
-| [`compute_impact`](src/rekipedia/analysis/impact.py) | `src/rekipedia/analysis/impact.py` | Calculates impact/churn-like metrics |
-| [`RunDigest`](src/rekipedia/orchestrator/run_digest.py) | `src/rekipedia/orchestrator/run_digest.py` | Main digest workflow coordinator |
-| [`RunUpdate`](src/rekipedia/orchestrator/run_update.py) | `src/rekipedia/orchestrator/run_update.py` | Incremental update workflow |
-| [`RunAsk`](src/rekipedia/orchestrator/run_ask.py) | `src/rekipedia/orchestrator/run_ask.py` | Q&A orchestration and context building |
-| [`ShardPlanner`](src/rekipedia/orchestrator/sharding.py) | `src/rekipedia/orchestrator/sharding.py` | Breaks repositories into budget-aware shards |
-| [`Snapshotter`](src/rekipedia/orchestrator/snapshotter.py) | `src/rekipedia/orchestrator/snapshotter.py` | Builds stable filesystem snapshots |
-| [`EmbedPipeline`](src/rekipedia/rag/embedder.py) | `src/rekipedia/rag/embedder.py` | Embedding build/search pipeline |
-| [`VectorStore`](src/rekipedia/rag/vector_store.py) | `src/rekipedia/rag/vector_store.py` | Persistent vector search storage |
-| [`Store`](src/rekipedia/storage/store.py) | `src/rekipedia/storage/store.py` | SQLite persistence wrapper |
-| [`DiagramBuilder`](src/rekipedia/synthesis/diagram_builder.py) | `src/rekipedia/synthesis/diagram_builder.py` | Produces graph and hierarchy diagrams |
-| [`PageBuilder`](src/rekipedia/synthesis/page_builder.py` | `src/rekipedia/synthesis/page_builder.py` | Builds wiki page content |
-
-> **Sources:** `src/rekipedia/sandbox/tasks/analyze_shard.py` · `src/rekipedia/analysis/refactor_enricher.py` · `src/rekipedia/analysis/refactor_detector.py` · `src/rekipedia/analysis/graph_analysis.py` · `src/rekipedia/analysis/impact.py` · `src/rekipedia/orchestrator/run_digest.py` · `src/rekipedia/orchestrator/run_update.py` · `src/rekipedia/orchestrator/run_ask.py` · `src/rekipedia/orchestrator/sharding.py` · `src/rekipedia/orchestrator/snapshotter.py` · `src/rekipedia/rag/embedder.py` · `src/rekipedia/rag/vector_store.py` · `src/rekipedia/storage/store.py` · `src/rekipedia/synthesis/diagram_builder.py` · `src/rekipedia/synthesis/page_builder.py`
-
-## Notable helper modules
-
-Several helper modules keep the runtime cohesive:
-
-- [`rekipedia.models.contracts`](src/rekipedia/models/contracts.py) defines the shared structures used everywhere else, such as `LLMConfig`, `Symbol`, `Relationship`, `AnalysisResult`, `Shard`, `WikiPageSpec`, and `ScanMeta`.
-- [`rekipedia.analysis.refactor_writer`](src/rekipedia/analysis/refactor_writer.py) turns detected issues into Markdown/JSON outputs.
-- [`rekipedia.analysis.graph_export`](src/rekipedia/analysis/graph_export.py) emits graph representations such as GraphML, Cypher, and Obsidian notes.
-- [`rekipedia.analysis.cross_repo_search`](src/rekipedia/analysis/cross_repo_search.py) supports searching across repositories using stored symbol data.
-
-These helpers are not the shard entry point themselves, but they provide the runtime support that makes the sandbox task useful in the broader repository workflow.
-
-> **Sources:** `src/rekipedia/models/contracts.py` · `src/rekipedia/analysis/refactor_writer.py` · `src/rekipedia/analysis/graph_export.py` · `src/rekipedia/analysis/cross_repo_search.py`
-
-## Summary
-
-The Python implementation area under `src` is the repository’s analysis/runtime backbone. The sandbox task entry point [`src/rekipedia/sandbox/tasks/analyze_shard.py`](src/rekipedia/sandbox/tasks/analyze_shard.py) sits at the edge of that backbone, likely acting as the isolated execution adapter for shard analysis. Underneath it, the system is organized into reusable layers: analysis, orchestration, RAG, storage, synthesis, and model contracts. That separation makes it possible to reuse the same core logic from both CLI commands and sandboxed task execution without duplicating behavior.
-
-If you are tracing a code path from shard analysis outward, the most relevant internal symbols are the orchestrator workflow functions (`RunDigest`, `RunUpdate`, `RunAsk`), the detector/enricher pair (`detect_all`, `detect_issues`), and the shared contract types in `rekipedia.models.contracts`.
-
-> **Sources:** `src/rekipedia/sandbox/tasks/analyze_shard.py` · `src/rekipedia/orchestrator/run_digest.py` · `src/rekipedia/orchestrator/run_update.py` · `src/rekipedia/orchestrator/run_ask.py` · `src/rekipedia/analysis/refactor_detector.py` · `src/rekipedia/analysis/refactor_enricher.py` · `src/rekipedia/models/contracts.py`
+> **Sources:** `benchmarks/run_extraction.py` · L19–L112 · [`run_extraction_benchmark`](benchmarks/run_extraction.py#L19); `src/rekipedia/sandbox/tasks/analyze_shard.py` · entry point only; `src/rekipedia/analysis/biz_domain.py` · L54–L154 · [`BizDomainAnalyzer`](src/rekipedia/analysis/biz_domain.py#L54)

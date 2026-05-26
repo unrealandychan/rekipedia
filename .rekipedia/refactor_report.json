@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-05-22T07:17:57.627601+00:00",
-  "rekipedia_version": "0.17.7",
+  "generated_at": "2026-05-26T09:15:49.520107+00:00",
+  "rekipedia_version": "0.17.25",
   "summary": {
     "high": 12,
     "medium": 0,
-    "low": 469
+    "low": 476
   },
   "issues": [
     {
@@ -14,11 +14,12 @@
       "severity": "high",
       "metrics": {
         "lines": 11,
-        "fan_in": 40,
+        "fan_in": 42,
         "fan_out": 1
       },
       "suggestion": "Split `AnalysisResult` into smaller, single-responsibility classes",
       "callers": [
+        "_run_biz",
         "_build_llm_report",
         "ConfigExtractor.extract",
         "GoExtractor.extract",
@@ -33,12 +34,11 @@
         "main",
         "test_agent_planner_add_pages_and_finalize",
         "test_agent_planner_fallback_on_error",
+        "_sample_analysis_result",
         "make_result",
         "sample_result",
         "_make_result",
-        "_make_analysis_result",
-        "TestAnalyzeShardMerge.test_merge_basic",
-        "TestDockerSandboxRunner.test_successful_run"
+        "_make_analysis_result"
       ]
     },
     {
@@ -115,12 +115,13 @@
       "file": "src/rekipedia/llm/client.py",
       "severity": "high",
       "metrics": {
-        "lines": 68,
-        "fan_in": 14,
+        "lines": 90,
+        "fan_in": 17,
         "fan_out": 0
       },
       "suggestion": "Split `LLMClient` into smaller, single-responsibility classes",
       "callers": [
+        "BizDomainAnalyzer._get_client",
         "run_review",
         "setup_cmd",
         "AgentAsk.__init__",
@@ -129,6 +130,8 @@
         "run_digest",
         "PageBuilder.__init__",
         "PlannerAgent.__init__",
+        "test_call_truncates_on_context_window_exceeded",
+        "test_call_raises_after_max_truncation_attempts",
         "test_call_passes_history_to_messages",
         "test_call_no_history_works",
         "test_stream_passes_history",
@@ -144,11 +147,12 @@
       "severity": "high",
       "metrics": {
         "lines": 10,
-        "fan_in": 144,
+        "fan_in": 153,
         "fan_out": 1
       },
       "suggestion": "Split `LLMConfig` into smaller, single-responsibility classes",
       "callers": [
+        "BizDomainAnalyzer._get_client",
         "scan",
         "ask",
         "_build_llm_config",
@@ -167,8 +171,7 @@
         "run_update",
         "ShardPlanner.plan",
         "AgentPlanner.__init__",
-        "_make_config",
-        "test_agent_planner_add_pages_and_finalize"
+        "_make_config"
       ]
     },
     {
@@ -177,7 +180,7 @@
       "file": "src/rekipedia/synthesis/page_builder.py",
       "severity": "high",
       "metrics": {
-        "lines": 144,
+        "lines": 151,
         "fan_in": 13,
         "fan_out": 0
       },
@@ -267,11 +270,12 @@
       "severity": "high",
       "metrics": {
         "lines": 10,
-        "fan_in": 12,
+        "fan_in": 13,
         "fan_out": 1
       },
       "suggestion": "Split `Relationship` into smaller, single-responsibility classes",
       "callers": [
+        "_sample_analysis_result",
         "test_relationship_default_confidence",
         "test_relationship_default_evidence_tag",
         "test_relationship_accepts_confidence",
@@ -312,19 +316,22 @@
       "file": "src/rekipedia/storage/sqlite_store.py",
       "severity": "high",
       "metrics": {
-        "lines": 920,
-        "fan_in": 66,
+        "lines": 923,
+        "fan_in": 78,
         "fan_out": 0
       },
       "suggestion": "Split `SqliteStore` into smaller, single-responsibility classes",
       "callers": [
         "_search_single_repo",
+        "build_onboard_guide",
         "_get_run_id",
         "affected_cmd",
         "diff_cmd",
         "domain_cmd",
+        "_run_biz",
         "embed_cmd",
         "export_cmd",
+        "hotspots_cmd",
         "impact_cmd",
         "_StoreCache._load",
         "_get_store",
@@ -334,10 +341,7 @@
         "_verify_scan",
         "_build_full_system",
         "run_digest",
-        "run_update",
-        "create_app",
-        "test_ask_raises_if_no_successful_run",
-        "client"
+        "run_update"
       ]
     },
     {
@@ -347,7 +351,7 @@
       "severity": "high",
       "metrics": {
         "lines": 7,
-        "fan_in": 45,
+        "fan_in": 47,
         "fan_out": 1
       },
       "suggestion": "Split `Symbol` into smaller, single-responsibility classes",
@@ -357,6 +361,7 @@
         "PythonExtractor.extract",
         "RustExtractor.extract",
         "TypeScriptExtractor.extract",
+        "_sample_analysis_result",
         "make_sym",
         "sample_result",
         "_make_sym",
@@ -1657,6 +1662,54 @@
     },
     {
       "kind": "dead_code",
+      "symbol": "BizDomainAnalyzer.__init__",
+      "file": "src/rekipedia/analysis/biz_domain.py",
+      "severity": "low",
+      "metrics": {
+        "fan_in": 0,
+        "fan_out": 0
+      },
+      "suggestion": "Remove `BizDomainAnalyzer.__init__` — 0 callers detected",
+      "callers": []
+    },
+    {
+      "kind": "dead_code",
+      "symbol": "BizDomainAnalyzer._get_client",
+      "file": "src/rekipedia/analysis/biz_domain.py",
+      "severity": "low",
+      "metrics": {
+        "fan_in": 0,
+        "fan_out": 5
+      },
+      "suggestion": "Remove `BizDomainAnalyzer._get_client` — 0 callers detected",
+      "callers": []
+    },
+    {
+      "kind": "dead_code",
+      "symbol": "BizDomainAnalyzer.analyze",
+      "file": "src/rekipedia/analysis/biz_domain.py",
+      "severity": "low",
+      "metrics": {
+        "fan_in": 0,
+        "fan_out": 4
+      },
+      "suggestion": "Remove `BizDomainAnalyzer.analyze` — 0 callers detected",
+      "callers": []
+    },
+    {
+      "kind": "dead_code",
+      "symbol": "BizDomainAnalyzer.save",
+      "file": "src/rekipedia/analysis/biz_domain.py",
+      "severity": "low",
+      "metrics": {
+        "fan_in": 0,
+        "fan_out": 4
+      },
+      "suggestion": "Remove `BizDomainAnalyzer.save` — 0 callers detected",
+      "callers": []
+    },
+    {
+      "kind": "dead_code",
       "symbol": "BuildMarkdown",
       "file": "go/internal/analysis/refactor_writer.go",
       "severity": "low",
@@ -2514,7 +2567,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 8
+        "fan_out": 17
       },
       "suggestion": "Remove `LLMClient.call` — 0 callers detected",
       "callers": []
@@ -2814,7 +2867,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 17
+        "fan_out": 23
       },
       "suggestion": "Remove `PageBuilder._build_page_from_spec` — 0 callers detected",
       "callers": []
@@ -3270,7 +3323,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 0
+        "fan_out": 1
       },
       "suggestion": "Remove `SqliteStore.__init__` — 0 callers detected",
       "callers": []
@@ -3366,7 +3419,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 12
+        "fan_out": 13
       },
       "suggestion": "Remove `SqliteStore.copy_unchanged_relationships` — 0 callers detected",
       "callers": []
@@ -3378,7 +3431,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 12
+        "fan_out": 13
       },
       "suggestion": "Remove `SqliteStore.copy_unchanged_symbols` — 0 callers detected",
       "callers": []
@@ -3462,7 +3515,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 4
+        "fan_out": 3
       },
       "suggestion": "Remove `SqliteStore.get_all_symbols` — 0 callers detected",
       "callers": []
@@ -3690,7 +3743,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 5
+        "fan_out": 6
       },
       "suggestion": "Remove `SqliteStore.upsert_files_batch` — 0 callers detected",
       "callers": []
@@ -3726,7 +3779,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 5
+        "fan_out": 6
       },
       "suggestion": "Remove `SqliteStore.upsert_page_sources` — 0 callers detected",
       "callers": []
@@ -3738,7 +3791,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 11
+        "fan_out": 12
       },
       "suggestion": "Remove `SqliteStore.upsert_pages_batch` — 0 callers detected",
       "callers": []
@@ -3973,6 +4026,18 @@
     },
     {
       "kind": "dead_code",
+      "symbol": "WikiPlan.default",
+      "file": "src/rekipedia/synthesis/planner.py",
+      "severity": "low",
+      "metrics": {
+        "fan_in": 0,
+        "fan_out": 9
+      },
+      "suggestion": "Remove `WikiPlan.default` — 0 callers detected",
+      "callers": []
+    },
+    {
+      "kind": "dead_code",
       "symbol": "WikiPlan.get_page",
       "file": "src/rekipedia/synthesis/planner.py",
       "severity": "low",
@@ -4074,7 +4139,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 1
+        "fan_out": 2
       },
       "suggestion": "Remove `_StoreCache.__init__` — 0 callers detected",
       "callers": []
@@ -4110,9 +4175,21 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 3
+        "fan_out": 4
       },
       "suggestion": "Remove `_StoreCache._refresh` — 0 callers detected",
+      "callers": []
+    },
+    {
+      "kind": "dead_code",
+      "symbol": "_StoreCache._resolve_db_path",
+      "file": "src/rekipedia/cli/mcp_server.py",
+      "severity": "low",
+      "metrics": {
+        "fan_in": 0,
+        "fan_out": 2
+      },
+      "suggestion": "Remove `_StoreCache._resolve_db_path` — 0 callers detected",
       "callers": []
     },
     {
@@ -4350,7 +4427,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 38
+        "fan_out": 41
       },
       "suggestion": "Remove `affected_cmd` — 0 callers detected",
       "callers": []
@@ -4386,7 +4463,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 43
+        "fan_out": 59
       },
       "suggestion": "Remove `ask_cmd` — 0 callers detected",
       "callers": []
@@ -4578,7 +4655,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 75
+        "fan_out": 76
       },
       "suggestion": "Remove `diff_cmd` — 0 callers detected",
       "callers": []
@@ -4602,7 +4679,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 50
+        "fan_out": 55
       },
       "suggestion": "Remove `domain_cmd` — 0 callers detected",
       "callers": []
@@ -4626,7 +4703,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 65
+        "fan_out": 66
       },
       "suggestion": "Remove `embed_cmd` — 0 callers detected",
       "callers": []
@@ -4825,12 +4902,24 @@
     },
     {
       "kind": "dead_code",
+      "symbol": "hotspots_cmd",
+      "file": "src/rekipedia/cli/hotspots.py",
+      "severity": "low",
+      "metrics": {
+        "fan_in": 0,
+        "fan_out": 25
+      },
+      "suggestion": "Remove `hotspots_cmd` — 0 callers detected",
+      "callers": []
+    },
+    {
+      "kind": "dead_code",
       "symbol": "impact_cmd",
       "file": "src/rekipedia/cli/impact.py",
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 26
+        "fan_out": 29
       },
       "suggestion": "Remove `impact_cmd` — 0 callers detected",
       "callers": []
@@ -5274,7 +5363,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 20
+        "fan_out": 22
       },
       "suggestion": "Remove `onboard_cmd` — 0 callers detected",
       "callers": []
@@ -5454,7 +5543,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 48
+        "fan_out": 51
       },
       "suggestion": "Remove `refactor_cmd` — 0 callers detected",
       "callers": []
@@ -5598,7 +5687,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 34
+        "fan_out": 33
       },
       "suggestion": "Remove `setup_cmd` — 0 callers detected",
       "callers": []
@@ -5910,7 +5999,7 @@
       "severity": "low",
       "metrics": {
         "fan_in": 0,
-        "fan_out": 43
+        "fan_out": 46
       },
       "suggestion": "Remove `update_cmd` — 0 callers detected",
       "callers": []

@@ -3,11 +3,14 @@ classDiagram
   BaseModel <|-- AnalysisResult
   ABC <|-- BaseExtractor
   ABC <|-- BaseRunner
+  BaseModel <|-- BizDomainGraph
   VectorStore <|-- ChromaStore
   BaseExtractor <|-- ConfigExtractor
   BaseRunner <|-- DockerSandboxRunner
+  BaseModel <|-- DomainNode
   VectorStore <|-- FaissStore
   BaseModel <|-- FileManifest
+  BaseModel <|-- FlowNode
   BaseExtractor <|-- GoExtractor
   BaseExtractor <|-- JavaExtractor
   Protocol <|-- LLMCaller
@@ -17,7 +20,4 @@ classDiagram
   VectorStore <|-- QdrantStore
   BaseModel <|-- RationaleNote
   BaseModel <|-- Relationship
-  BaseExtractor <|-- RustExtractor
-  BaseModel <|-- Shard
-  BaseModel <|-- Symbol
 ```
