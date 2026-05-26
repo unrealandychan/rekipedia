@@ -95,6 +95,7 @@ def _answer_streaming(
     *,
     stream: bool = True,
     pinned_files: list[str] | None = None,
+    brief: bool = False,
 ) -> str | None:
     """Run one Q&A turn: spinner while waiting, then stream tokens via rich.Live.
 
@@ -131,6 +132,7 @@ def _answer_streaming(
                     llm_config=llm_config,
                     history=history,
                     pinned_context=pinned_files,
+                    brief=brief,
                 )
             except (RuntimeError, Exception) as exc:
                 console.print(f"[bold red]Error:[/bold red] {exc}")
@@ -149,6 +151,7 @@ def _answer_streaming(
             llm_config=llm_config,
             history=history,
             pinned_context=pinned_files,
+            brief=brief,
         )
     except (RuntimeError, Exception) as exc:
         console.print(f"[bold red]Error:[/bold red] {exc}")
@@ -214,6 +217,16 @@ def _answer_streaming(
     metavar="FILE[:SYMBOL]",
     help="Pin a file (or file:symbol) into context. Can be repeated.",
 )
+@click.option(
+    "--brief",
+    is_flag=True,
+    default=False,
+    envvar="REKIPEDIA_BRIEF",
+    help=(
+        "Brief mode — compact answer (~150 tokens): 1 paragraph + file:line citations. "
+        "Also controlled by REKIPEDIA_BRIEF=1 env var."
+    ),
+)
 def ask_cmd(
     question_arg: str | None,
     question: str | None,
@@ -225,6 +238,7 @@ def ask_cmd(
     no_rewrite: bool,
     no_stream: bool,
     pinned_files: tuple[str, ...],
+    brief: bool,
 ) -> None:
     """Interactive grounded Q&A about the scanned repository.
 
@@ -315,7 +329,7 @@ def ask_cmd(
     if single_question:
         # Single-shot mode (no session save)
         _print_banner()
-        _answer_streaming(single_question, repo, output_dir, llm_config, history=[], stream=use_stream, pinned_files=list(pinned_files))
+        _answer_streaming(single_question, repo, output_dir, llm_config, history=[], stream=use_stream, pinned_files=list(pinned_files), brief=brief)
         return
 
     # Interactive REPL
@@ -352,6 +366,6 @@ def ask_cmd(
             _save_session()
             break
 
-        answer = _answer_streaming(user_input, repo, output_dir, llm_config, history=list(history), stream=use_stream, pinned_files=list(pinned_files))
+        answer = _answer_streaming(user_input, repo, output_dir, llm_config, history=list(history), stream=use_stream, pinned_files=list(pinned_files), brief=brief)
         if answer:
             _append_history(user_input, answer)

@@ -22,6 +22,13 @@ from rekipedia.storage.sqlite_store import SqliteStore
 
 _SYSTEM_PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "ask_system.md"
 
+_BRIEF_SYSTEM_SUFFIX = (
+    "\n\n## BRIEF MODE\n"
+    "Answer in ONE paragraph (max 3 sentences). "
+    "Then list up to 5 file:line citations. "
+    "No prose beyond the paragraph."
+)
+
 # Approximate character budget for context (≈ 24 K tokens at ~4 chars/token).
 # Keeps us safely within the context window of most models.
 _CONTEXT_CHAR_BUDGET = 96_000
@@ -267,6 +274,7 @@ def _build_full_system(
     output_dir: Path,
     llm_config: LLMConfig,
     pinned_context: str = "",
+    brief: bool = False,
 ) -> str:
     """Assemble the system prompt + all context sources."""
     system_prompt = _SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
@@ -363,7 +371,10 @@ def _build_full_system(
             context_parts.append(sym_section)
 
     context = "\n\n".join(context_parts)
-    return f"{system_prompt}\n\n{context}"
+    full = f"{system_prompt}\n\n{context}"
+    if brief:
+        full += _BRIEF_SYSTEM_SUFFIX
+    return full
 
 
 # ---------------------------------------------------------------------------
@@ -377,6 +388,7 @@ def _prepare_ask(
     llm_config: LLMConfig | None,
     history: list[dict] | None,
     pinned_context: str = "",
+    brief: bool = False,
 ) -> tuple[LLMClient, str]:
     """Validate scan, build system prompt, and init LLM client.
 
@@ -386,7 +398,7 @@ def _prepare_ask(
     """
     llm_config = llm_config or LLMConfig()
     _verify_scan(output_dir, repo_root)
-    full_system = _build_full_system(question, output_dir, llm_config, pinned_context=pinned_context)
+    full_system = _build_full_system(question, output_dir, llm_config, pinned_context=pinned_context, brief=brief)
     client = LLMClient(llm_config)
     return client, full_system
 
@@ -402,6 +414,7 @@ def run_ask(
     llm_config: LLMConfig | None = None,
     history: list[dict] | None = None,
     pinned_context: list[str] | None = None,
+    brief: bool = False,
 ) -> str:
     """Answer *question* grounded in the knowledge store.
 
@@ -412,6 +425,8 @@ def run_ask(
         llm_config: LLM settings; defaults to LLMConfig().
         history: Previous conversation turns as [{role, content}, ...].
         pinned_context: List of file[:symbol] strings to pin into context.
+        brief: If True, use compact answer mode (~150 tokens, 1 paragraph + citations).
+               Also activated by REKIPEDIA_BRIEF=1 env var.
 
     Returns:
         The assistant's answer as a Markdown string.
@@ -420,11 +435,12 @@ def run_ask(
         RuntimeError: If no successful scan exists for the repo.
     """
     import os as _os
+    brief = brief or _os.environ.get("REKIPEDIA_BRIEF", "0") == "1"
     if _os.environ.get("REKIPEDIA_AGENT_ASK", "0") == "1":
         from rekipedia.orchestrator.agent_ask import agent_run_ask
         return agent_run_ask(question, repo_root, output_dir, llm_config, history)
     pinned_str = _load_pinned_context(pinned_context or [], repo_root)
-    client, full_system = _prepare_ask(question, repo_root, output_dir, llm_config, history, pinned_context=pinned_str)
+    client, full_system = _prepare_ask(question, repo_root, output_dir, llm_config, history, pinned_context=pinned_str, brief=brief)
     return client.call(question, system=full_system, history=history)
 
 
@@ -435,12 +451,15 @@ def stream_ask(
     llm_config: LLMConfig | None = None,
     history: list[dict] | None = None,
     pinned_context: list[str] | None = None,
+    brief: bool = False,
 ) -> Iterator[str]:
     """Answer *question* grounded in the knowledge store, streaming tokens.
 
     Identical to :func:`run_ask` except the final LLM call uses streaming
     and yields text chunks instead of returning a single string.
     """
+    import os as _os
+    brief = brief or _os.environ.get("REKIPEDIA_BRIEF", "0") == "1"
     pinned_str = _load_pinned_context(pinned_context or [], repo_root)
-    client, full_system = _prepare_ask(question, repo_root, output_dir, llm_config, history, pinned_context=pinned_str)
+    client, full_system = _prepare_ask(question, repo_root, output_dir, llm_config, history, pinned_context=pinned_str, brief=brief)
     return client.stream(question, system=full_system, history=history)

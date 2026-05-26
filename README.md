@@ -68,6 +68,18 @@ reki export . --format md  # export full wiki to markdown
 
 ---
 
+### `reki ask` — Brief mode
+
+```bash
+# Brief mode — ~150 tokens, summary + citations only
+reki ask "what does Scanner.scan() do?" --brief
+
+# Or via env var (useful for piping)
+REKIPEDIA_BRIEF=1 reki ask "entry point?" | grep 'src/'
+```
+
+---
+
 ## LLM Setup
 
 rekipedia uses [litellm](https://github.com/BerriAI/litellm) and supports any provider:
