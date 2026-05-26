@@ -304,6 +304,13 @@ class PageBuilder:
             raw = self._client.call(user_prompt, system=self._system)
             title, content = _parse_llm_response(raw, slug)
         except Exception as exc:
+            if "contextwindow" in type(exc).__name__.lower() or "token" in str(exc).lower():
+                import logging as _logging
+                _logging.getLogger("rekipedia.synthesis").warning(
+                    "Page %s: context window exceeded even after truncation — writing stub", slug
+                )
+                stub = f"# {title_hint}\n\n> *This page could not be generated: the codebase section was too large for the model context window. Try scanning with a model with larger context (e.g. gemini-1.5-pro).*\n"
+                return (title_hint, stub)
             title = title_hint
             content = f"# {title}\n\n> *LLM synthesis failed: {exc}*\n"
 

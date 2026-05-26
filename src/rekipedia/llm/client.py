@@ -141,23 +141,45 @@ class LLMClient:
         Retries up to ``_MAX_RETRIES`` times on timeout / 5xx errors.
         Raises ``litellm.exceptions.APIError`` on non-retryable upstream errors.
         """
-        messages: list[dict[str, str]] = []
-        if system:
-            messages.append({"role": "system", "content": system})
-        if history:
-            messages.extend(history)
-        messages.append({"role": "user", "content": prompt})
+        _original_prompt = prompt
+        _MAX_TRUNCATION_ATTEMPTS = 4
+        for _trunc_attempt in range(_MAX_TRUNCATION_ATTEMPTS + 1):
+            messages: list[dict[str, str]] = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            if history:
+                messages.extend(history)
+            messages.append({"role": "user", "content": prompt})
 
-        kwargs = {**self._base_kwargs(), "messages": messages}
-        if timeout is not None:
-            kwargs["timeout"] = timeout
+            kwargs = {**self._base_kwargs(), "messages": messages}
+            if timeout is not None:
+                kwargs["timeout"] = timeout
 
-        def _call():
-            response = litellm.completion(**kwargs)
-            TOKEN_COUNTER.add(getattr(response, "usage", None))
-            return response.choices[0].message.content or ""
+            def _call():
+                response = litellm.completion(**kwargs)
+                TOKEN_COUNTER.add(getattr(response, "usage", None))
+                return response.choices[0].message.content or ""
 
-        return _with_retry(_call)
+            try:
+                return _with_retry(_call)
+            except Exception as exc:
+                _exc_str = str(exc).lower()
+                _is_ctx = (
+                    "contextwindow" in type(exc).__name__.lower()
+                    or "contextwindowexceeded" in _exc_str
+                    or ("token" in _exc_str and "limit" in _exc_str)
+                    or ("context" in _exc_str and "length" in _exc_str)
+                )
+                if not _is_ctx or _trunc_attempt >= _MAX_TRUNCATION_ATTEMPTS:
+                    raise
+                # Truncate prompt by 25% per attempt
+                keep_ratio = 0.75 ** (_trunc_attempt + 1)
+                new_len = max(1, int(len(_original_prompt) * keep_ratio))
+                prompt = _original_prompt[:new_len]
+                logger.warning(
+                    "Prompt too long — truncating to %d chars (attempt %d/%d)",
+                    new_len, _trunc_attempt + 1, _MAX_TRUNCATION_ATTEMPTS,
+                )
 
     def stream(self, prompt: str, *, system: str = "", history: list[dict] | None = None) -> Iterator[str]:
         """Stream response tokens as an iterator of text chunks.
