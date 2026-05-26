@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-import yaml
+
 import pytest
+import yaml
 
 ACTION_YML = Path(__file__).parent.parent / "action.yml"
 EXAMPLE_WF = Path(__file__).parent.parent / "examples" / "wiki.yml"

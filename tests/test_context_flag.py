@@ -2,13 +2,9 @@
 from __future__ import annotations
 
 import textwrap
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from rekipedia.orchestrator.run_ask import _load_pinned_context, _build_full_system
-
+from rekipedia.orchestrator.run_ask import _build_full_system, _load_pinned_context
 
 # ---------------------------------------------------------------------------
 # _load_pinned_context tests

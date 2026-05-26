@@ -5,9 +5,6 @@ import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
-
 # ---------------------------------------------------------------------------
 # Helpers — build an in-memory-like SqliteStore with mock data
 # ---------------------------------------------------------------------------

@@ -1,9 +1,8 @@
 """Tests for cross-module summary and relationship fields in _build_payload."""
 from __future__ import annotations
 
-import pytest
+from rekipedia.models.contracts import AnalysisResult, Relationship, Symbol
 from rekipedia.synthesis.page_builder import _build_cross_module_summary, _build_payload
-from rekipedia.models.contracts import AnalysisResult, Symbol, Relationship
 
 
 def _make_result(relationships=None, symbols=None, files_seen=None):

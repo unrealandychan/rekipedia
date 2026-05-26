@@ -4,10 +4,9 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
-import numpy as np
-import pytest
+from unittest.mock import MagicMock, patch
 
+import numpy as np
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
@@ -15,8 +14,8 @@ import pytest
 
 def _make_pipeline(tmp_path):
     """Create an EmbedPipeline instance pointing at tmp_path."""
-    from rekipedia.rag.embedder import EmbedPipeline
     from rekipedia.models.contracts import LLMConfig
+    from rekipedia.rag.embedder import EmbedPipeline
 
     cfg = LLMConfig(model="gpt-4", api_key="sk-test")
     pipe = EmbedPipeline(tmp_path, cfg)
@@ -34,8 +33,8 @@ def _write_dummy_chunks(rag_dir: Path, chunks: list[dict]):
 
 def test_chunks_loaded_once(tmp_path):
     """json.loads should be called only once even when search() is called twice."""
-    from rekipedia.rag.embedder import EmbedPipeline, _RAG_DIR, _CHUNKS_FILE, _INDEX_FILE
     from rekipedia.models.contracts import LLMConfig
+    from rekipedia.rag.embedder import _RAG_DIR, EmbedPipeline
 
     rag_dir = tmp_path / _RAG_DIR
     chunks = [{"file": "a.py", "chunk_idx": 0, "text": "hello", "is_implementation": True, "score": 0.9}]
@@ -81,8 +80,8 @@ def test_chunks_loaded_once(tmp_path):
 
 def test_no_double_embedding(tmp_path):
     """_embed_batch should be called only once per search() call even with MMR enabled."""
-    from rekipedia.rag.embedder import EmbedPipeline, _RAG_DIR
     import rekipedia.rag.embedder as emb_mod
+    from rekipedia.rag.embedder import _RAG_DIR, EmbedPipeline
 
     rag_dir = tmp_path / _RAG_DIR
     chunks = [
@@ -153,9 +152,9 @@ def test_mmr_chunk_lookup_dict():
 
 def test_rate_limit_sleep_off_by_default(tmp_path):
     """time.sleep should NOT be called when REKIPEDIA_EMBED_RATE_LIMIT is not set."""
-    from rekipedia.rag.embedder import EmbedPipeline, _RAG_DIR
     import rekipedia.rag.embedder as emb_mod
     from rekipedia.models.contracts import LLMConfig
+    from rekipedia.rag.embedder import EmbedPipeline
 
     cfg = LLMConfig(model="gpt-4", api_key="sk-test")
     pipe = EmbedPipeline(tmp_path, cfg)
@@ -178,9 +177,9 @@ def test_rate_limit_sleep_off_by_default(tmp_path):
 
 def test_rate_limit_sleep_on_when_env_set(tmp_path):
     """time.sleep SHOULD be called when REKIPEDIA_EMBED_RATE_LIMIT=1."""
-    from rekipedia.rag.embedder import EmbedPipeline, _RAG_DIR
     import rekipedia.rag.embedder as emb_mod
     from rekipedia.models.contracts import LLMConfig
+    from rekipedia.rag.embedder import EmbedPipeline
 
     cfg = LLMConfig(model="gpt-4", api_key="sk-test")
     pipe = EmbedPipeline(tmp_path, cfg)
@@ -210,9 +209,9 @@ def test_rate_limit_sleep_on_when_env_set(tmp_path):
 
 def test_stream_faiss_build(tmp_path):
     """FAISS index.add should be called once per batch (not once for all)."""
-    from rekipedia.rag.embedder import EmbedPipeline, _EMBED_BATCH
     import rekipedia.rag.embedder as emb_mod
     from rekipedia.models.contracts import LLMConfig
+    from rekipedia.rag.embedder import EmbedPipeline
 
     cfg = LLMConfig(model="gpt-4", api_key="sk-test")
     pipe = EmbedPipeline(tmp_path, cfg)

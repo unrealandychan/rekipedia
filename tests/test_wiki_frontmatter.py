@@ -82,7 +82,9 @@ def test_existing_frontmatter_stripped_and_rebuilt():
     # Old garbage field stripped
     assert "0.9.23" not in result
     # importance preserved from old frontmatter
-    import yaml, re as _re
+    import re as _re
+
+    import yaml
     m = _re.match(r"^---\n(.*?)\n---", result, _re.DOTALL)
     data = yaml.safe_load(m.group(1))
     assert data["importance"] == 75

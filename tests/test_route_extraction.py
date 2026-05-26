@@ -12,21 +12,17 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 from rekipedia.extractors.route_patterns import (
-    PYTHON_ROUTE_PATTERNS,
-    TYPESCRIPT_ROUTE_PATTERNS,
     GO_ROUTE_PATTERNS,
+    PYTHON_ROUTE_PATTERNS,
     RUST_ROUTE_PATTERNS,
+    TYPESCRIPT_ROUTE_PATTERNS,
+    _clean_path,
     extract_routes_from_line,
     normalise_method,
-    _clean_path,
 )
 from rekipedia.models.contracts import Symbol
-
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -36,8 +32,9 @@ def _sym_names_of_kind(symbols, kind="route"):
 
 
 def _extract_py(source: str, filename: str = "app.py"):
+    import tempfile
+
     from rekipedia.extractors.python_extractor import PythonExtractor
-    import tempfile, os
     ext = PythonExtractor()
     with tempfile.TemporaryDirectory() as tmp:
         fpath = Path(tmp) / filename
@@ -46,8 +43,9 @@ def _extract_py(source: str, filename: str = "app.py"):
 
 
 def _extract_ts(source: str, filename: str = "server.ts"):
-    from rekipedia.extractors.typescript_extractor import TypeScriptExtractor
     import tempfile
+
+    from rekipedia.extractors.typescript_extractor import TypeScriptExtractor
     ext = TypeScriptExtractor()
     with tempfile.TemporaryDirectory() as tmp:
         fpath = Path(tmp) / filename
@@ -56,8 +54,9 @@ def _extract_ts(source: str, filename: str = "server.ts"):
 
 
 def _extract_go(source: str, filename: str = "main.go"):
-    from rekipedia.extractors.go_extractor import GoExtractor
     import tempfile
+
+    from rekipedia.extractors.go_extractor import GoExtractor
     ext = GoExtractor()
     with tempfile.TemporaryDirectory() as tmp:
         fpath = Path(tmp) / filename
@@ -66,8 +65,9 @@ def _extract_go(source: str, filename: str = "main.go"):
 
 
 def _extract_rust(source: str, filename: str = "main.rs"):
-    from rekipedia.extractors.rust_extractor import RustExtractor
     import tempfile
+
+    from rekipedia.extractors.rust_extractor import RustExtractor
     ext = RustExtractor()
     with tempfile.TemporaryDirectory() as tmp:
         fpath = Path(tmp) / filename
@@ -254,8 +254,9 @@ class TestTypescriptRouteExtraction:
 
     def test_nextjs_api_route_inferred(self):
         src = "export default function handler(req, res) { res.json({ok: true}); }\n"
-        from rekipedia.extractors.typescript_extractor import TypeScriptExtractor
         import tempfile
+
+        from rekipedia.extractors.typescript_extractor import TypeScriptExtractor
         ext = TypeScriptExtractor()
         with tempfile.TemporaryDirectory() as tmp:
             # create nested directory structure
@@ -343,7 +344,8 @@ class TestSymbolKindRoute:
         assert sym.kind == "route"
 
     def test_route_kind_in_literal(self):
-        from rekipedia.models.contracts import SymbolKind
         import typing
+
+        from rekipedia.models.contracts import SymbolKind
         args = typing.get_args(SymbolKind)
         assert "route" in args

@@ -1,10 +1,7 @@
 """Tests for --focus flag in reki scan (#134)."""
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call
-import pytest
-
+from unittest.mock import MagicMock, patch
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -127,6 +124,7 @@ def test_scan_cmd_focus_has_envvar():
 def test_scan_cmd_passes_focus_to_run_digest(tmp_path):
     """--focus is forwarded as focus_globs= to run_digest."""
     from click.testing import CliRunner
+
     from rekipedia.cli.scan import scan_cmd
 
     runner = CliRunner()
@@ -144,6 +142,7 @@ def test_scan_cmd_passes_focus_to_run_digest(tmp_path):
 def test_scan_cmd_focus_displayed_in_output(tmp_path):
     """--focus patterns should be shown in the scan startup output."""
     from click.testing import CliRunner
+
     from rekipedia.cli.scan import scan_cmd
 
     runner = CliRunner()
@@ -161,6 +160,7 @@ def test_scan_cmd_focus_displayed_in_output(tmp_path):
 def test_run_digest_accepts_focus_globs_param():
     """run_digest signature must include focus_globs."""
     import inspect
+
     from rekipedia.orchestrator.run_digest import run_digest
     sig = inspect.signature(run_digest)
     assert "focus_globs" in sig.parameters
@@ -168,6 +168,7 @@ def test_run_digest_accepts_focus_globs_param():
 
 def test_run_digest_focus_globs_defaults_to_none():
     import inspect
+
     from rekipedia.orchestrator.run_digest import run_digest
     sig = inspect.signature(run_digest)
     assert sig.parameters["focus_globs"].default is None
@@ -175,8 +176,8 @@ def test_run_digest_focus_globs_defaults_to_none():
 
 def test_run_digest_focus_filters_files(tmp_path):
     """Integration: with focus_globs, only matching files reach the shard planner."""
-    from rekipedia.orchestrator.run_digest import run_digest
     from rekipedia.models.contracts import LLMConfig
+    from rekipedia.orchestrator.run_digest import run_digest
 
     # Create a minimal fake repo with two files
     (tmp_path / "src").mkdir()

@@ -16,7 +16,6 @@ from rekipedia.analysis.refactor_enricher import (
 )
 from rekipedia.models.contracts import AnalysisResult, Relationship, Symbol
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
 

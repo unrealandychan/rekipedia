@@ -2,26 +2,16 @@
 from __future__ import annotations
 
 import json
-import threading
 import time
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call
-import tempfile
-
-import pytest
+from unittest.mock import patch
 
 from rekipedia.watcher.watcher import (
     _is_source_file,
-    _SOURCE_EXTENSIONS,
     _RepoWatcher,
     add_repo,
-    remove_repo,
     list_repos,
-    _load_config,
-    _save_config,
-    CONFIG_PATH,
+    remove_repo,
 )
-
 
 # ── _is_source_file ───────────────────────────────────────────────────────────
 
@@ -195,6 +185,7 @@ class TestConfigCRUD:
 class TestWatchCLI:
     def test_watch_add_command(self, tmp_path):
         from click.testing import CliRunner
+
         from rekipedia.cli.watch import watch_cmd
         runner = CliRunner()
         cfg_path = tmp_path / "watch.json"
@@ -204,6 +195,7 @@ class TestWatchCLI:
 
     def test_watch_list_command_empty(self, tmp_path):
         from click.testing import CliRunner
+
         from rekipedia.cli.watch import watch_cmd
         runner = CliRunner()
         cfg_path = tmp_path / "watch.json"
@@ -213,6 +205,7 @@ class TestWatchCLI:
 
     def test_watch_remove_command(self, tmp_path):
         from click.testing import CliRunner
+
         from rekipedia.cli.watch import watch_cmd
         runner = CliRunner()
         cfg_path = tmp_path / "watch.json"
@@ -224,6 +217,7 @@ class TestWatchCLI:
     def test_watch_start_no_watchdog(self, tmp_path):
         """Should print a helpful message when watchdog not installed."""
         from click.testing import CliRunner
+
         from rekipedia.cli.watch import watch_cmd
         runner = CliRunner()
         cfg_path = tmp_path / "watch.json"
@@ -236,6 +230,7 @@ class TestWatchCLI:
     def test_watch_start_with_path(self, tmp_path):
         """start <path> should call start_watching with that path."""
         from click.testing import CliRunner
+
         from rekipedia.cli.watch import watch_cmd
         runner = CliRunner()
         with patch("rekipedia.watcher.watcher.start_watching") as mock_sw:
@@ -249,6 +244,7 @@ class TestWatchCLI:
     def test_watch_start_no_path_uses_registered(self, tmp_path):
         """start with no path should pass repos=None (uses registered list)."""
         from click.testing import CliRunner
+
         from rekipedia.cli.watch import watch_cmd
         runner = CliRunner()
         with patch("rekipedia.watcher.watcher.start_watching") as mock_sw:

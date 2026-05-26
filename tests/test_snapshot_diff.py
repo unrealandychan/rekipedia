@@ -1,10 +1,13 @@
 """Tests for snapshot save/load/diff functionality."""
 from __future__ import annotations
-import json
-import pytest
-from pathlib import Path
+
 from rekipedia.models.contracts import AnalysisResult
-from rekipedia.orchestrator.snapshot import save_snapshot, load_snapshot, list_snapshots, diff_snapshots
+from rekipedia.orchestrator.snapshot import (
+    diff_snapshots,
+    list_snapshots,
+    load_snapshot,
+    save_snapshot,
+)
 
 
 def make_ar(symbols=None, relationships=None):

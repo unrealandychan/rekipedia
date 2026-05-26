@@ -11,7 +11,7 @@ Builds a structured guide from existing rekipedia data:
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -139,7 +139,7 @@ def build_onboard_guide(store_path: Path, repo_root: Path) -> dict:
 
     return {
         "repo": str(repo_root),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "overview": overview,
         "getting_started": steps,
         "key_modules": key_modules,

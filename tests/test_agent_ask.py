@@ -3,15 +3,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
-import pytest
-
+from rekipedia.models.contracts import LLMConfig
 from rekipedia.orchestrator.agent_ask import AgentAsk, _ToolHandler
 from rekipedia.synthesis.agent_planner import AgentPlanner
-from rekipedia.models.contracts import LLMConfig
 from rekipedia.synthesis.planner import WikiPlan
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -285,8 +282,9 @@ def test_run_ask_uses_agent_when_env_set(tmp_path, monkeypatch):
     monkeypatch.setenv("REKIPEDIA_AGENT_ASK", "1")
 
     with patch("rekipedia.orchestrator.agent_ask.agent_run_ask", return_value="agent answer") as mock_agent:
-        from rekipedia.orchestrator import run_ask as run_ask_module
         import importlib
+
+        from rekipedia.orchestrator import run_ask as run_ask_module
         importlib.reload(run_ask_module)
 
         # Patch the env check inside the freshly reloaded module
@@ -299,5 +297,5 @@ def test_run_ask_uses_agent_when_env_set(tmp_path, monkeypatch):
         import os
         assert os.environ.get("REKIPEDIA_AGENT_ASK") == "1"
         # The routing happens inside run_ask; verify the import path exists
-        from rekipedia.orchestrator.agent_ask import agent_run_ask  # noqa: F401
+        from rekipedia.orchestrator.agent_ask import agent_run_ask
         assert callable(agent_run_ask)

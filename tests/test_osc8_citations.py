@@ -1,12 +1,8 @@
 """Tests for OSC-8 clickable citations (#130)."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-import pytest
-
+from unittest.mock import MagicMock, patch
 
 # ── terminal_links module ─────────────────────────────────────────────────────
 
@@ -14,6 +10,7 @@ class TestOsc8Supported:
     def test_force_off(self, monkeypatch):
         monkeypatch.setenv("REKIPEDIA_OSC8", "0")
         from importlib import reload
+
         import rekipedia.utils.terminal_links as m
         reload(m)
         assert m.osc8_supported() is False
@@ -21,6 +18,7 @@ class TestOsc8Supported:
     def test_force_on(self, monkeypatch):
         monkeypatch.setenv("REKIPEDIA_OSC8", "1")
         from importlib import reload
+
         import rekipedia.utils.terminal_links as m
         reload(m)
         # isatty check skipped when forced on
@@ -29,6 +27,7 @@ class TestOsc8Supported:
     def test_no_tty_returns_false(self, monkeypatch):
         monkeypatch.delenv("REKIPEDIA_OSC8", raising=False)
         from importlib import reload
+
         import rekipedia.utils.terminal_links as m
         reload(m)
         with patch("sys.stdout") as mock_stdout:
@@ -39,6 +38,7 @@ class TestOsc8Supported:
         monkeypatch.setenv("REKIPEDIA_OSC8", "")
         monkeypatch.setenv("TERM_PROGRAM", "iTerm.app")
         from importlib import reload
+
         import rekipedia.utils.terminal_links as m
         reload(m)
         with patch("sys.stdout") as mock_stdout:
@@ -49,6 +49,7 @@ class TestOsc8Supported:
         monkeypatch.setenv("REKIPEDIA_OSC8", "")
         monkeypatch.setenv("TERM_PROGRAM", "WezTerm")
         from importlib import reload
+
         import rekipedia.utils.terminal_links as m
         reload(m)
         with patch("sys.stdout") as mock_stdout:
@@ -60,6 +61,7 @@ class TestOsc8Supported:
         monkeypatch.delenv("TERM_PROGRAM", raising=False)
         monkeypatch.setenv("COLORTERM", "truecolor")
         from importlib import reload
+
         import rekipedia.utils.terminal_links as m
         reload(m)
         with patch("sys.stdout") as mock_stdout:
@@ -73,6 +75,7 @@ class TestOsc8Supported:
         monkeypatch.delenv("TERM", raising=False)
         monkeypatch.setenv("WT_SESSION", "some-uuid")
         from importlib import reload
+
         import rekipedia.utils.terminal_links as m
         reload(m)
         with patch("sys.stdout") as mock_stdout:
@@ -135,7 +138,6 @@ class TestFileHyperlink:
 
     def test_default_repo_root_is_cwd(self):
         from rekipedia.utils import terminal_links as m
-        from pathlib import Path
         with patch.object(m, "osc8_supported", return_value=True):
             with patch.object(Path, "cwd", return_value=Path("/cwd")):
                 result = m.file_hyperlink("src/api.py")
@@ -150,8 +152,8 @@ class TestPrintCitations:
         mock_console.print.assert_not_called()
 
     def test_prints_header_and_citations(self):
-        from rekipedia.utils.terminal_links import print_citations
         from rekipedia.api import Citation
+        from rekipedia.utils.terminal_links import print_citations
         mock_console = MagicMock()
         citations = [
             Citation(file="src/api.py", line=10),
@@ -164,8 +166,8 @@ class TestPrintCitations:
         assert "src/utils.py" in full_output
 
     def test_creates_console_if_none(self):
-        from rekipedia.utils.terminal_links import print_citations
         from rekipedia.api import Citation
+        from rekipedia.utils.terminal_links import print_citations
         # Should not raise
         print_citations([Citation(file="src/foo.py")], repo_root="/repo")
 
@@ -207,6 +209,7 @@ class TestParseCitations:
 class TestPrintAnswerCitations:
     def test_called_after_non_stream_answer(self, tmp_path):
         from click.testing import CliRunner
+
         from rekipedia.cli.ask import ask_cmd
 
         runner = CliRunner()

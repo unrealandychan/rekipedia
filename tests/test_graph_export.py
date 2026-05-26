@@ -1,6 +1,4 @@
-import pytest
-from rekipedia.analysis.graph_export import export_graphml, export_cypher, export_obsidian
-from pathlib import Path
+from rekipedia.analysis.graph_export import export_cypher, export_graphml, export_obsidian
 
 SYMS = [{'name': 'MyClass', 'kind': 'class', 'file': 'src/myclass.py'},
         {'name': 'my_func', 'kind': 'function', 'file': 'src/myclass.py'}]

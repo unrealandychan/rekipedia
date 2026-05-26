@@ -259,7 +259,6 @@ def ask_cmd(
     """
     import datetime
     import json as _json
-
     import sys
 
     repo = repo.resolve()

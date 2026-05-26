@@ -1,19 +1,17 @@
 """Tests for --doc-type flag for reki scan (#126)."""
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
 
+from rekipedia.models.contracts import LLMConfig
 from rekipedia.synthesis.doc_types import (
     DOC_TYPE_CHOICES,
     doc_type_preamble,
 )
 from rekipedia.synthesis.page_builder import PageBuilder
-from rekipedia.models.contracts import LLMConfig
-
 
 # ── doc_types module ──────────────────────────────────────────────────────────
 

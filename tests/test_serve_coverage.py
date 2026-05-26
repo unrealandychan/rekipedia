@@ -2,9 +2,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
-from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,7 +9,6 @@ from fastapi.testclient import TestClient
 from rekipedia.models.contracts import LLMConfig
 from rekipedia.server.app import create_app
 from rekipedia.storage.sqlite_store import SqliteStore
-
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
 

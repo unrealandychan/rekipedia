@@ -1,18 +1,14 @@
 """Coverage tests for rekipedia sandbox/runner.py."""
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
-from rekipedia.models.contracts import Shard, FileManifest
+from rekipedia.models.contracts import FileManifest, Shard
 from rekipedia.sandbox.runner import (
     DockerSandboxRunner,
     LocalRunner,
     get_runner,
 )
-
 
 # ── LocalRunner ───────────────────────────────────────────────────────────────
 

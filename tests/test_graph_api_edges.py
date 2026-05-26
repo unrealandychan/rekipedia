@@ -1,11 +1,7 @@
 """Tests for the multi-strategy edge ID resolution in the graph API."""
 from __future__ import annotations
 
-import os
-import sys
 import tempfile
-import pathlib
-import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers — replicate the resolve_id logic from app.py so we can unit test it
@@ -102,12 +98,13 @@ def test_self_loop_dropped():
 
 def test_graph_api_returns_edges():
     """End-to-end: file-level graph — beta.py imports alpha.py → edge appears."""
-    import tempfile
     from pathlib import Path
+
     from fastapi.testclient import TestClient
+
+    from rekipedia.models.contracts import LLMConfig
     from rekipedia.server.app import create_app
     from rekipedia.storage.sqlite_store import SqliteStore
-    from rekipedia.models.contracts import LLMConfig
 
     with tempfile.TemporaryDirectory() as tmpdir:
         repo = Path(tmpdir) / "repo"

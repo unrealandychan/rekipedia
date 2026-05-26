@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
 
 _LAYERS = ("API", "Service", "Data", "UI", "Utility")
 
@@ -118,7 +117,7 @@ def classify_domain(store, run_id: str, repo_root) -> dict:
 
     return {
         "repo": str(repo_root),
-        "generated_at": datetime.now(tz=timezone.utc).isoformat(),
+        "generated_at": datetime.now(tz=UTC).isoformat(),
         "total_files": len(file_layer),
         "layers": layers_result,
         "dependencies": dependencies,

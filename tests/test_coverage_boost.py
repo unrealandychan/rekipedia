@@ -9,16 +9,13 @@ These tests focus on the modules with lowest coverage:
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from click.testing import CliRunner
 
 from rekipedia.cli import main
 from rekipedia.models.contracts import LLMConfig
-
 
 # ---------------------------------------------------------------------------
 # CLI help / version smoke tests (quick coverage wins)
@@ -168,8 +165,9 @@ def test_llm_client_call_success() -> None:
 
 def test_llm_client_call_retries_on_timeout() -> None:
     """_with_retry should retry on litellm.Timeout and succeed on second attempt."""
-    from rekipedia.llm.client import LLMClient
     import litellm as _ll
+
+    from rekipedia.llm.client import LLMClient
 
     cfg = LLMConfig(model="ollama/llama4")
     client = LLMClient(cfg)
@@ -250,8 +248,9 @@ def test_build_full_system_assembles_context(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def test_embed_pipeline_build_shows_progress(tmp_path: Path) -> None:
-    from rekipedia.rag.embedder import EmbedPipeline
     import numpy as np
+
+    from rekipedia.rag.embedder import EmbedPipeline
 
     repo = tmp_path / "repo"
     repo.mkdir()

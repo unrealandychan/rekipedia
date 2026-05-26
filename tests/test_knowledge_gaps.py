@@ -1,7 +1,6 @@
 """Tests for _build_knowledge_gaps in graph_analysis."""
-import pytest
 from rekipedia.analysis.graph_analysis import _build_knowledge_gaps
-from rekipedia.models.contracts import AnalysisResult, Symbol, Relationship
+from rekipedia.models.contracts import AnalysisResult, Relationship, Symbol
 
 
 def make_result(symbols, relationships):

@@ -1,10 +1,8 @@
 """Tests for refactor_detector — graph-based static analysis metrics."""
 from __future__ import annotations
 
-import pytest
 from rekipedia.analysis.refactor_detector import (
     RefactorConfig,
-    RefactorIssue,
     detect_all,
     detect_circular_deps,
     detect_dead_code,
@@ -14,7 +12,6 @@ from rekipedia.analysis.refactor_detector import (
     detect_high_fan_out,
 )
 from rekipedia.models.contracts import Relationship, Symbol
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -9,7 +9,7 @@ All other smell types are treated as guidance-only (``action="skipped"``).
 from __future__ import annotations
 
 import difflib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any

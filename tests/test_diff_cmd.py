@@ -3,15 +3,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import subprocess
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from click.testing import CliRunner
 
 from rekipedia.cli.diff import diff_cmd
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -64,7 +62,7 @@ def test_get_changed_files_staged():
     from rekipedia.cli.diff import _get_changed_files
     with patch("rekipedia.cli.diff.subprocess.run") as mock:
         mock.return_value = _mock_run("src/foo.py\n")
-        result = _get_changed_files(Path("."), staged=True, base=None)
+        result = _get_changed_files(Path(), staged=True, base=None)
     call_args = mock.call_args[0][0]
     assert "--cached" in call_args
     assert result == ["src/foo.py"]
@@ -75,7 +73,7 @@ def test_get_changed_files_base():
     from rekipedia.cli.diff import _get_changed_files
     with patch("rekipedia.cli.diff.subprocess.run") as mock:
         mock.return_value = _mock_run("src/bar.py\n")
-        _get_changed_files(Path("."), staged=False, base="HEAD~3")
+        _get_changed_files(Path(), staged=False, base="HEAD~3")
     call_args = mock.call_args[0][0]
     assert "HEAD~3" in call_args
 
@@ -85,7 +83,7 @@ def test_get_changed_files_no_staged_no_base():
     from rekipedia.cli.diff import _get_changed_files
     calls = [_mock_run("a.py\n"), _mock_run("b.py\n")]
     with patch("rekipedia.cli.diff.subprocess.run", side_effect=calls):
-        result = _get_changed_files(Path("."), staged=False, base=None)
+        result = _get_changed_files(Path(), staged=False, base=None)
     # Union of a.py + b.py
     assert set(result) == {"a.py", "b.py"}
 

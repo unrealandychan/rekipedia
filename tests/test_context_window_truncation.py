@@ -1,12 +1,14 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 
 def test_call_truncates_on_context_window_exceeded():
     """LLMClient.call() should retry with truncated prompt on ContextWindowExceededError."""
+    import litellm
+
     from rekipedia.llm.client import LLMClient
     from rekipedia.models.contracts import LLMConfig
-    import litellm
 
     client = LLMClient(LLMConfig(model="gpt-4o", api_key="test"))
     call_count = 0
@@ -33,9 +35,10 @@ def test_call_truncates_on_context_window_exceeded():
 
 def test_call_raises_after_max_truncation_attempts():
     """LLMClient.call() should raise after exhausting truncation retries."""
+    import litellm
+
     from rekipedia.llm.client import LLMClient
     from rekipedia.models.contracts import LLMConfig
-    import litellm
 
     client = LLMClient(LLMConfig(model="gpt-4o", api_key="test"))
 

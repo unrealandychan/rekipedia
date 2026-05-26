@@ -15,7 +15,6 @@ from rekipedia.analysis.refactor_writer import (
 )
 from rekipedia.models.contracts import AnalysisResult, Relationship, Symbol
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 

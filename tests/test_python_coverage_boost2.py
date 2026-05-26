@@ -5,7 +5,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -29,8 +29,8 @@ def _make_shard_json(tmp_path: Path, files: list[dict] | None = None, root: str 
 
 class TestAnalyzeShardMerge:
     def test_merge_basic(self):
-        from rekipedia.sandbox.tasks.analyze_shard import _merge
         from rekipedia.models.contracts import AnalysisResult
+        from rekipedia.sandbox.tasks.analyze_shard import _merge
 
         target = AnalysisResult(shard_id="t", files_seen=[], entry_points=[])
         src = AnalysisResult(
@@ -138,7 +138,7 @@ class TestAnalyzeShardMain:
 
 class TestLocalRunner:
     def _make_shard(self, files=None):
-        from rekipedia.models.contracts import Shard, FileManifest, LLMConfig
+        from rekipedia.models.contracts import FileManifest, LLMConfig, Shard
         file_list = [FileManifest(path=f["path"], sha256="x", size_bytes=0) for f in (files or [])]
         return Shard(shard_id="s1", root="/tmp", files=file_list, llm=LLMConfig())
 
@@ -179,12 +179,12 @@ class TestLocalRunner:
 
 class TestDockerSandboxRunner:
     def _make_shard(self, tmp_path):
-        from rekipedia.models.contracts import Shard, LLMConfig
+        from rekipedia.models.contracts import LLMConfig, Shard
         return Shard(shard_id="docker-shard", root=str(tmp_path), files=[], llm=LLMConfig())
 
     def test_successful_run(self, tmp_path):
-        from rekipedia.sandbox.runner import DockerSandboxRunner
         from rekipedia.models.contracts import AnalysisResult
+        from rekipedia.sandbox.runner import DockerSandboxRunner
 
         expected = AnalysisResult(shard_id="docker-shard", files_seen=[], entry_points=[])
 
@@ -203,7 +203,6 @@ class TestDockerSandboxRunner:
             # Write result file in the temp dir that DockerSandboxRunner creates internally
             mock_run.return_value = MagicMock(returncode=0)
             # We need to intercept the tmpdir write. Patch tempfile.TemporaryDirectory.
-            import tempfile, contextlib
 
             class FakeTmpDir:
                 def __init__(self, *a, **kw):
@@ -228,7 +227,6 @@ class TestDockerSandboxRunner:
         shard = self._make_shard(tmp_path)
         runner = DockerSandboxRunner(image="test-img", timeout=10)
 
-        import tempfile
 
         class FakeTmpDir:
             def __init__(self, *a, **kw):
@@ -248,16 +246,16 @@ class TestDockerSandboxRunner:
 
 class TestGetRunner:
     def test_force_local(self):
-        from rekipedia.sandbox.runner import get_runner, LocalRunner
+        from rekipedia.sandbox.runner import LocalRunner, get_runner
         assert isinstance(get_runner(force_local=True), LocalRunner)
 
     def test_docker_available(self):
-        from rekipedia.sandbox.runner import get_runner, DockerSandboxRunner
+        from rekipedia.sandbox.runner import DockerSandboxRunner, get_runner
         with patch("rekipedia.sandbox.runner._docker_image_available", return_value=True):
             assert isinstance(get_runner(), DockerSandboxRunner)
 
     def test_docker_unavailable(self):
-        from rekipedia.sandbox.runner import get_runner, LocalRunner
+        from rekipedia.sandbox.runner import LocalRunner, get_runner
         with patch("rekipedia.sandbox.runner._docker_image_available", return_value=False):
             assert isinstance(get_runner(), LocalRunner)
 
@@ -308,8 +306,9 @@ class TestDockerHelpers:
 def app_client(tmp_path):
     """Create a test client for the FastAPI app."""
     from fastapi.testclient import TestClient
-    from rekipedia.server.app import create_app
+
     from rekipedia.models.contracts import LLMConfig
+    from rekipedia.server.app import create_app
 
     repo_root = tmp_path / "repo"
     repo_root.mkdir()
@@ -328,8 +327,9 @@ class TestAppRoutes:
 
     def test_index_with_wiki_pages(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -346,8 +346,9 @@ class TestAppRoutes:
 
     def test_index_with_manifest(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -368,8 +369,9 @@ class TestAppRoutes:
 
     def test_index_with_bad_manifest(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -389,8 +391,9 @@ class TestAppRoutes:
 
     def test_wiki_page_valid(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -427,8 +430,9 @@ class TestAppRoutes:
 
     def test_ask_page_with_db(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
         from rekipedia.storage.sqlite_store import SqliteStore
 
         repo_root = tmp_path / "repo"
@@ -466,8 +470,9 @@ class TestAppRoutes:
 
     def test_ask_post_saves_to_db(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
         from rekipedia.storage.sqlite_store import SqliteStore
 
         repo_root = tmp_path / "repo"
@@ -492,8 +497,9 @@ class TestAppRoutes:
 
     def test_api_history_with_db(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
         from rekipedia.storage.sqlite_store import SqliteStore
 
         repo_root = tmp_path / "repo"
@@ -517,8 +523,9 @@ class TestAppRoutes:
 
     def test_api_graph_with_db_no_run(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
         from rekipedia.storage.sqlite_store import SqliteStore
 
         repo_root = tmp_path / "repo"
@@ -538,8 +545,9 @@ class TestAppRoutes:
 
     def test_api_graph_with_data(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -571,8 +579,9 @@ class TestAppRoutes:
 
     def test_api_graph_exception(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -601,8 +610,9 @@ class TestAppRoutes:
 
     def test_api_health_ok(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
         from rekipedia.storage.sqlite_store import SqliteStore
 
         repo_root = tmp_path / "repo"
@@ -621,8 +631,9 @@ class TestAppRoutes:
 
     def test_api_health_db_error(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -639,8 +650,9 @@ class TestAppRoutes:
 
     def test_file_count_with_db(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -663,8 +675,9 @@ class TestAppRoutes:
 
     def test_file_count_db_exception(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -680,8 +693,9 @@ class TestAppRoutes:
 
     def test_summary_html_with_architecture_overview(self, tmp_path):
         from fastapi.testclient import TestClient
-        from rekipedia.server.app import create_app
+
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.server.app import create_app
 
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -757,8 +771,8 @@ class TestEmbedderHelpers:
         assert chunks[0]["file"] == "hello.py"
 
     def test_chunk_file_too_large(self, tmp_path):
-        from rekipedia.rag.embedder import _chunk_file
         import rekipedia.rag.embedder as emb
+        from rekipedia.rag.embedder import _chunk_file
         f = tmp_path / "big.md"
         f.write_text("x" * (emb._MAX_DOC_CHARS + 1))
         chunks = _chunk_file(f, tmp_path)
@@ -775,9 +789,9 @@ class TestEmbedderHelpers:
 class TestEmbedBatch:
     def test_embed_batch_with_base_url(self):
         """base_url is now passed as api_base to litellm.embedding."""
-        from rekipedia.rag.embedder import _embed_batch
+
         from rekipedia.models.contracts import LLMConfig
-        import numpy as np
+        from rekipedia.rag.embedder import _embed_batch
 
         cfg = LLMConfig(base_url="http://localhost:11434", api_key="test")
         mock_litellm = MagicMock()
@@ -792,8 +806,8 @@ class TestEmbedBatch:
 
     def test_embed_batch_with_base_url_error(self):
         """Errors from litellm when base_url is set should propagate."""
-        from rekipedia.rag.embedder import _embed_batch
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.rag.embedder import _embed_batch
 
         cfg = LLMConfig(base_url="http://localhost:11434", api_key="test")
         mock_litellm = MagicMock()
@@ -804,9 +818,9 @@ class TestEmbedBatch:
                 _embed_batch(["hello"], "openai/text-embedding-3-small", cfg)
 
     def test_embed_batch_litellm_path(self):
-        from rekipedia.rag.embedder import _embed_batch
+
         from rekipedia.models.contracts import LLMConfig
-        import numpy as np
+        from rekipedia.rag.embedder import _embed_batch
 
         cfg = LLMConfig(api_key="sk-test")  # no base_url → litellm path
         mock_litellm = MagicMock()
@@ -821,8 +835,8 @@ class TestEmbedBatch:
 
 class TestEmbedPipeline:
     def _make_pipeline(self, tmp_path):
-        from rekipedia.rag.embedder import EmbedPipeline
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.rag.embedder import EmbedPipeline
         return EmbedPipeline(tmp_path / "output", LLMConfig())
 
     def test_meta_no_file(self, tmp_path):
@@ -914,7 +928,6 @@ class TestEmbedPipeline:
         assert len(progress_calls) > 0
 
     def test_build_embed_batch_fails(self, tmp_path):
-        import numpy as np
         pipe = self._make_pipeline(tmp_path)
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
@@ -927,15 +940,15 @@ class TestEmbedPipeline:
         assert n >= 0  # returns 0 when all batches fail gracefully
 
     def test_pipeline_model_with_provider(self, tmp_path):
-        from rekipedia.rag.embedder import EmbedPipeline
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.rag.embedder import EmbedPipeline
         cfg = LLMConfig(embed_model="text-embed-small", embed_provider="openai")
         pipe = EmbedPipeline(tmp_path, cfg)
         assert pipe._model == "openai/text-embed-small"
 
     def test_pipeline_model_with_custom_base_url(self, tmp_path):
-        from rekipedia.rag.embedder import EmbedPipeline
         from rekipedia.models.contracts import LLMConfig
+        from rekipedia.rag.embedder import EmbedPipeline
         cfg = LLMConfig(embed_model="text-embed", embed_provider="openai", base_url="http://proxy")
         pipe = EmbedPipeline(tmp_path, cfg)
         # With custom base_url, don't add provider prefix

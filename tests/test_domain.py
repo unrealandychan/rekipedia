@@ -5,12 +5,10 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from click.testing import CliRunner
 
 from rekipedia.analysis.domain import _classify_file, classify_domain
 from rekipedia.cli.domain import domain_cmd
-
 
 # ── unit: _classify_file ─────────────────────────────────────────────────
 

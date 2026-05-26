@@ -148,6 +148,7 @@ def test_update_wiki_pages_refreshed_after_change(mock_llm, tmp_path):
 def test_targeted_wiki_resynthesis_only_affected_pages(mock_llm, tmp_path):
     """reki update should only re-synthesise pages whose source files changed (issue #77)."""
     import shutil
+
     from rekipedia.storage.sqlite_store import SqliteStore
 
     repo = tmp_path / "repo"
@@ -223,8 +224,11 @@ def test_get_all_page_slugs(tmp_path):
 
 def test_update_triggers_incremental_rag_embed_when_index_exists(mock_llm, tmp_path):
     """run_update() should call EmbedPipeline.update() when index exists."""
+    from unittest.mock import patch
+    from unittest.mock import patch as mpatch2
+
     import numpy as np
-    from unittest.mock import patch as mpatch2, patch
+
     from rekipedia.rag.embedder import EmbedPipeline
 
     repo = tmp_path / "repo"

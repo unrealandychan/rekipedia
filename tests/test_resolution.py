@@ -1,7 +1,6 @@
 """Tests for symbol resolution pass."""
-import pytest
-from rekipedia.models.contracts import AnalysisResult, Relationship, Symbol
 from rekipedia.analysis.resolution import resolve_relationships
+from rekipedia.models.contracts import AnalysisResult, Relationship, Symbol
 
 
 def _make_result(symbols, relationships):

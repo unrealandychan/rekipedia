@@ -1,12 +1,9 @@
 """Tests for rekipedia.config.loader (issue #143 — 3-layer merge)."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-import pytest
 import yaml
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -121,8 +118,9 @@ def test_xdg_config_home(tmp_path, monkeypatch):
 def test_get_global_config_path(tmp_path, monkeypatch):
     # Without XDG_CONFIG_HOME
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
-    from rekipedia.config import loader
     import importlib
+
+    from rekipedia.config import loader
     importlib.reload(loader)
     path = loader.get_global_config_path()
     assert path == Path.home() / ".config" / "rekipedia" / "config.yml"

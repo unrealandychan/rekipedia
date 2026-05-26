@@ -1,20 +1,16 @@
 """Tests for --brief flag and REKIPEDIA_BRIEF=1 env var in `reki ask`."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from rekipedia.models.contracts import LLMConfig
 from rekipedia.orchestrator.run_ask import (
-    _build_full_system,
     _BRIEF_SYSTEM_SUFFIX,
+    _build_full_system,
     run_ask,
     stream_ask,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper: minimal output_dir with store.db
@@ -166,6 +162,7 @@ class TestStreamAskBrief:
 class TestAskCmdBriefFlag:
     def test_brief_flag_accepted_by_cli(self, tmp_path):
         from click.testing import CliRunner
+
         from rekipedia.cli.ask import ask_cmd
 
         runner = CliRunner()
@@ -187,6 +184,7 @@ class TestAskCmdBriefFlag:
 
     def test_brief_flag_passed_to_answer_streaming(self, tmp_path):
         from click.testing import CliRunner
+
         from rekipedia.cli.ask import ask_cmd
 
         runner = CliRunner()
@@ -208,6 +206,7 @@ class TestAskCmdBriefFlag:
 
     def test_no_brief_flag_defaults_false(self, tmp_path):
         from click.testing import CliRunner
+
         from rekipedia.cli.ask import ask_cmd
 
         runner = CliRunner()

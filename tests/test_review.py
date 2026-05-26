@@ -4,12 +4,12 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from rekipedia.cli.review import _truncate_diff, run_review
 from rekipedia.models.contracts import LLMConfig
-from rekipedia.cli.review import run_review, _truncate_diff, _get_git_diff
 
 MINI_PY = Path(__file__).parent / "fixtures" / "mini-py-repo"
 
@@ -199,7 +199,6 @@ def test_run_review_uses_wiki_context(scanned_repo):
 
 def test_review_cmd_registered():
     """review_cmd should be importable and registered in the CLI."""
-    from rekipedia.cli.review import review_cmd
     from rekipedia.cli import main
     assert "review" in [cmd.name for cmd in main.commands.values()]
 
@@ -207,6 +206,7 @@ def test_review_cmd_registered():
 def test_review_cmd_with_diff_file(bare_repo, tmp_path):
     """--diff flag should read diff from file."""
     from click.testing import CliRunner
+
     from rekipedia.cli.review import review_cmd
 
     repo, output_dir = bare_repo
@@ -232,6 +232,7 @@ def test_review_cmd_with_diff_file(bare_repo, tmp_path):
 def test_review_cmd_empty_diff_exits_cleanly(bare_repo):
     """An empty diff should print a message and exit 0."""
     from click.testing import CliRunner
+
     from rekipedia.cli.review import review_cmd
 
     repo, output_dir = bare_repo

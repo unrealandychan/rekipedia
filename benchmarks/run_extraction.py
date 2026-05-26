@@ -77,6 +77,7 @@ def run_extraction_benchmark(verbose: bool = False) -> dict:
 def run_performance_benchmark(verbose: bool = False) -> dict:
     """Benchmark extraction speed using the Python fixture."""
     import time
+
     from rekipedia.extractors.python_extractor import PythonExtractor
 
     fixtures_dir = Path(__file__).parent / "fixtures"

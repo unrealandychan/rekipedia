@@ -220,6 +220,7 @@ def test_stream_ask_passes_history(scanned_repo):
 def test_ask_cmd_no_stream_flag(scanned_repo):
     """--no-stream flag should call _answer_streaming with stream=False."""
     from click.testing import CliRunner
+
     from rekipedia.cli.ask import ask_cmd
 
     repo, output_dir = scanned_repo

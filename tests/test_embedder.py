@@ -8,8 +8,9 @@ def test_mmr_requires_numpy():
     except ImportError:
         pytest.skip("numpy not available")
 
-    from rekipedia.rag.embedder import _mmr
     import numpy as np
+
+    from rekipedia.rag.embedder import _mmr
 
     # 10 vectors: first 5 are near-duplicates of [1, 0, 0]
     # last 5 are diverse (orthogonal directions)
@@ -43,8 +44,9 @@ def test_mmr_returns_all_when_small():
     except ImportError:
         pytest.skip("numpy not available")
 
-    from rekipedia.rag.embedder import _mmr
     import numpy as np
+
+    from rekipedia.rag.embedder import _mmr
 
     vecs = np.eye(3, dtype=np.float32)
     query = np.array([1.0, 0.0, 0.0], dtype=np.float32)
@@ -58,8 +60,9 @@ def test_mmr_top_k_count():
     except ImportError:
         pytest.skip("numpy not available")
 
-    from rekipedia.rag.embedder import _mmr
     import numpy as np
+
+    from rekipedia.rag.embedder import _mmr
 
     rng = np.random.default_rng(0)
     vecs = rng.random((20, 4)).astype(np.float32)

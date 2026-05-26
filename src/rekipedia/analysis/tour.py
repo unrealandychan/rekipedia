@@ -1,11 +1,10 @@
 """reki tour — build a guided learning walkthrough sorted by dependency depth."""
 from __future__ import annotations
 
-from collections import defaultdict, deque
-from datetime import datetime, timezone
+from collections import defaultdict
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 # ── phase definitions ──────────────────────────────────────────────────────
 _PHASES = [
@@ -25,7 +24,7 @@ def _get_description(file_path: str, output_dir: Path) -> str:
     if candidates:
         try:
             text = candidates[0].read_text(errors="replace")
-        except (OSError, IOError):
+        except OSError:
             return stem.replace("_", " ").capitalize()
         # skip frontmatter
         lines = text.splitlines()
@@ -151,7 +150,7 @@ def build_tour(store: Any, run_id: str, output_dir: Path) -> dict:
 
     return {
         "repo": repo_root,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "total_files": len(all_files),
         "phases": phases_out,
     }

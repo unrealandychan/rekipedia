@@ -2,24 +2,20 @@
 from __future__ import annotations
 
 import json
-import sys
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import patch
 
 import pytest
-import yaml
 
-from rekipedia.cli.ask import _load_config, _build_llm_config, _answer_streaming
+from rekipedia.cli.ask import _answer_streaming, _build_llm_config, _load_config
 from rekipedia.models.contracts import LLMConfig
 from rekipedia.orchestrator.run_ask import (
-    _verify_scan,
-    _load_wiki_pages,
-    _load_symbol_lines,
     _build_full_system,
+    _load_symbol_lines,
+    _load_wiki_pages,
+    _verify_scan,
     run_ask,
     stream_ask,
 )
-
 
 # ---------------------------------------------------------------------------
 # _load_config

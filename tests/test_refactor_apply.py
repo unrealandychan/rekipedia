@@ -9,12 +9,10 @@ from click.testing import CliRunner
 
 from rekipedia.analysis.refactor_applier import (
     AUTO_FIXABLE,
-    ApplyResult,
     apply_all,
     apply_smell,
 )
 from rekipedia.cli.refactor import refactor_cmd
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

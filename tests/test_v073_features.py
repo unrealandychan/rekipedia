@@ -5,10 +5,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
-import pytest
 
 from rekipedia.models.contracts import AnalysisResult, LLMConfig
-
 
 # ---------------------------------------------------------------------------
 # _build_planning_summary — impl/test/config file counts
@@ -86,8 +84,8 @@ def test_planning_summary_counts_sum_to_total() -> None:
 
 def test_embedder_skip_reported_in_progress(tmp_path: Path, monkeypatch) -> None:
     """Progress callback should mention skipped count when files are too large."""
-    from rekipedia.rag.embedder import EmbedPipeline
     import rekipedia.rag.embedder as emb_mod
+    from rekipedia.rag.embedder import EmbedPipeline
 
     repo = tmp_path / "repo"
     repo.mkdir()

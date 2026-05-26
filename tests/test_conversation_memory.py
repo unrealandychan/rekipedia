@@ -5,11 +5,8 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from rekipedia.llm.client import FakeCaller, LLMClient
+from rekipedia.llm.client import LLMClient
 from rekipedia.models.contracts import LLMConfig
-
 
 # ---------------------------------------------------------------------------
 # LLMClient history tests

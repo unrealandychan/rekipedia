@@ -1,7 +1,11 @@
-from rekipedia.analysis.cross_repo_search import (
-    search_all_repos, _search_single_repo, _tokenize_symbol, _score_bm25
-)
 from pathlib import Path
+
+from rekipedia.analysis.cross_repo_search import (
+    _score_bm25,
+    _search_single_repo,
+    _tokenize_symbol,
+    search_all_repos,
+)
 
 
 def test_search_no_repos():

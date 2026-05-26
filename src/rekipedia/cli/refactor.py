@@ -242,8 +242,9 @@ def _filter_llm_report(content: str, severity: str) -> str:
 
 def _run_apply_mode(repo: Path, *, apply_fixes: bool, dry_run: bool) -> None:
     """Handle --apply and/or --dry-run execution paths."""
-    from rekipedia.analysis.refactor_applier import apply_all
     import datetime
+
+    from rekipedia.analysis.refactor_applier import apply_all
 
     # Collect large-file smells from static walk
     large_file_smells: list[dict] = []
@@ -307,7 +308,7 @@ def _run_apply_mode(repo: Path, *, apply_fixes: bool, dry_run: bool) -> None:
         if res.action == "skipped":
             skipped += 1
             console.print(f"  [dim]{loc}[/dim]  [yellow]{res.smell_type}[/yellow]  {desc}")
-            console.print(f"  [dim]→ (manual fix required — skipped)[/dim]\n")
+            console.print("  [dim]→ (manual fix required — skipped)[/dim]\n")
         else:
             ready += 1
             action_verb = "Would add" if dry_run else "Added"

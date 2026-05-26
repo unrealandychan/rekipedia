@@ -164,7 +164,7 @@ def _build_hub_nodes(
     return scored[:top_n]
 
 
-def get_hub_nodes(store: "SqliteStore", run_id: str, top_n: int = 10) -> list[dict]:
+def get_hub_nodes(store: SqliteStore, run_id: str, top_n: int = 10) -> list[dict]:
     """Return top N hub nodes (most connected symbols) from the stored graph."""
     relationships = store.get_all_relationships(run_id)
     symbols = store.get_all_symbols(run_id)
@@ -174,7 +174,7 @@ def get_hub_nodes(store: "SqliteStore", run_id: str, top_n: int = 10) -> list[di
     return all_scored[:top_n]
 
 
-def get_bridge_nodes(store: "SqliteStore", run_id: str, top_n: int = 10) -> list[dict]:
+def get_bridge_nodes(store: SqliteStore, run_id: str, top_n: int = 10) -> list[dict]:
     """Return top N bridge nodes (cross-boundary connectors: high in AND high out degree)."""
     relationships = store.get_all_relationships(run_id)
     symbols = store.get_all_symbols(run_id)

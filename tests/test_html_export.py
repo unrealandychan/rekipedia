@@ -1,14 +1,11 @@
 """Tests for interactive HTML export (#129)."""
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
 from rekipedia.exporters.html_export import HtmlExporter
-
 
 # ── HtmlExporter unit tests ───────────────────────────────────────────────────
 

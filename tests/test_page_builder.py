@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from rekipedia.models.contracts import AnalysisResult, LLMConfig, Symbol
-from rekipedia.synthesis.page_builder import PageBuilder, CANONICAL_PAGES
+from rekipedia.synthesis.page_builder import CANONICAL_PAGES, PageBuilder
 
 
 @pytest.fixture()

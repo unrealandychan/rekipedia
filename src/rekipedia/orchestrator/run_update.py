@@ -33,7 +33,7 @@ _MAX_SHARD_WORKERS = 4
 
 def _compute_impact_affected_files(
     changed_paths: set[str],
-    store: "SqliteStore",
+    store: SqliteStore,
     run_id: str,
 ) -> set[str]:
     """Use BFS impact analysis to find all files transitively affected by changed_paths.

@@ -16,7 +16,7 @@ def extractor():
 
 def _extract(extractor, source: str, rel_path: str = "src/mypkg/mod.py", tmp_path=None):
     """Write source to a temp file and extract."""
-    import tempfile, os
+    import tempfile
     with tempfile.TemporaryDirectory() as td:
         td = Path(td)
         file_path = td / rel_path

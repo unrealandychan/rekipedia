@@ -2,15 +2,11 @@
 # Copyright 2026 Eddie Chan. All rights reserved.
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
-
-import pytest
 
 from rekipedia.extractors.go_extractor import GoExtractor
 from rekipedia.extractors.java_extractor import JavaExtractor
 from rekipedia.extractors.rust_extractor import RustExtractor
-
 
 # ─────────────────────────────────────────────────────────────
 # Helpers

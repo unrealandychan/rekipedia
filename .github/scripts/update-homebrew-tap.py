@@ -6,10 +6,10 @@ Usage: python3 update-homebrew-tap.py <version>
 e.g.   python3 update-homebrew-tap.py 0.9.1
 """
 
-import sys
-import os
-import json
 import base64
+import json
+import os
+import sys
 import urllib.request
 
 VERSION = sys.argv[1].lstrip("v")
@@ -95,7 +95,7 @@ if missing:
 
 
 # ── 2. Formula (Formula/rekipedia.rb) ────────────────────────────────────────
-formula = f"""# typed: false
+formula = rf"""# typed: false
 # frozen_string_literal: true
 
 class Rekipedia < Formula

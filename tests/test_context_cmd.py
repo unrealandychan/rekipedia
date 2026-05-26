@@ -4,11 +4,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
 from rekipedia.cli.context import context_cmd
-
 
 # ---------------------------------------------------------------------------
 # Helpers

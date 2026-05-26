@@ -6,7 +6,6 @@ from pathlib import Path
 
 import click
 from rich.console import Console
-from rich.rule import Rule
 
 console = Console()
 
@@ -22,8 +21,8 @@ console = Console()
 )
 def tour_cmd(repo: str, output: str | None, fmt: str) -> None:
     """Generate a guided learning walkthrough sorted by dependency depth."""
-    from rekipedia.storage.sqlite_store import SqliteStore
     from rekipedia.analysis.tour import build_tour
+    from rekipedia.storage.sqlite_store import SqliteStore
 
     repo_path = Path(repo).resolve()
     db_path = repo_path / ".rekipedia" / "store.db"

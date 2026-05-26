@@ -1,5 +1,4 @@
 """Tests for _build_hub_nodes in graph_analysis."""
-import pytest
 from rekipedia.analysis.graph_analysis import _build_hub_nodes
 
 

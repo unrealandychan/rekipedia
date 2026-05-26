@@ -2,14 +2,10 @@
 from __future__ import annotations
 
 import os
-import stat
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from rekipedia.orchestrator.snapshotter import Snapshotter
-
 
 # ── #112 Snapshotter parallel hashing ────────────────────────────────
 
@@ -58,9 +54,10 @@ def _make_analysis_result(shard_id: str):
 
 def test_run_update_parallel_shards(tmp_path: Path) -> None:
     """All shards should be processed via the parallel runner."""
-    from rekipedia.orchestrator.run_update import run_update, _MAX_SHARD_WORKERS
-    from rekipedia.models.contracts import LLMConfig
     import threading
+
+    from rekipedia.models.contracts import LLMConfig
+    from rekipedia.orchestrator.run_update import run_update
 
     call_count = 0
     lock = threading.Lock()
@@ -123,10 +120,11 @@ def test_run_update_parallel_shards(tmp_path: Path) -> None:
 
 def test_run_update_partial_failure(tmp_path: Path) -> None:
     """One shard failing should not prevent others from succeeding."""
-    from rekipedia.orchestrator.run_update import run_update
-    from rekipedia.models.contracts import LLMConfig
-    from rekipedia.storage.sqlite_store import SqliteStore
     import uuid
+
+    from rekipedia.models.contracts import LLMConfig
+    from rekipedia.orchestrator.run_update import run_update
+    from rekipedia.storage.sqlite_store import SqliteStore
 
     output_dir = tmp_path / ".rekipedia"
     output_dir.mkdir()

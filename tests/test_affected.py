@@ -2,15 +2,13 @@
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
 
-from rekipedia.cli.affected import affected_cmd, _resolve_files, _git_diff_files, _read_stdin_files
-
+from rekipedia.cli.affected import _git_diff_files, _resolve_files, affected_cmd
 
 # ── helper: build minimal fake symbols + relationships ────────────────────
 

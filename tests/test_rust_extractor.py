@@ -1,9 +1,8 @@
 """Tests for RustExtractor — tree-sitter full symbol coverage (#132)."""
 from __future__ import annotations
 
-from pathlib import Path
 import textwrap
-import pytest
+from pathlib import Path
 
 from rekipedia.extractors.rust_extractor import RustExtractor
 
@@ -12,7 +11,7 @@ EXTRACTOR = RustExtractor()
 
 def _extract(src: str, filename: str = "src/lib.rs") -> object:
     """Write src to a tmp file and extract."""
-    import tempfile, os
+    import tempfile
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp)
         file_path = repo / filename

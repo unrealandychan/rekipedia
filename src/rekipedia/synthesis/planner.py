@@ -167,7 +167,7 @@ class WikiPlan:
         return next((p for p in self.pages if p["slug"] == slug), None)
 
     @classmethod
-    def default(cls, analysis_result=None) -> "WikiPlan":
+    def default(cls, analysis_result=None) -> WikiPlan:
         """Return a minimal default plan used when --no-llm is set (no LLM call made)."""
         pages = [{"slug": "index", "title": "Overview", "importance": 100, "priority": 1, "sources": []}]
         if analysis_result is not None:

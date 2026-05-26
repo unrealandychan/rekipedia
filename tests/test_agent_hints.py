@@ -1,7 +1,7 @@
 """Tests for agent_hints module (issues #60, #61)."""
 from __future__ import annotations
+
 import json
-import pytest
 
 
 def test_write_agent_hints_creates_files(tmp_path):
@@ -16,7 +16,7 @@ def test_write_agent_hints_creates_files(tmp_path):
 
 
 def test_write_agent_hints_no_duplicate(tmp_path):
-    from rekipedia.orchestrator.agent_hints import write_agent_hints, _MARKER
+    from rekipedia.orchestrator.agent_hints import _MARKER, write_agent_hints
     write_agent_hints(tmp_path)
     write_agent_hints(tmp_path)  # second call should not duplicate
     content = (tmp_path / "CLAUDE.md").read_text()

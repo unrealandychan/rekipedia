@@ -6,12 +6,10 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from click.testing import CliRunner
 
-from rekipedia.cli.tour import tour_cmd
 from rekipedia.analysis.tour import build_tour
-
+from rekipedia.cli.tour import tour_cmd
 
 # ── helpers ────────────────────────────────────────────────────────────────
 

@@ -1,11 +1,10 @@
 """Tests for MCP server tools."""
 from __future__ import annotations
+
 import json
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from rekipedia.cli.mcp_server import _StoreCache, _handle_tool, write_mcp_json
-
+from rekipedia.cli.mcp_server import _handle_tool, _StoreCache, write_mcp_json
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

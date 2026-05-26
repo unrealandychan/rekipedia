@@ -5,11 +5,8 @@ import json
 import zipfile
 from pathlib import Path
 
-import pytest
-
 from rekipedia.models.contracts import LLMConfig
 from rekipedia.synthesis.planner import WikiPlan
-
 
 # ---------------------------------------------------------------------------
 # WikiPlan importance / nav_order sorting
@@ -85,8 +82,9 @@ def test_embed_pipeline_uses_provider_prefix(tmp_path: Path) -> None:
 
 
 def test_embed_pipeline_no_prefix_when_slash_in_model(tmp_path: Path) -> None:
-    from rekipedia.rag.embedder import EmbedPipeline
     import os
+
+    from rekipedia.rag.embedder import EmbedPipeline
     os.environ.pop("REKIPEDIA_EMBED_MODEL", None)
     os.environ.pop("REKIPEDIA_EMBED_PROVIDER", None)
     cfg = LLMConfig(embed_model="openai/text-embedding-3-small", embed_provider="openai")
@@ -133,6 +131,7 @@ def _make_wiki_dir(tmp_path: Path, pages: list[tuple[str, str]]) -> tuple[Path, 
 
 def test_export_md(tmp_path: Path) -> None:
     from click.testing import CliRunner
+
     from rekipedia.cli.export import export_cmd
 
     pages = [("index", "# Index\n\nWelcome."), ("architecture", "# Architecture\n\nDesign.")]
@@ -155,6 +154,7 @@ def test_export_md(tmp_path: Path) -> None:
 
 def test_export_zip(tmp_path: Path) -> None:
     from click.testing import CliRunner
+
     from rekipedia.cli.export import export_cmd
 
     pages = [("index", "# Index\n\nHello."), ("core", "# Core\n\nDetails.")]
@@ -178,6 +178,7 @@ def test_export_zip(tmp_path: Path) -> None:
 
 def test_export_fails_gracefully_without_wiki(tmp_path: Path) -> None:
     from click.testing import CliRunner
+
     from rekipedia.cli.export import export_cmd
 
     runner = CliRunner()

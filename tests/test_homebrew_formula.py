@@ -3,7 +3,6 @@
 import re
 import textwrap
 
-
 # Simulate the formula template from the script (without network calls)
 FORMULA_TEMPLATE = textwrap.dedent("""\
     # typed: false

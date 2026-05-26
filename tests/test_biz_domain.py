@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from click.testing import CliRunner
 
 from rekipedia.analysis.biz_domain import (
@@ -18,7 +17,6 @@ from rekipedia.analysis.biz_domain import (
 )
 from rekipedia.cli.domain import domain_cmd
 from rekipedia.models.contracts import AnalysisResult, Relationship, Symbol
-
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 

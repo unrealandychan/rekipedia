@@ -1,10 +1,8 @@
 """Tests for SQLite performance optimisations (issues #108-#111)."""
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
 
 import pytest
 
@@ -138,7 +136,6 @@ def test_batch_rollback(tmp_path):
     # by patching upsert_files_batch to call the real impl but with a connection that
     # raises on executemany.  Since sqlite3.Connection.executemany is read-only (C slot),
     # we swap out the internal cursor wrapper with a subclass that raises.
-    import sqlite3 as _sqlite3
 
     original_conn = store._conn
 

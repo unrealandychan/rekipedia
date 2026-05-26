@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
-
 
 # ---------------------------------------------------------------------------
 # Workers resolution helpers
@@ -51,6 +50,7 @@ def test_workers_invalid_env_var():
 def test_run_digest_workers_param():
     """run_digest passes workers to ThreadPoolExecutor."""
     from concurrent.futures import ThreadPoolExecutor
+
     from rekipedia.orchestrator import run_digest as rd_module
 
     captured = {}
@@ -94,7 +94,6 @@ def test_scan_cli_workers_flag():
         captured_workers["workers"] = kwargs.get("workers")
 
     with runner.isolated_filesystem():
-        import pathlib
 
         with patch("rekipedia.orchestrator.run_digest.run_digest", side_effect=fake_run_digest), \
              patch("rekipedia.cli.scan._load_config", return_value={}):

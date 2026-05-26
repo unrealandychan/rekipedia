@@ -4,7 +4,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 from rekipedia.cli import main
@@ -14,7 +13,6 @@ from rekipedia.cli.refactor import (
     _filter_llm_report,
     _static_walk,
 )
-
 
 # ---------------------------------------------------------------------------
 # Help / registration smoke tests

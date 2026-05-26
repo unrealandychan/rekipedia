@@ -1,6 +1,5 @@
 """Tests for Planner keywords field (issue #54)."""
 from __future__ import annotations
-from unittest.mock import MagicMock, patch
 
 
 def test_keywords_in_planner_prompt():
@@ -18,7 +17,6 @@ def test_keywords_allowed_in_page_builder():
 
 def test_planner_parse_keywords_from_llm_response():
     """Planner should handle LLM response with keywords field."""
-    import json
     from rekipedia.synthesis.planner import WikiPlan
 
     plan_data = {

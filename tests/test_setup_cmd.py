@@ -1,15 +1,12 @@
 """Tests for reki setup command (issue #144)."""
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
 import yaml
 from click.testing import CliRunner
 
-from rekipedia.cli.setup import setup_cmd, PROVIDERS, _REQUIRED_PRESET_KEYS
-
+from rekipedia.cli.setup import _REQUIRED_PRESET_KEYS, PROVIDERS, setup_cmd
 
 # ---------------------------------------------------------------------------
 # Helpers

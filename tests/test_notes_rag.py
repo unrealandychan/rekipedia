@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from rekipedia.models.contracts import LLMConfig
 from rekipedia.storage.sqlite_store import SqliteStore

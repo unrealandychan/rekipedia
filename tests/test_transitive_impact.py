@@ -1,5 +1,4 @@
 """Tests for compute_transitive_impact BFS."""
-import pytest
 from rekipedia.analysis.impact import compute_transitive_impact
 
 

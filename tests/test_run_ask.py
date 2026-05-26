@@ -1,6 +1,6 @@
 """Tests for run_ask relevance ranking and query rewriting (issues #53, #56)."""
 from __future__ import annotations
-import os
+
 from unittest.mock import MagicMock, patch
 
 
@@ -83,16 +83,16 @@ def test_rank_pages_no_keywords():
 # Issue #56 tests
 
 def test_rewrite_query_disabled_by_env(tmp_path, monkeypatch):
-    from rekipedia.orchestrator.run_ask import _rewrite_query
     from rekipedia.models.contracts import LLMConfig
+    from rekipedia.orchestrator.run_ask import _rewrite_query
     monkeypatch.setenv("REKIPEDIA_QUERY_REWRITE", "0")
     result = _rewrite_query("how does auth work?", tmp_path, LLMConfig())
     assert result == "how does auth work?"
 
 
 def test_rewrite_query_no_vocab(tmp_path):
-    from rekipedia.orchestrator.run_ask import _rewrite_query
     from rekipedia.models.contracts import LLMConfig
+    from rekipedia.orchestrator.run_ask import _rewrite_query
     # No symbols.json, no wiki dir → returns original
     result = _rewrite_query("how does auth work?", tmp_path, LLMConfig())
     assert result == "how does auth work?"
@@ -101,6 +101,7 @@ def test_rewrite_query_no_vocab(tmp_path):
 def test_rewrite_query_with_mock_llm(tmp_path, monkeypatch):
     """When vocab is available (>= 15 hints) and LLMClient returns a rewritten query, use it."""
     import json
+
     from rekipedia.models.contracts import LLMConfig
 
     # Create enough symbols to trigger rewriting (need 15+ vocab hints)

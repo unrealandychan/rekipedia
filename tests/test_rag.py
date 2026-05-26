@@ -1,16 +1,13 @@
 """Tests for rekipedia.rag modules."""
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-import pytest
 
 from rekipedia.models.contracts import LLMConfig
 from rekipedia.rag.scan_meta import patch_scan_meta, read_scan_meta, write_scan_meta
-
 
 # ---------------------------------------------------------------------------
 # scan_meta
@@ -129,7 +126,7 @@ def test_embed_pipeline_search_no_index(tmp_path: Path) -> None:
 
 
 def test_embed_pipeline_skips_large_file(tmp_path: Path) -> None:
-    from rekipedia.rag.embedder import _chunk_file, _MAX_CODE_CHARS
+    from rekipedia.rag.embedder import _MAX_CODE_CHARS, _chunk_file
 
     f = tmp_path / "big.py"
     f.write_text("x = 1\n" * (_MAX_CODE_CHARS // 6 + 100))  # exceeds limit
@@ -235,7 +232,8 @@ def test_sqlite_store_get_all_rag_chunks(tmp_path: Path) -> None:
 
 def test_embed_pipeline_persists_provenance(tmp_path: Path) -> None:
     """EmbedPipeline.build() should call upsert_rag_chunks when store is provided."""
-    from unittest.mock import MagicMock, patch as mpatch
+    from unittest.mock import MagicMock
+    from unittest.mock import patch as mpatch
 
     from rekipedia.rag.embedder import EmbedPipeline
 
@@ -263,9 +261,10 @@ def test_embed_pipeline_persists_provenance(tmp_path: Path) -> None:
 
 def test_embed_pipeline_update_skips_unchanged_files(tmp_path):
     """update() should only re-embed chunks from changed files."""
-    from rekipedia.rag.embedder import EmbedPipeline
-    from rekipedia.models.contracts import LLMConfig as LC
     from unittest.mock import patch as mpatch2
+
+    from rekipedia.models.contracts import LLMConfig as LC
+    from rekipedia.rag.embedder import EmbedPipeline
 
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -305,9 +304,10 @@ def test_embed_pipeline_update_skips_unchanged_files(tmp_path):
 
 def test_embed_pipeline_update_falls_back_to_build_if_no_index(tmp_path):
     """update() should fall back to build() if no existing index found."""
-    from rekipedia.rag.embedder import EmbedPipeline
-    from rekipedia.models.contracts import LLMConfig as LC
     from unittest.mock import patch as mpatch2
+
+    from rekipedia.models.contracts import LLMConfig as LC
+    from rekipedia.rag.embedder import EmbedPipeline
 
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -323,8 +323,9 @@ def test_embed_pipeline_update_falls_back_to_build_if_no_index(tmp_path):
 
 
 def test_carry_forward_rag_chunks(tmp_path):
-    from rekipedia.storage.sqlite_store import SqliteStore
     import uuid
+
+    from rekipedia.storage.sqlite_store import SqliteStore
 
     store = SqliteStore(tmp_path / "store.db")
     store.open()
