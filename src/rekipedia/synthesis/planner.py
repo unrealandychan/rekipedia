@@ -166,6 +166,17 @@ class WikiPlan:
     def get_page(self, slug: str) -> dict | None:
         return next((p for p in self.pages if p["slug"] == slug), None)
 
+    @classmethod
+    def default(cls, analysis_result=None) -> "WikiPlan":
+        """Return a minimal default plan used when --no-llm is set (no LLM call made)."""
+        pages = [{"slug": "index", "title": "Overview", "importance": 100, "priority": 1, "sources": []}]
+        if analysis_result is not None:
+            files = {s.file for s in getattr(analysis_result, "symbols", []) if getattr(s, "file", None)}
+            for i, f in enumerate(sorted(files)[:20], start=2):
+                slug = f.replace("/", "-").replace(".", "-").strip("-")
+                pages.append({"slug": slug, "title": f, "importance": 50, "priority": i, "sources": [f]})
+        return cls({"pages": pages, "sections": [], "index_slug": "index", "nav_order": [p["slug"] for p in pages]})
+
     def get_section_for(self, slug: str) -> str | None:
         for s in self.sections:
             if slug in s.get("pages", []):

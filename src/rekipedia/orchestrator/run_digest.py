@@ -90,6 +90,16 @@ def run_digest(
         logger.debug("Verbose mode ON — all debug logs enabled")
     else:
         logging.basicConfig(level=logging.WARNING)
+        # Suppress LiteLLM info/help spam on stderr — users only need to see rekipedia output
+        logging.getLogger("LiteLLM").setLevel(logging.ERROR)
+        logging.getLogger("litellm").setLevel(logging.ERROR)
+        logging.getLogger("httpx").setLevel(logging.ERROR)
+        logging.getLogger("httpcore").setLevel(logging.ERROR)
+        try:
+            import litellm as _litellm
+            _litellm.suppress_debug_info = True  # suppress "Give Feedback / Provider List" prints
+        except Exception:
+            pass
 
     llm_config = llm_config or LLMConfig()
     _log = progress or (lambda _: None)
@@ -300,72 +310,86 @@ def run_digest(
         combined_for_build.evidence["pre_built_module_graph"] = combined.evidence["pre_built_module_graph"]
         combined_for_build.evidence["pre_built_dependency_graph"] = combined.evidence["pre_built_dependency_graph"]
 
-        planner = PlannerAgent(llm_config)
+        if no_llm:
+            from rekipedia.synthesis.planner import WikiPlan
+            wiki_plan = WikiPlan.default(combined_for_build)
+            _vlog("  --no-llm: skipped PlannerAgent, using default wiki plan")
+        else:
+            planner = PlannerAgent(llm_config)
 
-        # Live spinner for planner — shows thinking phases while LLM call blocks
-        _plan_progress_msgs: list[str] = []
+            # Live spinner for planner — shows thinking phases while LLM call blocks
+            _plan_progress_msgs: list[str] = []
 
-        def _plan_progress(msg: str) -> None:
-            _plan_progress_msgs.append(msg)
-            _log(msg)
+            def _plan_progress(msg: str) -> None:
+                _plan_progress_msgs.append(msg)
+                _log(msg)
 
-        wiki_plan = planner.plan(combined_for_build, diagrams=diagrams, progress_cb=_plan_progress)
+            wiki_plan = planner.plan(combined_for_build, diagrams=diagrams, progress_cb=_plan_progress)
         _log(f"  Wiki plan: {wiki_plan}")
         _vlog(f"  Wiki plan: {wiki_plan}")
 
-        _page_rich = Progress(
-            TextColumn("[bold green]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            TimeRemainingColumn(),
-            transient=False,
-            refresh_per_second=4,
-        )
-
-        builder = PageBuilder(llm_config, doc_type=doc_type)
-
-        # Pre-build full payload once, then slice per page spec
-        from rekipedia.synthesis.page_builder import _build_payload, _slice_payload
-        full_payload = _build_payload(combined_for_build, diagrams=diagrams)
-
         pages: dict[str, tuple[str, str]] = {}
 
-        with _page_rich:
-            page_task = _page_rich.add_task(
-                f"[green]📝 Page 0/{len(wiki_plan.pages)}",
-                total=len(wiki_plan.pages),
-            )
-            _page_done = 0
+        if no_llm:
+            # --no-llm: skip all LLM page generation, write stub pages only
+            for spec in wiki_plan.pages:
+                slug = spec["slug"]
+                title = spec.get("title", slug)
+                stub = (
+                    f"# {title}\n\n"
+                    "> Generated with `--no-llm`. "
+                    "Run `reki scan` with an LLM provider for full wiki content.\n"
+                )
+                pages[slug] = (stub, "")
+        else:
+            builder = PageBuilder(llm_config, doc_type=doc_type)
+            from rekipedia.synthesis.page_builder import _build_payload, _slice_payload
+            full_payload = _build_payload(combined_for_build, diagrams=diagrams)
 
-            with ThreadPoolExecutor(max_workers=_MAX_PAGE_WORKERS) as executor:
-                future_to_spec = {
-                    executor.submit(
-                        builder._build_page_from_spec,
-                        spec,
-                        _slice_payload(full_payload, spec.get("required_data")),
-                    ): spec
-                    for spec in wiki_plan.pages
-                }
-                for future in as_completed(future_to_spec):
-                    spec = future_to_spec[future]
-                    slug = spec["slug"]
-                    try:
-                        result = future.result()
-                        if result:
-                            pages[slug] = result
-                            _vlog(f"  ✓ {slug}: {len(result[1])} chars")
-                    except Exception as exc:
-                        logger.error("Page %s failed: %s", slug, exc, exc_info=verbose)
-                        title = spec.get("title", slug.replace("-", " ").title())
-                        pages[slug] = (title, f"# {title}\n\n> *Generation failed: {exc}*\n")
-                    finally:
-                        _page_done += 1
-                        _page_rich.update(
-                            page_task,
-                            advance=1,
-                            description=f"[green]📝 Page {_page_done}/{len(wiki_plan.pages)}",
-                        )
-                        _log(f"Page {_page_done}/{len(wiki_plan.pages)}")
+            _page_rich = Progress(
+                TextColumn("[bold green]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeRemainingColumn(),
+                transient=False,
+                refresh_per_second=4,
+            )
+            with _page_rich:
+                page_task = _page_rich.add_task(
+                    f"[green]📝 Page 0/{len(wiki_plan.pages)}",
+                    total=len(wiki_plan.pages),
+                )
+                _page_done = 0
+
+                with ThreadPoolExecutor(max_workers=_MAX_PAGE_WORKERS) as executor:
+                    future_to_spec = {
+                        executor.submit(
+                            builder._build_page_from_spec,
+                            spec,
+                            _slice_payload(full_payload, spec.get("required_data")),
+                        ): spec
+                        for spec in wiki_plan.pages
+                    }
+                    for future in as_completed(future_to_spec):
+                        spec = future_to_spec[future]
+                        slug = spec["slug"]
+                        try:
+                            result = future.result()
+                            if result:
+                                pages[slug] = result
+                                _vlog(f"  ✓ {slug}: {len(result[1])} chars")
+                        except Exception as exc:
+                            logger.error("Page %s failed: %s", slug, exc, exc_info=verbose)
+                            title = spec.get("title", slug.replace("-", " ").title())
+                            pages[slug] = (title, f"# {title}\n\n> *Generation failed: {exc}*\n")
+                        finally:
+                            _page_done += 1
+                            _page_rich.update(
+                                page_task,
+                                advance=1,
+                                description=f"[green]📝 Page {_page_done}/{len(wiki_plan.pages)}",
+                            )
+                            _log(f"Page {_page_done}/{len(wiki_plan.pages)}")
 
         # Store nav order in evidence for web UI
         combined_for_build.evidence["nav_order"] = json.dumps(wiki_plan.nav_order)
