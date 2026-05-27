@@ -9,8 +9,12 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from rich.console import Console
+
 CONFIG_PATH = Path.home() / ".rekipedia" / "watch.json"
 STATUS_PATH = Path.home() / ".rekipedia" / "watch_status.json"
+
+_console = Console()
 
 _SOURCE_EXTENSIONS = frozenset({
     ".py", ".pyw",
@@ -23,6 +27,11 @@ _SOURCE_EXTENSIONS = frozenset({
     ".swift",
     ".kt",
 })
+
+
+def _log(msg: str, style: str = "white") -> None:
+    ts = datetime.now().strftime("%H:%M:%S")
+    _console.print(f"[dim]{ts}[/dim] {msg}", style=style)
 
 
 def _is_source_file(path: str) -> bool:
@@ -113,7 +122,7 @@ class _RepoWatcher:
 
     def on_delete(self, path: str) -> None:
         """Immediately purge symbols for a deleted file."""
-        print(f"[reki watch] File deleted: {path}, purging symbols...", flush=True)
+        _log(f"[reki watch] File deleted: {path}, purging symbols...", style="dim white")
         try:
             subprocess.run(
                 [sys.executable, "-m", "rekipedia", "purge-file", path],
@@ -122,7 +131,7 @@ class _RepoWatcher:
                 check=False,
             )
         except Exception as e:
-            print(f"[reki watch] Purge failed: {e}", flush=True)
+            _log(f"[reki watch] Purge failed: {e}", style="red")
 
     def _trigger(self) -> None:
         with self._lock:
@@ -131,12 +140,18 @@ class _RepoWatcher:
             self._dirty = False
             changed = set(self._changed_paths)
             self._changed_paths.clear()
-        print(f"[reki watch] Change detected in {self.repo_path}, running update...", flush=True)
+
+        n = len(changed)
+        if 0 < n <= _SMART_DIFF_THRESHOLD:
+            file_names = ", ".join(Path(p).name for p in sorted(changed))
+            detail = f" [dim]({n} files: {file_names})[/dim]"
+            cmd = [sys.executable, "-m", "rekipedia", "update"] + sorted(changed)
+        else:
+            detail = f" [dim](full scan — {n} files changed)[/dim]"
+            cmd = [sys.executable, "-m", "rekipedia", "update"]
+
+        _log(f"[reki watch] Change detected in {self.repo_path}, running update...{detail}", style="yellow")
         try:
-            if 0 < len(changed) <= _SMART_DIFF_THRESHOLD:
-                cmd = [sys.executable, "-m", "rekipedia", "update"] + sorted(changed)
-            else:
-                cmd = [sys.executable, "-m", "rekipedia", "update"]
             result = subprocess.run(
                 cmd,
                 cwd=self.repo_path,
@@ -144,11 +159,13 @@ class _RepoWatcher:
                 check=False,
             )
             if result.returncode == 0:
+                _log(f"[reki watch] Update succeeded for {self.repo_path}", style="green")
                 update_repo_status(self.repo_path, success=True)
             else:
+                _log(f"[reki watch] Update failed for {self.repo_path} (exit {result.returncode})", style="red")
                 update_repo_status(self.repo_path, success=False, error="update failed")
         except Exception as e:
-            print(f"[reki watch] Update failed: {e}", flush=True)
+            _log(f"[reki watch] Update failed: {e}", style="red")
             update_repo_status(self.repo_path, success=False, error=str(e))
 
 
@@ -190,10 +207,10 @@ def start_watching(repos: list[str] | None = None, debounce_seconds: float = 2.0
         handler = _Handler(rw)
         observer.schedule(handler, repo, recursive=True)
         watchers.append(rw)
-        print(f"Watching: {repo}")
+        _log(f"Watching: {repo}", style="cyan")
 
     observer.start()
-    print("reki watch started. Press Ctrl+C to stop.")
+    _log("reki watch started. Press Ctrl+C to stop.", style="cyan")
     try:
         while True:
             time.sleep(1)
