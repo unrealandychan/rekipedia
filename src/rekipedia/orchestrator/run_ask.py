@@ -407,7 +407,7 @@ def _build_full_system(
             pass
 
     # ── GitHub Issues & PRs context ───────────────────────────────────
-    _GITHUB_TRIGGER_WORDS = {"ticket", "issue", "pr", "why", "decision", "discuss", "discussed"}
+    _GITHUB_TRIGGER_WORDS = {"ticket", "issue", "pr", "why", "decision", "discuss", "discussed", "linear"}
     if question_words & _GITHUB_TRIGGER_WORDS:
         try:
             db_path = output_dir / "store.db"
@@ -429,7 +429,7 @@ def _build_full_system(
                                 for src in _gs.get_sources_for_symbol(sym_name)[:1]:
                                     gh_sources[src["id"]] = src
                         if gh_sources:
-                            gh_lines = ["## Related GitHub Issues & PRs\n"]
+                            gh_lines = ["## Related GitHub Issues & PRs / Linear Issues\n"]
                             for src in list(gh_sources.values())[:5]:
                                 state_str = f"[{src['state']}]" if src.get("state") else ""
                                 gh_lines.append(

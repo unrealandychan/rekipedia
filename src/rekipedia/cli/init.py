@@ -65,6 +65,10 @@ llm:
 #     repo: ""           # e.g. "owner/repo" — auto-detected from git remote if empty
 #     max_issues: 500    # cap how many issues to index
 #     max_prs: 200       # cap how many PRs to index
+#   linear:
+#     api_key: ""        # or set REKIPEDIA_LINEAR_API_KEY env var
+#     team_id: ""        # optional — leave empty to fetch all teams
+#     max_issues: 500    # cap how many issues to index
 """
 
 _GITIGNORE_ENTRY = ".rekipedia/store.db\n"

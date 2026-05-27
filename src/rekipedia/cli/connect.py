@@ -15,6 +15,12 @@ from rekipedia.connectors.github_connector import (
     RepoNotFoundError,
     _detect_repo_from_git,
 )
+from rekipedia.connectors.linear_connector import (
+    LinearAuthError,
+    LinearAPIError,
+    LinearConnector,
+    LinearRateLimitError,
+)
 from rekipedia.storage.sqlite_store import SqliteStore
 
 console = Console()
@@ -161,4 +167,97 @@ def github_cmd(
     console.print(
         f"[green]✓[/green] Indexed {len(issues)} issues, {len(prs)} PRs "
         f"— {len(links)} symbol links created"
+    )
+
+
+@connect_cmd.command("linear")
+@click.argument("repo_path", default=".", type=click.Path(exists=True, file_okay=False))
+@click.option("--api-key", default=None, help="Linear API key (not saved to config).")
+@click.option("--team-id", default=None, help="Linear team ID to filter issues.")
+@click.option("--max-issues", default=None, type=int, help="Max issues to fetch.")
+def linear_cmd(
+    repo_path: str,
+    api_key: str | None,
+    team_id: str | None,
+    max_issues: int | None,
+) -> None:
+    """Index Linear issues for the current repo.
+
+    Token read order: --api-key flag → REKIPEDIA_LINEAR_API_KEY env var → config file.
+    API key is never stored in the database or displayed in logs.
+
+    Examples:
+
+    \\b
+        reki connect linear
+        reki connect linear --api-key lin_api_xxx
+        reki connect linear --team-id TEAM_ID
+        reki connect linear --max-issues 200
+    """
+    root = Path(repo_path).resolve()
+    output_dir = root / ".rekipedia"
+    db_path = output_dir / "store.db"
+
+    cfg = load_config(root)
+    linear_cfg = cfg.get("connectors", {}).get("linear", {})
+
+    # Token resolution: flag > env var > config
+    resolved_key = api_key or os.environ.get("REKIPEDIA_LINEAR_API_KEY") or linear_cfg.get("api_key") or None
+    if resolved_key == "":
+        resolved_key = None
+
+    if not resolved_key:
+        console.print(
+            "[red]✗[/red] No Linear API key found. "
+            "Pass --api-key or set REKIPEDIA_LINEAR_API_KEY."
+        )
+        raise SystemExit(1)
+
+    resolved_team_id = team_id or linear_cfg.get("team_id") or None
+    if resolved_team_id == "":
+        resolved_team_id = None
+
+    resolved_max = max_issues or linear_cfg.get("max_issues", 500)
+
+    connector = LinearConnector(
+        api_key=resolved_key,
+        team_id=resolved_team_id,
+        max_issues=resolved_max,
+    )
+
+    issues: list = []
+    with console.status(f"🔗 Fetching Linear issues… (0/{resolved_max})") as status:
+        def _progress(cur: int, total: int) -> None:
+            status.update(f"🔗 Fetching Linear issues… ({cur}/{total})")
+
+        connector._progress = _progress  # type: ignore[assignment]
+        try:
+            issues = connector.fetch_issues()
+        except LinearRateLimitError as exc:
+            console.print(f"[yellow]⚠[/yellow]  Rate limit hit: {exc}")
+            console.print("[yellow]⚠[/yellow]  Continuing with partial results.")
+        except LinearAuthError as exc:
+            console.print(f"[red]✗[/red] {exc}")
+            raise SystemExit(1)
+        except LinearAPIError as exc:
+            console.print(f"[red]✗[/red] {exc}")
+            raise SystemExit(1)
+
+    link_count = 0
+    with console.status("🔗 Cross-referencing symbols… "):
+        with SqliteStore(db_path) as store:
+            run_id = store.get_latest_run_id(str(root))
+            all_symbols: list[dict] = []
+            if run_id:
+                all_symbols = store.get_all_symbols(run_id)
+
+            store.store_external_sources([s.to_dict() for s in issues])
+            links = connector.build_symbol_links(issues, all_symbols)
+            if links:
+                store.store_source_symbol_links(links)
+            link_count = len(links)
+
+    console.print(
+        f"[green]✓[/green] Indexed {len(issues)} Linear issues "
+        f"— {link_count} symbol links created"
     )
