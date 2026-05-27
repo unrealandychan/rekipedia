@@ -71,7 +71,7 @@ def test_watch_status_cli_with_repos(isolated_status, monkeypatch):
         "/repo/beta": {"last_updated": "2026-01-02T00:00:00+00:00", "update_count": 2, "last_error": "update failed"},
     })
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(watch_cmd, ["status"])
     assert result.exit_code == 0
     assert "/repo/alpha" in result.output
