@@ -1059,6 +1059,153 @@ class SqliteStore:
         except Exception:
             return 0
 
+    # ------------------------------------------------------------------
+    # External sources (GitHub Issues & PRs)
+    # ------------------------------------------------------------------
+
+    def store_external_sources(self, sources: list[dict]) -> None:
+        """Upsert external source records (GitHub issues/PRs).
+
+        Args:
+            sources: List of dicts with keys matching the ``external_sources``
+                table columns.
+        """
+        import json as _json
+
+        for s in sources:
+            labels = s.get("labels", [])
+            files_changed = s.get("files_changed", [])
+            self._c.execute(
+                """
+                INSERT OR REPLACE INTO external_sources
+                    (id, source_type, source_id, title, body, url, state, labels, date, files_changed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    s["id"],
+                    s.get("source_type", ""),
+                    s.get("source_id", ""),
+                    s.get("title", ""),
+                    s.get("body", ""),
+                    s.get("url", ""),
+                    s.get("state", ""),
+                    _json.dumps(labels) if not isinstance(labels, str) else labels,
+                    s.get("date", ""),
+                    _json.dumps(files_changed) if not isinstance(files_changed, str) else files_changed,
+                ),
+            )
+        self._c.commit()
+
+    def store_source_symbol_links(self, links: list[dict]) -> None:
+        """Upsert source_symbol_links records.
+
+        Args:
+            links: List of dicts with keys ``source_id``, ``symbol_name``, ``link_type``.
+        """
+        for lnk in links:
+            self._c.execute(
+                """
+                INSERT OR IGNORE INTO source_symbol_links (source_id, symbol_name, link_type)
+                VALUES (?, ?, ?)
+                """,
+                (lnk["source_id"], lnk["symbol_name"], lnk["link_type"]),
+            )
+        self._c.commit()
+
+    def get_sources_for_file(self, file_path: str) -> list[dict]:
+        """Return external sources linked to *file_path* (via file_changed links).
+
+        Args:
+            file_path: Repository-relative file path.
+
+        Returns:
+            List of external source dicts.
+        """
+        if "external_sources" not in self._table_names():
+            return []
+        rows = self._c.execute(
+            """
+            SELECT DISTINCT es.id, es.source_type, es.source_id, es.title, es.body,
+                   es.url, es.state, es.labels, es.date, es.files_changed
+            FROM external_sources es
+            JOIN source_symbol_links ssl ON ssl.source_id = es.id
+            WHERE ssl.link_type = 'file_changed' AND ssl.symbol_name = ?
+            ORDER BY es.date DESC
+            """,
+            (file_path,),
+        ).fetchall()
+        return [self._row_to_source(r) for r in rows]
+
+    def get_sources_for_symbol(self, symbol_name: str) -> list[dict]:
+        """Return external sources linked to *symbol_name*.
+
+        Args:
+            symbol_name: Symbol name to look up.
+
+        Returns:
+            List of external source dicts.
+        """
+        if "external_sources" not in self._table_names():
+            return []
+        rows = self._c.execute(
+            """
+            SELECT DISTINCT es.id, es.source_type, es.source_id, es.title, es.body,
+                   es.url, es.state, es.labels, es.date, es.files_changed
+            FROM external_sources es
+            JOIN source_symbol_links ssl ON ssl.source_id = es.id
+            WHERE ssl.symbol_name = ?
+            ORDER BY es.date DESC
+            """,
+            (symbol_name,),
+        ).fetchall()
+        return [self._row_to_source(r) for r in rows]
+
+    def get_external_source_count(self) -> int:
+        """Return the total number of external sources stored."""
+        try:
+            row = self._c.execute("SELECT COUNT(*) FROM external_sources").fetchone()
+            return int(row[0]) if row else 0
+        except Exception:
+            return 0
+
+    @staticmethod
+    def _row_to_source(r: tuple) -> dict:
+        import json as _json
+
+        return {
+            "id": r[0],
+            "source_type": r[1],
+            "source_id": r[2],
+            "title": r[3],
+            "body": r[4],
+            "url": r[5],
+            "state": r[6],
+            "labels": _json.loads(r[7]) if r[7] else [],
+            "date": r[8],
+            "files_changed": _json.loads(r[9]) if r[9] else [],
+        }
+
+    def get_symbols_by_file(self, run_id: str, file_path: str) -> list[dict]:
+        """Return symbols defined in *file_path* for the given run.
+
+        Args:
+            run_id: The scan run identifier.
+            file_path: Repository-relative file path.
+
+        Returns:
+            List of symbol dicts with at least ``name`` and ``kind``.
+        """
+        if "scan_symbols" not in self._table_names():
+            return []
+        rows = self._c.execute(
+            "SELECT name, kind, file, line_start, line_end FROM scan_symbols WHERE run_id = ? AND file = ?",
+            (run_id, file_path),
+        ).fetchall()
+        return [
+            {"name": r[0], "kind": r[1], "file": r[2], "line_start": r[3], "line_end": r[4]}
+            for r in rows
+        ]
+
 
 # ── helpers ──────────────────────────────────────────────────────────
 

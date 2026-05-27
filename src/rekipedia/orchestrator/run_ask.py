@@ -406,6 +406,41 @@ def _build_full_system(
         except Exception:
             pass
 
+    # ── GitHub Issues & PRs context ───────────────────────────────────
+    _GITHUB_TRIGGER_WORDS = {"ticket", "issue", "pr", "why", "decision", "discuss", "discussed"}
+    if question_words & _GITHUB_TRIGGER_WORDS:
+        try:
+            db_path = output_dir / "store.db"
+            if db_path.exists():
+                from rekipedia.storage.sqlite_store import SqliteStore as _SqliteStore2
+                with _SqliteStore2(db_path) as _gs:
+                    if _gs.get_external_source_count() > 0:
+                        # Gather sources for relevant files
+                        gh_sources: dict[str, dict] = {}
+                        for chunk in rag_results[:5]:
+                            fp = chunk.get("file", "")
+                            if fp:
+                                for src in _gs.get_sources_for_file(fp)[:2]:
+                                    gh_sources[src["id"]] = src
+                        # Also get sources for top symbols
+                        for sym_line in symbol_lines[:10]:
+                            sym_name = sym_line.split()[0] if sym_line.split() else ""
+                            if sym_name:
+                                for src in _gs.get_sources_for_symbol(sym_name)[:1]:
+                                    gh_sources[src["id"]] = src
+                        if gh_sources:
+                            gh_lines = ["## Related GitHub Issues & PRs\n"]
+                            for src in list(gh_sources.values())[:5]:
+                                state_str = f"[{src['state']}]" if src.get("state") else ""
+                                gh_lines.append(
+                                    f"- **{src['source_id']}** {state_str} {src['title']}\n"
+                                    f"  URL: {src['url']}\n"
+                                    f"  {(src.get('body') or '')[:200]}"
+                                )
+                            context += "\n\n" + "\n".join(gh_lines)
+        except Exception:
+            pass
+
     full = f"{system_prompt}\n\n{context}"
     if brief:
         full += _BRIEF_SYSTEM_SUFFIX

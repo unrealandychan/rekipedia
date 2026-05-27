@@ -57,6 +57,14 @@ llm:
   # Leave blank to use the same model as above (not recommended for large repos).
   # embed_model: text-embedding-3-small
   # embed_provider: openai
+
+# ── External connectors ───────────────────────────────────────────────────────
+# connectors:
+#   github:
+#     token: ""          # or set REKIPEDIA_GITHUB_TOKEN env var
+#     repo: ""           # e.g. "owner/repo" — auto-detected from git remote if empty
+#     max_issues: 500    # cap how many issues to index
+#     max_prs: 200       # cap how many PRs to index
 """
 
 _GITIGNORE_ENTRY = ".rekipedia/store.db\n"

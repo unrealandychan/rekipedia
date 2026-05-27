@@ -1,4 +1,23 @@
-"""Global + local config loader with deep-merge (issue #143)."""
+"""Global + local config loader with deep-merge (issue #143).
+
+Supported config keys include ``connectors.github`` for the GitHub connector:
+
+.. code-block:: yaml
+
+    connectors:
+      github:
+        token: ""          # or set REKIPEDIA_GITHUB_TOKEN env var
+        repo: ""           # e.g. "owner/repo" — auto-detected from git remote if empty
+        max_issues: 500    # cap
+        max_prs: 200       # cap
+
+Token read order (for ``reki connect github``):
+  1. ``--token`` CLI flag
+  2. ``REKIPEDIA_GITHUB_TOKEN`` environment variable
+  3. ``connectors.github.token`` in config file
+
+The token is NEVER written to sqlite or log output.
+"""
 from __future__ import annotations
 
 import os

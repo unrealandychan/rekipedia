@@ -4,6 +4,7 @@ from __future__ import annotations
 import click
 
 from rekipedia.cli.affected import affected_cmd
+from rekipedia.cli.connect import connect_cmd
 from rekipedia.cli.ask import ask_cmd
 from rekipedia.cli.context import context_cmd
 from rekipedia.cli.diff import diff_cmd
@@ -55,3 +56,4 @@ main.add_command(setup_cmd)
 main.add_command(domain_cmd)
 main.add_command(tour_cmd)
 main.add_command(onboard_cmd)
+main.add_command(connect_cmd)
