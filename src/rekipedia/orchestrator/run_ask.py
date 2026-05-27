@@ -447,6 +447,90 @@ def _build_full_system(
     return full
 
 
+def _run_deconfliction(
+    question: str,
+    output_dir: Path,
+    answer: str,
+) -> str:
+    """Append a conflict-detection section to *answer* if conflicts found.
+
+    Runs only when external sources were fetched; silent otherwise.
+    """
+    try:
+        db_path = output_dir / "store.db"
+        if not db_path.exists():
+            return answer
+        from rekipedia.storage.sqlite_store import SqliteStore as _SS
+        with _SS(db_path) as _store:
+            if _store.get_external_source_count() == 0:
+                return answer
+            _rows = _store._c.execute(
+                "SELECT id, source_type, source_id, title, body, url, state, labels, date, files_changed"
+                " FROM external_sources LIMIT 200"
+            ).fetchall()
+            raw_sources = [_store._row_to_source(r) for r in _rows]
+
+        if not raw_sources:
+            return answer
+
+        from rekipedia.connectors import ExternalSource
+        from rekipedia.orchestrator.deconfliction import DeconflictionEngine
+
+        ext_sources: list[ExternalSource] = []
+        for row in raw_sources:
+            import json as _json
+            labels = row.get("labels") or "[]"
+            if isinstance(labels, str):
+                try:
+                    labels = _json.loads(labels)
+                except Exception:
+                    labels = []
+            ext_sources.append(ExternalSource(
+                source_type=row.get("source_type", ""),
+                source_id=row.get("source_id", row.get("id", "")),
+                title=row.get("title", ""),
+                body=row.get("body", "") or "",
+                url=row.get("url", ""),
+                state=row.get("state", ""),
+                labels=labels,
+                date=row.get("date", "") or "",
+            ))
+
+        # Use question keywords as the "symbol" for deconfliction
+        keywords = _extract_keywords(question)
+        if not keywords:
+            return answer
+
+        engine = DeconflictionEngine()
+        # Run deconfliction for up to 3 keywords to keep it fast
+        all_conflicts = []
+        for kw in keywords[:3]:
+            all_conflicts.extend(engine.detect(kw, answer, ext_sources))
+
+        # Deduplicate by (symbol, conflict_type, sources)
+        seen: set[tuple] = set()
+        unique_conflicts = []
+        for c in all_conflicts:
+            key = (c.symbol, c.conflict_type, tuple(c.sources))
+            if key not in seen:
+                seen.add(key)
+                unique_conflicts.append(c)
+
+        if not unique_conflicts:
+            return answer
+
+        lines = ["\n\n## ⚠️ Context Conflicts Detected\n"]
+        for c in unique_conflicts:
+            src_str = ", ".join(c.sources) if c.sources else "none"
+            lines.append(
+                f"- **{c.conflict_type}** (symbol: `{c.symbol}`, sources: {src_str})\n"
+                f"  {c.summary}"
+            )
+        return answer + "\n".join(lines)
+    except Exception:
+        return answer  # deconfliction is non-critical
+
+
 # ---------------------------------------------------------------------------
 # Shared setup helper
 # ---------------------------------------------------------------------------
@@ -511,7 +595,8 @@ def run_ask(
         return agent_run_ask(question, repo_root, output_dir, llm_config, history)
     pinned_str = _load_pinned_context(pinned_context or [], repo_root)
     client, full_system = _prepare_ask(question, repo_root, output_dir, llm_config, history, pinned_context=pinned_str, brief=brief)
-    return client.call(question, system=full_system, history=history)
+    answer = client.call(question, system=full_system, history=history)
+    return _run_deconfliction(question, output_dir, answer)
 
 
 def stream_ask(
