@@ -6,9 +6,11 @@ import subprocess
 import sys
 import threading
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 CONFIG_PATH = Path.home() / ".rekipedia" / "watch.json"
+STATUS_PATH = Path.home() / ".rekipedia" / "watch_status.json"
 
 _SOURCE_EXTENSIONS = frozenset({
     ".py", ".pyw",
@@ -36,6 +38,30 @@ def _load_config() -> dict:
 def _save_config(cfg: dict) -> None:
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
+
+
+def _load_status() -> dict:
+    if STATUS_PATH.exists():
+        return json.loads(STATUS_PATH.read_text())
+    return {}
+
+
+def _save_status(status: dict) -> None:
+    STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    STATUS_PATH.write_text(json.dumps(status, indent=2))
+
+
+def update_repo_status(repo_path: str, *, success: bool, error: str | None = None) -> None:
+    status = _load_status()
+    entry = status.get(repo_path, {"update_count": 0})
+    entry["last_updated"] = datetime.now(timezone.utc).isoformat()
+    if success:
+        entry["update_count"] = entry.get("update_count", 0) + 1
+        entry["last_error"] = None
+    else:
+        entry["last_error"] = error
+    status[repo_path] = entry
+    _save_status(status)
 
 
 def add_repo(path: str) -> None:
@@ -111,14 +137,19 @@ class _RepoWatcher:
                 cmd = [sys.executable, "-m", "rekipedia", "update"] + sorted(changed)
             else:
                 cmd = [sys.executable, "-m", "rekipedia", "update"]
-            subprocess.run(
+            result = subprocess.run(
                 cmd,
                 cwd=self.repo_path,
                 timeout=120,
                 check=False,
             )
+            if result.returncode == 0:
+                update_repo_status(self.repo_path, success=True)
+            else:
+                update_repo_status(self.repo_path, success=False, error="update failed")
         except Exception as e:
             print(f"[reki watch] Update failed: {e}", flush=True)
+            update_repo_status(self.repo_path, success=False, error=str(e))
 
 
 def start_watching(repos: list[str] | None = None, debounce_seconds: float = 2.0) -> None:

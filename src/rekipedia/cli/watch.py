@@ -46,3 +46,33 @@ def watch_start(path, debounce):
     from rekipedia.watcher.watcher import start_watching
     repos = [str(Path(path).resolve())] if path else None
     start_watching(repos=repos, debounce_seconds=debounce)
+
+
+@watch_cmd.command('status')
+def watch_status():
+    """Show status dashboard for watched repos."""
+    from rich.table import Table
+    from rekipedia.watcher.watcher import _load_config, _load_status
+
+    cfg = _load_config()
+    status = _load_status()
+    repos = cfg.get("repos", [])
+
+    table = Table(title="reki watch status", show_lines=True)
+    table.add_column("Repo Path", style="cyan", no_wrap=True)
+    table.add_column("Last Updated")
+    table.add_column("Updates", justify="right")
+    table.add_column("Last Error")
+
+    for repo in repos:
+        entry = status.get(repo, {})
+        last_updated = entry.get("last_updated", "Never")
+        update_count = str(entry.get("update_count", 0))
+        last_error = entry.get("last_error") or ""
+        style = "yellow" if last_error else "green"
+        table.add_row(repo, last_updated, update_count, last_error, style=style)
+
+    if not repos:
+        console.print("[dim]No repos registered.[/dim]")
+    else:
+        console.print(table)
