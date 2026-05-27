@@ -25,22 +25,26 @@ def _load_config(repo: Path) -> dict:
     default=".",
     type=click.Path(exists=True, file_okay=False, path_type=Path),
 )
+@click.argument("paths", nargs=-1, required=False)
 @click.option("--model", default=None, envvar="REKIPEDIA_MODEL", help="LLM model override.")
 @click.option("--no-docker", is_flag=True, default=False, help="Skip Docker, run extractors in-process.")
 @click.option("--output-dir", default=None, type=click.Path(path_type=Path), help="Output directory (default: REPO/.rekipedia).")
 @click.option("--languages", "-l", default=None, help="Comma-separated list of languages to include, e.g. python,typescript,go. Default: all.")
 @click.option("--impact-only", is_flag=True, default=False, help="BFS-selective regeneration: only re-generate wiki pages for transitively affected modules.")
-def update_cmd(repo: Path, model: str | None, no_docker: bool, output_dir: Path | None, languages: str | None, impact_only: bool) -> None:
+def update_cmd(repo: Path, paths: tuple[str, ...], model: str | None, no_docker: bool, output_dir: Path | None, languages: str | None, impact_only: bool) -> None:
     """Incrementally refresh the wiki for files changed since the last scan.
 
     Re-extracts only changed files and re-synthesises all wiki pages.
     Falls back to a full scan if no previous successful scan exists.
 
-    \b
+    Optionally pass specific file PATHS to restrict the update to those files only.
+
+    \\b
     Examples:
         rekipedia update .
         rekipedia update ./my-project --no-docker
         rekipedia update . --impact-only
+        rekipedia update . src/foo.py src/bar.py
         REKIPEDIA_MODEL=gpt-4o rekipedia update .
     """
     repo = repo.resolve()
@@ -75,6 +79,10 @@ def update_cmd(repo: Path, model: str | None, no_docker: bool, output_dir: Path 
     if impact_only:
         console.print("  [bold cyan]impact-only[/bold cyan]: BFS-selective wiki regeneration enabled")
 
+    path_filter: list[str] | None = list(paths) if paths else None
+    if path_filter:
+        console.print(f"  [bold cyan]smart-diff[/bold cyan]: restricting update to {len(path_filter)} file(s)")
+
     from rekipedia.orchestrator.run_update import run_update
 
     with Progress(
@@ -97,6 +105,7 @@ def update_cmd(repo: Path, model: str | None, no_docker: bool, output_dir: Path 
                 progress=_log,
                 languages=lang_list,
                 impact_only=impact_only,
+                path_filter=path_filter,
             )
         except Exception as exc:
             console.print(f"[bold red]Error:[/bold red] {exc}")

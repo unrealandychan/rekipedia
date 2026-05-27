@@ -26,6 +26,7 @@ from rekipedia.cli.setup import setup_cmd
 from rekipedia.cli.tour import tour_cmd
 from rekipedia.cli.update import update_cmd
 from rekipedia.cli.watch import watch_cmd
+from rekipedia.cli.purge_file import purge_file_cmd
 
 
 @click.group()
@@ -48,6 +49,7 @@ main.add_command(impact_cmd)
 main.add_command(affected_cmd)
 main.add_command(mcp_cmd)
 main.add_command(watch_cmd)
+main.add_command(purge_file_cmd)
 main.add_command(search_cmd)
 main.add_command(refactor_cmd)
 main.add_command(note_cmd)

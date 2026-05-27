@@ -64,31 +64,55 @@ def remove_repo(path: str) -> None:
         print(f"Not registered: {path}")
 
 
+_SMART_DIFF_THRESHOLD = 20
+
+
 class _RepoWatcher:
     def __init__(self, repo_path: str, debounce_seconds: float = 3.0):
         self.repo_path = repo_path
         self.debounce = debounce_seconds
         self._dirty = False
+        self._changed_paths: set[str] = set()
         self._lock = threading.Lock()
         self._timer: threading.Timer | None = None
 
     def on_change(self, path: str) -> None:
         with self._lock:
             self._dirty = True
+            self._changed_paths.add(path)
             if self._timer:
                 self._timer.cancel()
             self._timer = threading.Timer(self.debounce, self._trigger)
             self._timer.start()
+
+    def on_delete(self, path: str) -> None:
+        """Immediately purge symbols for a deleted file."""
+        print(f"[reki watch] File deleted: {path}, purging symbols...", flush=True)
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "rekipedia", "purge-file", path],
+                cwd=self.repo_path,
+                timeout=30,
+                check=False,
+            )
+        except Exception as e:
+            print(f"[reki watch] Purge failed: {e}", flush=True)
 
     def _trigger(self) -> None:
         with self._lock:
             if not self._dirty:
                 return
             self._dirty = False
+            changed = set(self._changed_paths)
+            self._changed_paths.clear()
         print(f"[reki watch] Change detected in {self.repo_path}, running update...", flush=True)
         try:
+            if 0 < len(changed) <= _SMART_DIFF_THRESHOLD:
+                cmd = [sys.executable, "-m", "rekipedia", "update"] + sorted(changed)
+            else:
+                cmd = [sys.executable, "-m", "rekipedia", "update"]
             subprocess.run(
-                [sys.executable, "-m", "rekipedia", "update"],
+                cmd,
                 cwd=self.repo_path,
                 timeout=120,
                 check=False,
@@ -123,6 +147,10 @@ def start_watching(repos: list[str] | None = None, debounce_seconds: float = 2.0
         def on_created(self, event):
             if not event.is_directory and _is_source_file(event.src_path):
                 self._rw.on_change(event.src_path)
+
+        def on_deleted(self, event):
+            if not event.is_directory and _is_source_file(event.src_path):
+                self._rw.on_delete(event.src_path)
 
     observer = Observer()
     watchers = []

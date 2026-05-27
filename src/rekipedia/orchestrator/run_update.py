@@ -74,6 +74,7 @@ def run_update(
     progress: Callable[[str], None] | None = None,
     languages: list[str] | None = None,
     impact_only: bool = False,
+    path_filter: list[str] | None = None,
 ) -> None:
     """Incremental update pipeline.
 
@@ -133,6 +134,19 @@ def run_update(
         ]
         deleted_paths: set[str] = set(prev_map.keys()) - set(current_map.keys())
         changed_paths: set[str] = {f.path for f in changed} | deleted_paths
+
+        # If path_filter is provided, restrict processing to those paths only
+        if path_filter is not None:
+            filter_set = {str(Path(p).resolve()) for p in path_filter}
+            changed = [f for f in changed if str(Path(f.path).resolve()) in filter_set or f.path in filter_set]
+            deleted_paths = {p for p in deleted_paths if str(Path(p).resolve()) in filter_set or p in filter_set}
+            changed_paths = {f.path for f in changed} | deleted_paths
+            if changed or deleted_paths:
+                _log(f"  smart-diff: processing {len(changed)} changed / {len(deleted_paths)} deleted from filter")
+            else:
+                _log("  smart-diff: no relevant changes in filtered paths — wiki is already up to date.")
+                store.close()
+                return
 
         if not changed and not deleted_paths:
             _log("No changes detected — wiki is already up to date.")

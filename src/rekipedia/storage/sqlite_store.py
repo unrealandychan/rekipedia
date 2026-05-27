@@ -1185,6 +1185,95 @@ class SqliteStore:
             "files_changed": _json.loads(r[9]) if r[9] else [],
         }
 
+    def delete_symbols_for_file(self, run_id: str, file_path: str) -> int:
+        """Delete all symbols for *file_path* in *run_id*.
+
+        Returns the number of rows deleted.
+        """
+        if "scan_symbols" not in self._table_names():
+            return 0
+        cur = self._c.execute(
+            "DELETE FROM scan_symbols WHERE run_id = ? AND file = ?",
+            (run_id, file_path),
+        )
+        self._c.commit()
+        return cur.rowcount
+
+    def delete_relationships_for_file(self, run_id: str, file_path: str) -> int:
+        """Delete all relationships for *file_path* in *run_id*.
+
+        Returns the number of rows deleted.
+        """
+        if "scan_relationships" not in self._table_names():
+            return 0
+        cur = self._c.execute(
+            "DELETE FROM scan_relationships WHERE run_id = ? AND file = ?",
+            (run_id, file_path),
+        )
+        self._c.commit()
+        return cur.rowcount
+
+    def delete_pages_for_file(self, run_id: str, file_path: str) -> int:
+        """Delete wiki pages whose only source is *file_path* in *run_id*.
+
+        Returns the number of page rows deleted.
+        """
+        if "page_sources" not in self._table_names():
+            return 0
+        if "scan_wiki_pages" not in self._table_names():
+            return 0
+        # Find slugs exclusively sourced by file_path
+        rows = self._c.execute(
+            "SELECT page_slug FROM page_sources WHERE run_id = ? AND file_path = ?",
+            (run_id, file_path),
+        ).fetchall()
+        slugs = {r[0] for r in rows}
+        if not slugs:
+            return 0
+        # Keep slugs that have other sources too
+        deleted = 0
+        for slug in slugs:
+            other = self._c.execute(
+                "SELECT COUNT(*) FROM page_sources WHERE run_id = ? AND page_slug = ? AND file_path != ?",
+                (run_id, slug, file_path),
+            ).fetchone()[0]
+            if other == 0:
+                self._c.execute(
+                    "DELETE FROM scan_wiki_pages WHERE run_id = ? AND slug = ?",
+                    (run_id, slug),
+                )
+                deleted += 1
+            self._c.execute(
+                "DELETE FROM page_sources WHERE run_id = ? AND page_slug = ? AND file_path = ?",
+                (run_id, slug, file_path),
+            )
+        self._c.commit()
+        return deleted
+
+    def purge_file(self, run_id: str, file_path: str) -> dict:
+        """Remove all symbols, relationships, and wiki pages for *file_path*.
+
+        Returns a summary dict with counts of deleted rows per table.
+        """
+        symbols = self.delete_symbols_for_file(run_id, file_path)
+        relationships = self.delete_relationships_for_file(run_id, file_path)
+        pages = self.delete_pages_for_file(run_id, file_path)
+        # Also remove scan_files entry
+        files_deleted = 0
+        if "scan_files" in self._table_names():
+            cur = self._c.execute(
+                "DELETE FROM scan_files WHERE run_id = ? AND path = ?",
+                (run_id, file_path),
+            )
+            self._c.commit()
+            files_deleted = cur.rowcount
+        return {
+            "symbols": symbols,
+            "relationships": relationships,
+            "pages": pages,
+            "files": files_deleted,
+        }
+
     def get_symbols_by_file(self, run_id: str, file_path: str) -> list[dict]:
         """Return symbols defined in *file_path* for the given run.
 
