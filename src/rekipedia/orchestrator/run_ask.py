@@ -371,6 +371,41 @@ def _build_full_system(
             context_parts.append(sym_section)
 
     context = "\n\n".join(context_parts)
+
+    # ── Git history context ────────────────────────────────────────────
+    _GIT_TRIGGER_WORDS = {"why", "when", "who", "changed", "history", "introduced", "commit"}
+    question_words = set(question.lower().split())
+    if question_words & _GIT_TRIGGER_WORDS:
+        try:
+            db_path = output_dir / "store.db"
+            if db_path.exists():
+                from rekipedia.storage.sqlite_store import SqliteStore as _SqliteStore
+                with _SqliteStore(db_path) as _store:
+                    if _store.get_commit_count() > 0:
+                        # Find relevant files from RAG results
+                        relevant_files: list[str] = []
+                        for chunk in rag_results[:5]:
+                            fp = chunk.get("file", "")
+                            if fp:
+                                relevant_files.append(fp)
+                        commits_seen: dict[str, dict] = {}
+                        for fp in relevant_files:
+                            for c in _store.get_commits_for_file(fp)[:5]:
+                                if c["hash"] not in commits_seen:
+                                    commits_seen[c["hash"]] = c
+                        if commits_seen:
+                            import json as _json
+                            git_lines = ["## Recent git history\n"]
+                            for c in list(commits_seen.values())[:5]:
+                                files_label = ", ".join(_json.loads(c["files_changed"])[:3]) if c["files_changed"] else ""
+                                git_lines.append(
+                                    f"- **{c['short_hash']}** {c['date'][:10]} [{c['author']}] {c['message']}\n"
+                                    f"  Files: {files_label}"
+                                )
+                            context += "\n\n" + "\n".join(git_lines)
+        except Exception:
+            pass
+
     full = f"{system_prompt}\n\n{context}"
     if brief:
         full += _BRIEF_SYSTEM_SUFFIX

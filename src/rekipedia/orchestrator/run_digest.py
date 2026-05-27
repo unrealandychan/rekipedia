@@ -55,6 +55,7 @@ def run_digest(
     focus_globs: list[str] | None = None,
     doc_type: str = "default",
     workers: int = 4,
+    with_git: bool = False,
 ) -> None:
     """Full scan pipeline.
 
@@ -130,6 +131,21 @@ def run_digest(
 
         store.upsert_snapshot(run_id, [f.model_dump() for f in files])
         store.upsert_files_batch(run_id, files)
+
+        # ── 1.6. Git history ─────────────────────────────────────────
+        if with_git:
+            try:
+                from rekipedia.extractors.git_extractor import commits_to_dicts, extract_commits
+                _vlog("⠙ 🔀 Indexing git history…")
+                git_commits = extract_commits(repo_root)
+                if git_commits:
+                    store.store_commits(commits_to_dicts(git_commits))
+                    _vlog(f"⠙ 🔀 Indexing git history… ({len(git_commits)} commits)")
+                else:
+                    _vlog("⠙ 🔀 No git history found (skipped)")
+            except Exception as _git_err:
+                logger.debug("Git extraction failed (non-fatal): %s", _git_err)
+
 
         # ── 1.5. Focus filter ─────────────────────────────────────────
         if focus_globs:

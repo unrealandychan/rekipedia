@@ -82,6 +82,7 @@ def _run_with_refactor(repo: Path, output_dir: Path, verbose: bool) -> None:
 )
 @click.option("--workers", "-w", default=None, type=int, metavar="N",
     help="Number of parallel workers for file extraction (default: min(4, cpu_count))")
+@click.option("--with-git/--no-git", "with_git", default=False, help="Index git commit history alongside code symbols.")
 def scan_cmd(
     repo: Path,
     model: str | None,
@@ -98,6 +99,7 @@ def scan_cmd(
     focus: tuple[str, ...],
     doc_type: str,
     workers: int | None,
+    with_git: bool,
 ) -> None:
     """Scan REPO and (re)build the rekipedia knowledge store.
 
@@ -215,6 +217,7 @@ def scan_cmd(
                 focus_globs=focus_list,
                 doc_type=doc_type,
                 workers=workers,
+                with_git=with_git,
             )
         except Exception:
             console.print_exception(show_locals=True)
@@ -246,6 +249,7 @@ def scan_cmd(
                     focus_globs=focus_list,
                     doc_type=doc_type,
                     workers=workers,
+                    with_git=with_git,
                 )
             except Exception as exc:
                 progress.stop()

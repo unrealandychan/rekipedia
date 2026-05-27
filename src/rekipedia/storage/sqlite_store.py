@@ -972,6 +972,94 @@ class SqliteStore:
         ]
 
 
+    # ------------------------------------------------------------------
+    # Git history
+    # ------------------------------------------------------------------
+
+    def store_commits(self, commits: list[dict]) -> None:
+        """Upsert git commit records into the ``git_commits`` table.
+
+        Also populates the ``git_file_commits`` index so that
+        :meth:`get_commits_for_file` is efficient.
+
+        Args:
+            commits: List of dicts with keys ``hash``, ``short_hash``,
+                ``author``, ``date``, ``message``, ``files_changed``
+                (JSON-encoded list of file paths).
+        """
+        import json as _json
+
+        for c in commits:
+            self._c.execute(
+                """
+                INSERT OR REPLACE INTO git_commits
+                    (hash, short_hash, author, date, message, files_changed)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    c["hash"],
+                    c["short_hash"],
+                    c["author"],
+                    c["date"],
+                    c["message"],
+                    c["files_changed"],
+                ),
+            )
+            files = _json.loads(c["files_changed"]) if isinstance(c["files_changed"], str) else c["files_changed"]
+            for fp in files:
+                self._c.execute(
+                    """
+                    INSERT OR IGNORE INTO git_file_commits (file_path, commit_hash)
+                    VALUES (?, ?)
+                    """,
+                    (fp, c["hash"]),
+                )
+        self._c.commit()
+
+    def get_commits_for_file(self, file_path: str) -> list[dict]:
+        """Return commits that touched *file_path*, newest first.
+
+        Args:
+            file_path: Repository-relative file path.
+
+        Returns:
+            List of commit dicts (same shape as :meth:`store_commits` input).
+        """
+        rows = self._c.execute(
+            """
+            SELECT gc.hash, gc.short_hash, gc.author, gc.date, gc.message, gc.files_changed
+            FROM git_commits gc
+            JOIN git_file_commits gfc ON gfc.commit_hash = gc.hash
+            WHERE gfc.file_path = ?
+            ORDER BY gc.date DESC
+            """,
+            (file_path,),
+        ).fetchall()
+        return [
+            {
+                "hash": r[0],
+                "short_hash": r[1],
+                "author": r[2],
+                "date": r[3],
+                "message": r[4],
+                "files_changed": r[5],
+            }
+            for r in rows
+        ]
+
+    def get_commit_count(self) -> int:
+        """Return the total number of commits stored in the database.
+
+        Returns:
+            Integer count (0 if the table is empty or doesn't exist yet).
+        """
+        try:
+            row = self._c.execute("SELECT COUNT(*) FROM git_commits").fetchone()
+            return int(row[0]) if row else 0
+        except Exception:
+            return 0
+
+
 # ── helpers ──────────────────────────────────────────────────────────
 
 def _now() -> str:
