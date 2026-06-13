@@ -364,7 +364,7 @@
 <section class="hero" id="hero">
   <div class="hero-badge">
     <span class="dot"></span>
-    Now available on PyPI & npm
+    v0.23.0 — Community Sharding + Graph MCP Tools
   </div>
   <h1>Turn any repo into an<br><span>AI-ready knowledge base</span></h1>
   <p class="hero-sub">Wiki. RAG. MCP. All from one command.</p>
@@ -432,6 +432,16 @@
       <div class="feature-icon">🔥</div>
       <h3>Hotspot Detection</h3>
       <p>Automatically identifies high-churn files and complex modules so you focus on what matters.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏘️</div>
+      <h3>Community Sharding</h3>
+      <p>Run <code style="background:rgba(99,102,241,0.12);color:#a5b4fc;padding:2px 6px;border-radius:4px;font-size:0.8rem">--community-sharding</code> to cluster tightly-coupled files together. LLMs get denser, higher-quality context.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🕸️</div>
+      <h3>Graph Intelligence</h3>
+      <p>Three new MCP tools: <code style="background:rgba(99,102,241,0.12);color:#a5b4fc;padding:2px 6px;border-radius:4px;font-size:0.8rem">get_god_nodes</code>, <code style="background:rgba(99,102,241,0.12);color:#a5b4fc;padding:2px 6px;border-radius:4px;font-size:0.8rem">shortest_path</code>, <code style="background:rgba(99,102,241,0.12);color:#a5b4fc;padding:2px 6px;border-radius:4px;font-size:0.8rem">get_community</code>. Agents can now reason about your architecture graph directly.</p>
     </div>
   </div>
 </section>
@@ -510,18 +520,18 @@
 // ── Terminal animation ──────────────────────────────────────────────
 const lines = [
   { type: 'cmd', prompt: '$', text: 'pip install rekipedia' },
-  { type: 'out', cls: 'muted', text: 'Successfully installed rekipedia' },
-  { type: 'cmd', prompt: '$', text: 'reki scan . --no-llm' },
+  { type: 'out', cls: 'muted', text: 'Successfully installed rekipedia 0.23.0' },
+  { type: 'cmd', prompt: '$', text: 'reki scan . --community-sharding' },
   { type: 'out', cls: 'yellow', text: '⚡ Scanning 142 files...' },
+  { type: 'out', cls: '', text: '🏘️ 8 communities via label propagation' },
   { type: 'out', cls: '', text: '✓ Wiki generated → .reki/wiki/' },
-  { type: 'out', cls: 'muted', text: 'Done in 1.4s · 0 API calls' },
-  { type: 'cmd', prompt: '$', text: 'reki ask "how does auth work?"' },
-  { type: 'out', cls: '', text: '🎯 Auth flow uses JWT tokens.' },
-  { type: 'out', cls: 'blue', text: '  src/auth/middleware.py:42' },
-  { type: 'out', cls: 'blue', text: '  src/auth/tokens.py:18' },
+  { type: 'out', cls: 'muted', text: 'Done in 1.6s · context density +34%' },
+  { type: 'cmd', prompt: '$', text: 'reki ask "what are the god nodes?"' },
+  { type: 'out', cls: '', text: '🕸️ Top hub: src/core/engine.py (0.94)' },
+  { type: 'out', cls: 'blue', text: '  in: 18  out: 12  community: 3' },
   { type: 'cmd', prompt: '$', text: 'reki mcp' },
   { type: 'out', cls: '', text: '🔌 MCP server started on :7777' },
-  { type: 'out', cls: 'muted', text: 'Ready for Claude Code / Cursor' },
+  { type: 'out', cls: 'muted', text: 'get_god_nodes · shortest_path · get_community' },
 ];
 
 const tb = document.getElementById('terminal-body');
