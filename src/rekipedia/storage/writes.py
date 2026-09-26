@@ -348,6 +348,70 @@ class WritesMixin:
         )
         self._c.commit()
 
+    def upsert_hyperedges(self, run_id: str, hyperedges: list[Any]) -> None:
+        """Upsert hyperedges representing N-ary relationships (design patterns, shared concepts)."""
+        if not hyperedges:
+            return
+        self._c.execute(
+            """
+            CREATE TABLE IF NOT EXISTS scan_hyperedges (
+                run_id TEXT,
+                id TEXT,
+                concept TEXT NOT NULL,
+                description TEXT,
+                confidence TEXT DEFAULT 'INFERRED',
+                pattern_type TEXT,
+                PRIMARY KEY(run_id, id)
+            )
+            """
+        )
+        self._c.execute(
+            """
+            CREATE TABLE IF NOT EXISTS scan_hyperedge_members (
+                run_id TEXT,
+                hyperedge_id TEXT,
+                symbol_id TEXT NOT NULL,
+                PRIMARY KEY(run_id, hyperedge_id, symbol_id)
+            )
+            """
+        )
+        edge_rows = []
+        member_rows = []
+        for h in hyperedges:
+            if hasattr(h, "model_dump"):
+                d = h.model_dump()
+            elif hasattr(h, "to_dict"):
+                d = h.to_dict()
+            elif isinstance(h, dict):
+                d = h
+            else:
+                d = {"id": getattr(h, "id", ""), "concept": getattr(h, "concept", ""), "nodes": getattr(h, "nodes", [])}
+            edge_id = str(d.get("id") or f"hyperedge_{len(edge_rows)}")
+            concept = str(d.get("concept", ""))
+            desc = str(d.get("description", ""))
+            confidence = str(d.get("confidence", "INFERRED"))
+            pattern_type = str(d.get("pattern_type") or "design_pattern")
+            edge_rows.append((run_id, edge_id, concept, desc, confidence, pattern_type))
+            for sym_id in d.get("nodes", []):
+                member_rows.append((run_id, edge_id, str(sym_id)))
+
+        self._c.executemany(
+            """
+            INSERT OR REPLACE INTO scan_hyperedges(run_id, id, concept, description, confidence, pattern_type)
+            VALUES(?, ?, ?, ?, ?, ?)
+            """,
+            edge_rows,
+        )
+        if member_rows:
+            self._c.executemany(
+                """
+                INSERT OR REPLACE INTO scan_hyperedge_members(run_id, hyperedge_id, symbol_id)
+                VALUES(?, ?, ?)
+                """,
+                member_rows,
+            )
+        self._c.commit()
+
     def upsert_document_chunks(self, run_id: str, chunks: list[dict]) -> None:
         """Insert document chunks for a run."""
         import json as _json

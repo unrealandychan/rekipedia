@@ -1,4 +1,4 @@
-from rekipedia.analysis.graph_export import export_cypher, export_graphml, export_obsidian
+from rekipedia.analysis.graph_export import export_cypher, export_graphml, export_interactive_html, export_obsidian
 
 SYMS = [{'name': 'MyClass', 'kind': 'class', 'file': 'src/myclass.py'},
         {'name': 'my_func', 'kind': 'function', 'file': 'src/myclass.py'}]
@@ -64,4 +64,19 @@ def test_obsidian_with_wiki_and_diagrams(tmp_path):
     assert diag_copied.exists()
     diag_content = diag_copied.read_text(encoding="utf-8")
     assert "[[onboarding|Onboarding]]" in diag_content
+
+
+def test_export_interactive_html_embeds_data():
+    nodes = [{"id": "App", "name": "App", "kind": "class", "file": "src/app.py"}]
+    edges = [{"source": "App", "target": "DB", "kind": "calls"}]
+    god_nodes = [{"name": "App", "degree": 5}]
+    hypers = [{"id": "p1", "concept": "Repo Pattern", "nodes": ["A", "B", "C"]}]
+
+    html = export_interactive_html(nodes, edges, god_nodes, hypers, title="Test Graph")
+    assert "<!DOCTYPE html>" in html
+    assert "Test Graph" in html
+    assert "d3.forceSimulation" in html
+    assert '"nodes": [' in html
+    assert '"App"' in html
+    assert '"Repo Pattern"' in html
 

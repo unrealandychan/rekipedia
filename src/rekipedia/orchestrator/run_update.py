@@ -280,6 +280,13 @@ def run_update(
             for name, (dtype, content) in diagrams.items():
                 store.upsert_diagram(run_id, name, dtype, content)
 
+        # ── 7.5. Hyperedge detection ──────────────────────────────────
+        from rekipedia.analysis.hyperedge_detector import detect_hyperedges
+        all_syms = store.get_all_symbols(run_id)
+        detected_hyperedges = detect_hyperedges(all_syms, all_rels_raw)
+        combined.hyperedges = detected_hyperedges
+        store.upsert_hyperedges(run_id, detected_hyperedges)
+
         # ── 8. Export ─────────────────────────────────────────────────
         _log("Exporting…")
         from rekipedia.exporters.json_export import JsonExporter

@@ -199,29 +199,36 @@ exclude_pages:
 
 ---
 
-## Phase 5 — Serve UI 🚧 IN PROGRESS
+## Phase 5 — Serve UI & Interactive Graph Visualization ✅ COMPLETE
 
-**Goal:** `rekipedia serve` — local web UI to browse wiki pages and ask questions.
+**Goal:** `rekipedia serve` — local web UI to browse wiki pages, ask questions, and explore interactive graph.
 
 | Item | Status |
 |---|---|
-| Dark-themed wiki browser (page nav, sidebar sorted by importance score) | 🚧 |
-| Grounded Q&A via web (streaming answers) | 🚧 |
-| Q&A history stored in SQLite | 🚧 |
-| Interactive dependency graph (`graph.html`) — inspired by graphify | 📋 |
+| Dark-themed wiki browser (page nav, sidebar sorted by importance score) | ✅ |
+| Grounded Q&A via web (streaming answers) | ✅ |
+| Q&A history stored in SQLite | ✅ |
+| Interactive dependency graph (`graph.html`) & standalone browser export (`reki export --format graph`) | ✅ |
 
 ---
 
-## Phase 6 — Extraction Quality Upgrades
+## Phase 6 — Extraction Quality & Graph Intelligence ✅ COMPLETE
 
-**Goal:** Richer knowledge extraction inspired by [graphify](https://github.com/safishamsi/graphify) (40k ⭐). Improve signal quality without increasing token cost.
+**Goal:** Richer knowledge extraction inspired by Graphify (121k ⭐) and CodeGraph (72k ⭐).
 
 | Item | Status | Notes |
 |---|---|---|
-| **Relationship confidence scoring** — tag each relationship as `EXTRACTED` (1.0) / `INFERRED` (0.0–1.0) / `AMBIGUOUS` | 📋 | SQLite schema + extractor change |
-| **Design rationale extraction** — parse `# NOTE:`, `# IMPORTANT:`, `# HACK:`, `# WHY:` comments into knowledge nodes | 📋 | Python/TS/Go extractors |
-| **God nodes / symbol importance ranking** — surface highest-degree symbols in `index.md` and prioritise in RAG retrieval | 📋 | Post-extraction graph analysis |
-| **Git hooks auto-rebuild** — `rekipedia hook install` triggers `rekipedia update` on commit/branch switch | 📋 | Lightweight alt to CI integration |
+| **Relationship confidence scoring** — tag each relationship as `EXTRACTED` (1.0) / `INFERRED` (0.0–1.0) / `AMBIGUOUS` | ✅ | SQLite schema + extractor change |
+| **Design rationale extraction** — parse `# NOTE:`, `# IMPORTANT:`, `# HACK:`, `# WHY:` comments into knowledge nodes | ✅ | Python/TS/Go extractors |
+| **Tree-sitter AST extraction** — precise AST traversal for TypeScript/JavaScript via `tree-sitter-typescript` | ✅ | Issue #246 (`BaseTreeSitterExtractor`) |
+| **Hyperedge support** — N-ary relationships for design patterns (Repository, Service, Controller, Factory) | ✅ | Issue #237 (`models/hyperedge.py`) |
+| **CLI inspection** — `reki explain <symbol>` and `reki path <from> <to>` | ✅ | Instant terminal graph exploration |
+| **Staleness detection** — detect modified files since last scan and warn in CLI/MCP | ✅ | CodeGraph pattern (`utils/staleness.py`) |
+| **Agent skill installer** — `reki install` for Pi, Claude Code, Cursor, Codex, Agent-Skills | ✅ | Seamless skill registration |
+| **Hybrid engine bridge** — `--use-engine codebase-memory` for ultra-large codebases | ✅ | Issue #247 (`extractors/bridge/`) |
+| **Graph-First Cloud SQL Schema** — pgvector + graph schema with hybrid retrieval | ✅ | Issue #232 (`schemas/cloud_sql/`) |
+| **God nodes / symbol importance ranking** — surface highest-degree symbols in `index.md` | ✅ | Post-extraction graph analysis |
+| **Git hooks auto-rebuild** — `rekipedia hook install` triggers `rekipedia update` on commit | ✅ | Lightweight alt to CI integration |
 
 ---
 

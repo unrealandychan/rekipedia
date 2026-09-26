@@ -87,6 +87,7 @@ class AnalysisResult(BaseModel):
     unknowns: list[str] = Field(default_factory=list)
     evidence: dict[str, str] = Field(default_factory=dict)
     rationale_notes: list[RationaleNote] = Field(default_factory=list)
+    hyperedges: list[Any] = Field(default_factory=list)
 
 
 # ─────────────────────────────────────────────

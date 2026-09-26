@@ -28,9 +28,13 @@
 | Problem | rekipedia |
 |---|---|
 | "Where does the auth logic live?" | `reki ask "how does auth work?"` → `src/auth.py:42` |
+| "What does this class or symbol do?" | `reki explain AuthService` → callers, callees, degrees, design pattern |
+| "How does module A reach module B?" | `reki path App UserRepo` → shortest directed path hop-by-hop |
 | Onboarding new devs takes days | `reki onboard .` generates a guided walkthrough in seconds |
 | AI agents hallucinate about your codebase | `reki mcp` gives agents a grounded knowledge base with citations |
+| Stale graph after file edits | Auto-staleness detection alerts agents when working tree changed |
 | Refactor anxiety — will this break everything? | `reki hotspots` surfaces hub and bridge nodes before you touch anything |
+| Interactive dependency exploration | `reki export . --format graph` → self-contained `graph.html` (zero server) |
 | Wiki goes stale immediately | `reki watch .` auto-reindexes on every file save |
 
 ---
@@ -200,17 +204,22 @@ reki publish . [--output-dir PATH]
 |---|---|
 | `reki scan .` | Full scan — index symbols, generate wiki |
 | `reki scan . --no-llm` | Scan without LLM, zero config |
+| `reki scan . --use-engine codebase-memory` | Hybrid mode: delegate AST indexing for multi-million LOC codebases |
 | `reki ask "question"` | Ask anything about the codebase |
 | `reki ask "question" --brief` | Short answer mode |
+| `reki explain <symbol>` | Inspect symbol location, callers, callees, degrees, design patterns |
+| `reki path <from> <to>` | Trace shortest directed path between two symbols with evidence tags |
+| `reki install` | Install agent skill for Pi, Claude Code, Cursor, Codex, Agent-Skills |
 | `reki update . --impact-only` | Incremental update, affected pages only |
 | `reki serve .` | Local web UI at `http://127.0.0.1:7070` |
 | `reki embed .` | Build FAISS semantic index |
 | `reki publish . [--output-dir PATH]` | Publish wiki to a git-tracked directory |
+| `reki export . --format graph` | Export standalone interactive `graph.html` (offline viewer) |
 | `reki export . --format bundle` | Export a content-addressed wiki bundle |
 | `reki merge <bundle-A> <bundle-B> [--base BASE]` | Three-way conflict-free wiki merge |
 | `reki pull [URL]` | Fetch and merge a remote wiki bundle |
 | `reki watch . --publish` | Auto-index + auto-publish on every file save |
-| `reki export . --format md\|zip\|json\|html\|bundle` | Export the wiki |
+| `reki export . --format md\|zip\|json\|graph\|html` | Export the wiki |
 | `reki diff` | Show impact of uncommitted changes |
 | `reki hotspots` | Hub & bridge node detection |
 | `reki refactor . --dry-run` | Preview refactor suggestions |

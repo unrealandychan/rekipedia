@@ -9,13 +9,16 @@ from rekipedia.cli.context import context_cmd
 from rekipedia.cli.diff import diff_cmd
 from rekipedia.cli.domain import domain_cmd
 from rekipedia.cli.embed import embed_cmd
+from rekipedia.cli.explain_cmd import explain_cmd
 from rekipedia.cli.export import export_cmd
 from rekipedia.cli.hook import hook_cmd
 from rekipedia.cli.hotspots import hotspots_cmd
+from rekipedia.cli.path_cmd import path_cmd
 from rekipedia.cli.surprises import surprises_cmd
 from rekipedia.cli.git_history import git_history_cmd
 from rekipedia.cli.impact import impact_cmd
 from rekipedia.cli.init import init_cmd
+from rekipedia.cli.install_cmd import install_cmd
 from rekipedia.cli.mcp_cmd import mcp_cmd
 from rekipedia.cli.merge_cmd import merge_cmd
 from rekipedia.cli.merge_driver_cmd import merge_driver_cmd
@@ -36,9 +39,9 @@ from rekipedia.cli.watch import watch_cmd
 
 SECTIONS = [
     ("Core", ["scan", "ask", "mcp", "serve"]),
-    ("Analysis", ["hotspots", "surprises", "git-history", "diff", "impact", "refactor", "review"]),
+    ("Analysis", ["explain", "path", "hotspots", "surprises", "git-history", "diff", "impact", "refactor", "review"]),
     ("Team sync", ["publish", "export", "merge", "pull", "watch"]),
-    ("Setup", ["init", "hook", "embed"]),
+    ("Setup", ["init", "install", "hook", "embed"]),
 ]
 
 
@@ -89,6 +92,7 @@ def main() -> None:
 
 
 main.add_command(init_cmd)
+main.add_command(install_cmd)
 main.add_command(scan_cmd)
 main.add_command(update_cmd)
 main.add_command(ask_cmd)
@@ -116,4 +120,6 @@ main.add_command(pull_cmd)
 main.add_command(merge_driver_cmd)
 main.add_command(hotspots_cmd)
 main.add_command(surprises_cmd)
+main.add_command(explain_cmd)
+main.add_command(path_cmd)
 main.add_command(git_history_cmd, name="git-history")

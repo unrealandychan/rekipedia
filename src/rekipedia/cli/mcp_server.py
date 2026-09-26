@@ -208,6 +208,19 @@ class _StoreCache:
         self._callers_index = callers
         self._callees_index = callees
 
+    def check_staleness(self) -> dict:
+        """Check if working tree files have changed compared to the indexed snapshot."""
+        try:
+            from rekipedia.storage.sqlite_store import SqliteStore
+            from rekipedia.utils.staleness import check_index_staleness
+            if not self.db_path.exists():
+                return {"is_stale": False, "banner": ""}
+            with SqliteStore(self.db_path) as s:
+                repo_root = self._rekipedia_dir.parent
+                return check_index_staleness(repo_root, s)
+        except Exception:
+            return {"is_stale": False, "banner": ""}
+
 
 def _sym_to_dict(s) -> dict:
     return {
@@ -530,6 +543,15 @@ def run_mcp_server(output_dir: str = "."):
             _write({"jsonrpc": "2.0", "id": req_id, "result": {"tools": TOOLS}})
         elif method == "tools/call":
             result_text = _handle_tool(params.get("name", ""), params.get("arguments", {}), cache)
+            stale = cache.check_staleness()
+            if stale.get("is_stale"):
+                try:
+                    parsed = json.loads(result_text)
+                    if isinstance(parsed, dict) and "_staleness_warning" not in parsed:
+                        parsed["_staleness_warning"] = stale.get("banner")
+                        result_text = json.dumps(parsed)
+                except Exception:
+                    pass
             _write({"jsonrpc": "2.0", "id": req_id, "result": {
                 "content": [{"type": "text", "text": result_text}]
             }})

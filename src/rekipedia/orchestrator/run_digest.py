@@ -90,6 +90,7 @@ def run_digest(
     force: bool = False,
     persona: str = "senior-dev",
     preset: str | None = None,
+    use_engine: str = "internal",
 ) -> None:
     """Full scan pipeline.
 
@@ -295,66 +296,75 @@ def run_digest(
             shards = planner.plan(extraction_files, llm_config)
             _vlog(f"  {len(shards)} shards planned")
 
-        # ── 3. Extract shards in parallel ────────────────────────────
-        runner: BaseRunner = get_runner(force_local=force_local)
-        runner_name = type(runner).__name__
-        _vlog(f"Using {runner_name} with up to {workers} parallel workers")
+        # ── 3. Extract shards in parallel (or delegate to external engine) ──
+        if use_engine == "codebase-memory":
+            _log("Delegating symbol extraction to codebase-memory-mcp engine…")
+            from rekipedia.extractors.bridge.codebase_memory_bridge import CodebaseMemoryAdapter
+            bridge_result = CodebaseMemoryAdapter.execute_bridge(repo_root)
+            merged_results = [bridge_result]
+            store.upsert_symbols(run_id, [s.model_dump() for s in bridge_result.symbols])
+            store.upsert_relationships(run_id, [r.model_dump(by_alias=True) for r in bridge_result.relationships])
+            _vlog(f"  codebase-memory: imported {len(bridge_result.symbols)} symbols and {len(bridge_result.relationships)} relationships")
+        else:
+            runner: BaseRunner = get_runner(force_local=force_local)
+            runner_name = type(runner).__name__
+            _vlog(f"Using {runner_name} with up to {workers} parallel workers")
 
-        merged_results: list[AnalysisResult] = [None] * len(shards)  # type: ignore[list-item]
-        shard_errors: list[str] = []
+            merged_results: list[AnalysisResult] = [None] * len(shards)  # type: ignore[list-item]
+            shard_errors: list[str] = []
 
-        _rich_progress = Progress(
-            SpinnerColumn(),
-            TextColumn("[bold cyan]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            TimeRemainingColumn(),
-            console=_console,
-            transient=False,
-            disable=_console.quiet,
-        )
-
-        with _rich_progress:
-            shard_task = _rich_progress.add_task(
-                f"[cyan]🔍 Shard 0/{len(shards)}",
-                total=len(shards),
+            _rich_progress = Progress(
+                SpinnerColumn(),
+                TextColumn("[bold cyan]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeRemainingColumn(),
+                console=_console,
+                transient=False,
+                disable=_console.quiet,
             )
-            _shard_done = 0
-            _shard_emitter = StepEmitter(_rich_progress, shard_task, _log)
 
-            with ThreadPoolExecutor(max_workers=workers) as executor:
-                future_to_idx = {
-                    executor.submit(runner.run, shard, repo_root): (i, shard)
-                    for i, shard in enumerate(shards)
-                }
-                for future in as_completed(future_to_idx):
-                    i, shard = future_to_idx[future]
-                    try:
-                        result = future.result()
-                        merged_results[i] = result
-                        _vlog(f"  ✓ {shard.shard_id}: {len(result.symbols)} symbols, {len(result.relationships)} rels")
-                    except Exception as exc:
-                        logger.error("Shard %s failed: %s", shard.shard_id, exc, exc_info=verbose)
-                        shard_errors.append(f"{shard.shard_id}: {exc}")
-                        merged_results[i] = AnalysisResult(
-                            shard_id=shard.shard_id, files_seen=[], entry_points=[],
-                            risks=[f"extraction failed: {exc}"]
-                        )
-                    finally:
-                        _shard_done += 1
-                        _shard_emitter.step(
-                            f"Shard {_shard_done}/{len(shards)}",
-                            description=f"[cyan]🔍 Shard {_shard_done}/{len(shards)}",
-                        )
+            with _rich_progress:
+                shard_task = _rich_progress.add_task(
+                    f"[cyan]🔍 Shard 0/{len(shards)}",
+                    total=len(shards),
+                )
+                _shard_done = 0
+                _shard_emitter = StepEmitter(_rich_progress, shard_task, _log)
 
-        if shard_errors:
-            _vlog(f"  ⚠ {len(shard_errors)} shard(s) failed — continuing with partial results")
+                with ThreadPoolExecutor(max_workers=workers) as executor:
+                    future_to_idx = {
+                        executor.submit(runner.run, shard, repo_root): (i, shard)
+                        for i, shard in enumerate(shards)
+                    }
+                    for future in as_completed(future_to_idx):
+                        i, shard = future_to_idx[future]
+                        try:
+                            result = future.result()
+                            merged_results[i] = result
+                            _vlog(f"  ✓ {shard.shard_id}: {len(result.symbols)} symbols, {len(result.relationships)} rels")
+                        except Exception as exc:
+                            logger.error("Shard %s failed: %s", shard.shard_id, exc, exc_info=verbose)
+                            shard_errors.append(f"{shard.shard_id}: {exc}")
+                            merged_results[i] = AnalysisResult(
+                                shard_id=shard.shard_id, files_seen=[], entry_points=[],
+                                risks=[f"extraction failed: {exc}"]
+                            )
+                        finally:
+                            _shard_done += 1
+                            _shard_emitter.step(
+                                f"Shard {_shard_done}/{len(shards)}",
+                                description=f"[cyan]🔍 Shard {_shard_done}/{len(shards)}",
+                            )
 
-        # Persist all results after parallel extraction (SQLite writes must be serial)
-        for result in merged_results:
-            if result:
-                store.upsert_symbols(run_id, [s.model_dump() for s in result.symbols])
-                store.upsert_relationships(run_id, [r.model_dump(by_alias=True) for r in result.relationships])
+            if shard_errors:
+                _vlog(f"  ⚠ {len(shard_errors)} shard(s) failed — continuing with partial results")
+
+            # Persist all results after parallel extraction (SQLite writes must be serial)
+            for result in merged_results:
+                if result:
+                    store.upsert_symbols(run_id, [s.model_dump() for s in result.symbols])
+                    store.upsert_relationships(run_id, [r.model_dump(by_alias=True) for r in result.relationships])
 
         # ── 4. Build diagrams ─────────────────────────────────────────
         _vlog("Building diagrams…")
@@ -477,6 +487,19 @@ def run_digest(
         combined_for_build.evidence["pre_built_module_graph"] = combined.evidence["pre_built_module_graph"]
         combined_for_build.evidence["pre_built_dependency_graph"] = combined.evidence["pre_built_dependency_graph"]
 
+        # Hyperedge detection (N-ary design patterns & architectural motifs)
+        from rekipedia.analysis.hyperedge_detector import detect_hyperedges
+        _llm_for_hyperedges = None if no_llm else LLMClient(llm_config)
+        detected_hyperedges = detect_hyperedges(
+            combined_for_build.symbols,
+            combined_for_build.relationships,
+            llm_client=_llm_for_hyperedges,
+        )
+        combined_for_build.hyperedges = detected_hyperedges
+        store.upsert_hyperedges(run_id, detected_hyperedges)
+        if detected_hyperedges:
+            _vlog(f"  Detected {len(detected_hyperedges)} hyperedge(s)")
+
         planner = PlannerAgent(llm_config)
 
         # Live spinner for planner — shows thinking phases while LLM call blocks
@@ -595,6 +618,42 @@ def run_digest(
             page_count=len(pages),
         )
         _vlog("scan_meta.json written")
+
+        # ── 7a. Standalone interactive graph.html (Graphify pattern) ─────
+        try:
+            from rekipedia.analysis.graph_export import export_interactive_html
+            all_syms = store.get_all_symbols(run_id)
+            all_rels = store.get_all_relationships(run_id)
+            god_nodes_list = store.get_god_nodes(run_id, top_n=10)
+            hypers_list = store.get_hyperedges(run_id)
+            g_nodes = [
+                {"id": s.name, "name": s.name, "kind": s.kind, "file": s.file}
+                for s in all_syms if s.name
+            ]
+            existing_ids = {n["id"] for n in g_nodes}
+            g_edges = []
+            for r in all_rels:
+                frm = r.get("from_", "") or r.get("from", "")
+                to = r.get("to", "")
+                if frm and to:
+                    if frm not in existing_ids:
+                        g_nodes.append({"id": frm, "name": frm, "kind": "module", "file": ""})
+                        existing_ids.add(frm)
+                    if to not in existing_ids:
+                        g_nodes.append({"id": to, "name": to, "kind": "module", "file": ""})
+                        existing_ids.add(to)
+                    g_edges.append({"source": frm, "target": to, "kind": r.get("kind", "calls")})
+            g_html = export_interactive_html(
+                nodes=g_nodes,
+                edges=g_edges,
+                god_nodes=[{"name": n, "degree": d} for n, d in god_nodes_list],
+                hyperedges=hypers_list,
+                title=f"{repo_root.name} · Codebase Knowledge Graph",
+            )
+            (output_dir / "graph.html").write_text(g_html, encoding="utf-8")
+            _vlog("graph.html written")
+        except Exception as _g_exc:
+            logger.debug("Failed to write standalone graph.html: %s", _g_exc)
 
         # ── 7b. Agent hint files & .mcp.json ─────────────────────────────
         from rekipedia.orchestrator.agent_hints import (

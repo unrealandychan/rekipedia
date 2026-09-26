@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.28.0] — 2026-09-26
+
+### Features
+- **Hyperedge Support (#237)**: Represent N-ary relationships, architectural motifs, and design patterns (Repository Pattern, Service Layer, Controllers, Factory Pattern, shared inheritance clusters). Stored in SQLite (`scan_hyperedges`, `scan_hyperedge_members`), exported to JSON, and rendered into a dedicated "Design Patterns & Architectural Motifs" section in wiki generation.
+- **Tree-sitter AST Extraction for TypeScript/JS (#246)**: Replaced regex parsing with `tree-sitter-typescript` AST traversal via new `BaseTreeSitterExtractor`, achieving high precision for TypeScript, TSX, JSX, interfaces, type aliases, CommonJS `require`, and classes with robust fallback.
+- **Hybrid Engine Bridge (#247)**: Added `--use-engine codebase-memory` to delegate symbol/relationship extraction to `codebase-memory-mcp` for ultra-large codebases, with automatic schema mapping via `CodebaseMemoryAdapter`.
+- **Graph-First Cloud SQL Schema (#232)**: Added PostgreSQL 16 + pgvector DDL schema (`schemas/cloud_sql/001_graph_first_pgvector.sql`), hybrid retrieval function (`merge_and_rerank`), and GCS artifact incremental sync.
+- **`reki path <from> <to>` CLI Command**: Trace the shortest directed path between any two symbols hop-by-hop with relationship kinds and `[EXTRACTED]` / `[INFERRED]` confidence tags. Supports `--json`.
+- **`reki explain <symbol>` CLI Command**: Instant symbol breakdown showing location (`file:line`), callers, callees, degree metrics, rationale notes (`NOTE:`, `WHY:`), and design pattern memberships. Supports `--json`.
+- **Standalone Interactive `graph.html` Export**: Generate a self-contained, offline force-directed graph viewer (`reki export --format graph` and auto-emitted `.rekipedia/graph.html`) featuring search, kind filters, zoom/pan, and node inspector without needing a server.
+- **Universal Agent Skill Installer**: `reki install [--platform pi|claude|cursor|codex|agents|copilot] [--project]` auto-registers skills with Pi, Claude Code, Cursor rules (`.cursor/rules/`), Codex, or cross-framework Agent-Skills.
+- **Staleness Detection (CodeGraph pattern)**: Auto-detects modified files since the last scan and warns users/agents in `reki ask` and MCP server tools to keep context fresh.
+
+### Tests
+- 43 new unit tests across 8 test suites; 1,266 tests passing in total.
+
 ## [0.27.0] — 2026-06-26
 
 ### Features

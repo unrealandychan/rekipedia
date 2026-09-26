@@ -699,10 +699,16 @@ def create_app(
                     break
 
             god_nodes_data = [{"name": name, "degree": degree} for name, degree in god_nodes]
+            try:
+                raw_h = store.get_hyperedges(run_id) if hasattr(store, "get_hyperedges") else []
+                hyperedges_data = raw_h if isinstance(raw_h, list) else []
+            except Exception:
+                hyperedges_data = []
             return JSONResponse({
                 "nodes": nodes,
                 "edges": edges,
                 "god_nodes": god_nodes_data,
+                "hyperedges": hyperedges_data,
                 "edge_count_total": len(edges),
             })
         except Exception as exc:

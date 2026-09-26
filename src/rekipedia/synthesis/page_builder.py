@@ -357,6 +357,9 @@ class PageBuilder:
             content = f"# {title}\n\n> *LLM synthesis failed: {exc}*\n"
 
         content = _ensure_frontmatter(slug, title, content)
+        if slug == "architecture" and getattr(combined, "hyperedges", None):
+            if "## Design Patterns" not in content:
+                content += "\n" + format_design_patterns_section(combined.hyperedges)
         return (title, content)
 
 
@@ -379,6 +382,26 @@ _CROSS_MODULE_REVERSE = {
     "inherits": "inherited_by",
     "inherit": "inherited_by",
 }
+
+
+def format_design_patterns_section(hyperedges: list[Any]) -> str:
+    """Format hyperedges into a readable Design Patterns & Architectural Motifs Markdown section."""
+    if not hyperedges:
+        return ""
+    lines = ["## Design Patterns & Architectural Motifs\n"]
+    for h in hyperedges:
+        concept = getattr(h, "concept", "") if hasattr(h, "concept") else h.get("concept", "")
+        desc = getattr(h, "description", "") if hasattr(h, "description") else h.get("description", "")
+        nodes = getattr(h, "nodes", []) if hasattr(h, "nodes") else h.get("nodes", [])
+        ptype = getattr(h, "pattern_type", "") if hasattr(h, "pattern_type") else h.get("pattern_type", "")
+        conf = getattr(h, "confidence", "INFERRED") if hasattr(h, "confidence") else h.get("confidence", "INFERRED")
+        node_str = ", ".join(f"`{n}`" for n in nodes)
+        lines.append(f"### {concept}\n")
+        lines.append(f"**Pattern type:** `{ptype or 'design_pattern'}` | **Confidence:** `{conf}`  ")
+        lines.append(f"**Participating symbols:** {node_str}\n")
+        if desc:
+            lines.append(f"> {desc}\n")
+    return "\n".join(lines)
 
 
 def _build_cross_module_summary(
@@ -574,6 +597,10 @@ def _build_payload(combined: AnalysisResult, diagrams: dict | None = None) -> di
     payload["knowledge_gaps"] = _build_knowledge_gaps(combined)
     from rekipedia.analysis.graph_analysis import _build_hub_nodes
     payload["hub_nodes"] = _build_hub_nodes(combined.relationships, combined.symbols)
+    payload["hyperedges"] = [
+        h.model_dump() if hasattr(h, "model_dump") else (h.to_dict() if hasattr(h, "to_dict") else h)
+        for h in getattr(combined, "hyperedges", [])
+    ]
     if diagrams:
         payload["pre_built_module_graph"] = diagrams.get("module-graph", ("", ""))[1]
         payload["pre_built_dependency_graph"] = diagrams.get("class-hierarchy", ("", ""))[1]

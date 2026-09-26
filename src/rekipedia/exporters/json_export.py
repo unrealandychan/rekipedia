@@ -44,6 +44,18 @@ class JsonExporter:
             encoding="utf-8",
         )
 
+        # hyperedges.json
+        hyperedges_data = [
+            h.model_dump() if hasattr(h, "model_dump") else (h.to_dict() if hasattr(h, "to_dict") else h)
+            for h in getattr(combined, "hyperedges", [])
+        ]
+        if hyperedges_data:
+            hyperedges_path = self._exports_dir / "hyperedges.json"
+            hyperedges_path.write_text(
+                json.dumps(hyperedges_data, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+
         # manifest.json
         nav_order: list[str] = []
         pages_meta: list[dict] = []
@@ -84,6 +96,8 @@ class JsonExporter:
             "file_count": len(files),
             "symbol_count": len(combined.symbols),
             "relationship_count": len(combined.relationships),
+            "hyperedge_count": len(hyperedges_data),
+            "hyperedges": hyperedges_data,
             "nav_order": ordered_slugs,
             "pages": pages_list,
             "diagrams": list(diagrams.keys()),

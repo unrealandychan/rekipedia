@@ -115,6 +115,14 @@ def _run_with_refactor(repo: Path, output_dir: Path, verbose: bool) -> None:
     is_flag=True, default=False,
     help="Group related files by real import/call edges (from previous scan) before sharding. Improves wiki quality for tightly coupled subsystems. Falls back to default sharding on the first scan."
 )
+@click.option(
+    "--use-engine",
+    "use_engine",
+    type=click.Choice(["internal", "codebase-memory"], case_sensitive=False),
+    default="internal",
+    show_default=True,
+    help="Underlying AST extraction engine. Use 'codebase-memory' to delegate symbol extraction for ultra-large codebases.",
+)
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Suppress all output messages and progress bars.")
 def scan_cmd(
     repo: Path,
@@ -135,6 +143,7 @@ def scan_cmd(
     no_thumbnails: bool,
     preset: str | None,
     community_sharding: bool,
+    use_engine: str,
     quiet: bool,
 ) -> None:
     """Scan REPO and (re)build the rekipedia knowledge store.
@@ -251,6 +260,7 @@ def scan_cmd(
                 community_sharding=community_sharding,
                 force=force,
                 preset=preset,
+                use_engine=use_engine,
             )
         except Exception:
             console.print_exception(show_locals=True)
@@ -287,6 +297,7 @@ def scan_cmd(
                     community_sharding=community_sharding,
                     force=force,
                     preset=preset,
+                    use_engine=use_engine,
                 )
             except Exception as exc:
                 progress.stop()

@@ -317,6 +317,20 @@ def ask_cmd(
 
     repo = repo.resolve()
     output_dir = (output_dir or repo / ".rekipedia").resolve()
+
+    # Check index staleness (CodeGraph pattern)
+    _db_file = output_dir / "store.db"
+    if _db_file.exists():
+        try:
+            from rekipedia.storage.sqlite_store import SqliteStore
+            from rekipedia.utils.staleness import check_index_staleness
+            with SqliteStore(_db_file) as _st:
+                _stale = check_index_staleness(repo, _st)
+                if _stale.get("is_stale"):
+                    console.print(f"[yellow]{_stale.get('banner')}[/yellow]\n")
+        except Exception:
+            pass
+
     llm_config = _build_llm_config(repo, model)
 
     # ── Early API key validation (issue #156) ────────────────────────────────

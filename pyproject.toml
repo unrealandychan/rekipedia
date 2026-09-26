@@ -26,6 +26,7 @@ dependencies = [
   "tree-sitter-go",
   "tree-sitter-rust",
   "tree-sitter-java",
+  "tree-sitter-typescript",
 ]
 
 [project.optional-dependencies]

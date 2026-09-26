@@ -56,6 +56,40 @@ class ReadsMixin:
         ).fetchall()
         return [{"tag": r[0], "content": r[1], "file": r[2], "line": r[3]} for r in rows]
 
+    def get_hyperedges(self, run_id: str) -> list[dict[str, Any]]:
+        """Return all hyperedges and their member symbols for *run_id*."""
+        if "scan_hyperedges" not in self._table_names():
+            return []
+        rows = self._c.execute(
+            "SELECT id, concept, description, confidence, pattern_type FROM scan_hyperedges WHERE run_id = ?",
+            [run_id],
+        ).fetchall()
+        if not rows:
+            return []
+
+        # Fetch members
+        members_map: dict[str, list[str]] = {}
+        if "scan_hyperedge_members" in self._table_names():
+            member_rows = self._c.execute(
+                "SELECT hyperedge_id, symbol_id FROM scan_hyperedge_members WHERE run_id = ?",
+                [run_id],
+            ).fetchall()
+            for hid, sym in member_rows:
+                members_map.setdefault(hid, []).append(sym)
+
+        result = []
+        for r in rows:
+            hid = r[0]
+            result.append({
+                "id": hid,
+                "concept": r[1],
+                "description": r[2] or "",
+                "confidence": r[3] or "INFERRED",
+                "pattern_type": r[4] or "design_pattern",
+                "nodes": members_map.get(hid, []),
+            })
+        return result
+
     def get_relationships_for_run(self, run_id: str) -> list[dict]:
         """Return all scan_relationships rows for *run_id* as plain dicts."""
         if "scan_relationships" not in self._table_names():

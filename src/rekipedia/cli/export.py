@@ -20,7 +20,7 @@ from rich.console import Console
 
 console = Console()
 
-_FORMAT_CHOICES = click.Choice(["md", "zip", "json", "html", "graphml", "cypher", "obsidian", "bundle", "okf"], case_sensitive=False)
+_FORMAT_CHOICES = click.Choice(["md", "zip", "json", "html", "graph", "graph-html", "graphml", "cypher", "obsidian", "bundle", "okf"], case_sensitive=False)
 
 
 @click.command("export")
@@ -149,6 +149,74 @@ def export_cmd(
             rels = store.get_all_relationships(run_id)
         written = export_obsidian(symbols, rels, obs_dir, wiki_dir=wiki_dir, diagrams_dir=diagrams_dir)
         console.print(f"[green]✅ Obsidian vault: {len(written)} notes written to {obs_dir}[/green]")
+        return
+
+    if fmt in ("graph", "graph-html"):
+        from rekipedia.analysis.graph_export import export_interactive_html
+        from rekipedia.storage.sqlite_store import SqliteStore
+        db = out_dir / "store.db"
+        if not db.exists():
+            alt = out_dir / "rekipedia.db"
+            if alt.exists():
+                db = alt
+            else:
+                console.print("[red]No rekipedia DB. Run rekipedia scan first.[/red]")
+                sys.exit(1)
+        with SqliteStore(db) as store:
+            run_id = store.get_latest_run_id(str(repo)) or store.latest_run_id()
+            if not run_id:
+                try:
+                    row = store._c.execute("SELECT id FROM scan_runs ORDER BY rowid DESC LIMIT 1").fetchone()
+                    if row:
+                        run_id = row[0]
+                except Exception:
+                    pass
+            symbols = store.get_all_symbols(run_id) if run_id else []
+            rels = store.get_all_relationships(run_id) if run_id else []
+            god_nodes = store.get_god_nodes(run_id, top_n=10) if run_id else []
+            hyperedges = store.get_hyperedges(run_id) if run_id else []
+
+        nodes = [
+            {
+                "id": s.name if hasattr(s, "name") else s.get("name", ""),
+                "name": s.name if hasattr(s, "name") else s.get("name", ""),
+                "kind": s.kind if hasattr(s, "kind") else s.get("kind", "module"),
+                "file": s.file if hasattr(s, "file") else s.get("file", ""),
+            }
+            for s in symbols if (s.name if hasattr(s, "name") else s.get("name"))
+        ]
+        # Also ensure unique nodes for relation endpoints
+        existing_node_ids = {n["id"] for n in nodes}
+        edges = []
+        for r in rels:
+            frm = r.get("from_", "") or r.get("from", "") if isinstance(r, dict) else (r.from_ or "")
+            to = r.get("to", "") if isinstance(r, dict) else r.to
+            kind = r.get("kind", "") if isinstance(r, dict) else r.kind
+            if frm and to:
+                if frm not in existing_node_ids:
+                    nodes.append({"id": frm, "name": frm, "kind": "module", "file": ""})
+                    existing_node_ids.add(frm)
+                if to not in existing_node_ids:
+                    nodes.append({"id": to, "name": to, "kind": "module", "file": ""})
+                    existing_node_ids.add(to)
+                edges.append({"source": frm, "target": to, "kind": kind})
+
+        god_nodes_data = [{"name": name, "degree": degree} for name, degree in god_nodes]
+
+        dest = Path(output) if output else out_dir / "graph.html"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        html_content = export_interactive_html(
+            nodes=nodes,
+            edges=edges,
+            god_nodes=god_nodes_data,
+            hyperedges=hyperedges,
+            title=f"{doc_title} · Knowledge Graph",
+        )
+        dest.write_text(html_content, encoding="utf-8")
+        size_kb = dest.stat().st_size / 1024
+        console.print(f"[green]✅ Exported interactive GRAPH HTML[/green] → [bold]{dest}[/bold] ({size_kb:.1f} KB)")
+        console.print(f"   nodes  : {len(nodes)}")
+        console.print(f"   edges  : {len(edges)}")
         return
 
     if fmt in ("graphml", "cypher"):

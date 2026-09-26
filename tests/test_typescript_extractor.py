@@ -73,3 +73,48 @@ def test_inheritance_relationship(extractor, tmp_path):
     result = extractor.extract(ts, tmp_path)
     rels = [r for r in result.relationships if r.kind == "inherits"]
     assert any(r.to == "Animal" for r in rels)
+
+
+def test_tsx_ast_extraction(extractor, tmp_path):
+    tsx = tmp_path / "Button.tsx"
+    tsx.write_text("""
+    import React from 'react';
+    import { format } from '../utils/format';
+
+    export interface ButtonProps {
+        label: string;
+        onClick: () => void;
+    }
+
+    export type ButtonVariant = 'primary' | 'secondary';
+
+    export const Button = ({ label, onClick }: ButtonProps) => {
+        return <button onClick={onClick}>{format(label)}</button>;
+    };
+    """)
+    result = extractor.extract(tsx, tmp_path)
+    sym_names = {s.name for s in result.symbols}
+    assert "Button" in sym_names
+    assert "ButtonProps" in sym_names
+    assert "ButtonVariant" in sym_names
+
+    imports = {r.to for r in result.relationships if r.kind == "import"}
+    assert "react" in imports
+    assert "../utils/format" in imports
+
+
+def test_cjs_require_extraction(extractor, tmp_path):
+    js = tmp_path / "legacy.js"
+    js.write_text("""
+    const path = require('path');
+    const express = require('express');
+
+    function start() {
+        console.log('started');
+    }
+    """)
+    result = extractor.extract(js, tmp_path)
+    imports = {r.to for r in result.relationships if r.kind == "import"}
+    assert "path" in imports
+    assert "express" in imports
+    assert any(s.name == "start" for s in result.symbols)
