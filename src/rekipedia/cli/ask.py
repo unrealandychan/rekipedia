@@ -345,7 +345,22 @@ def ask_cmd(
         or os.environ.get("GOOGLE_API_KEY")
         or llm_config.api_key
     )
-    _needs_api_key = not model_name.startswith("ollama/") and not bool(base_url)
+
+    _is_vertex = model_name.startswith("vertex_ai/")
+    _has_adc = False
+    if _is_vertex:
+        try:
+            import google.auth
+            _creds, _proj = google.auth.default()
+            _has_adc = bool(_creds)
+        except Exception:
+            _has_adc = bool(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
+
+    _needs_api_key = (
+        not model_name.startswith("ollama/")
+        and not bool(base_url)
+        and not (_is_vertex and _has_adc)
+    )
 
     if _needs_api_key and not _has_api_key:
         console.print("[bold red]✗[/bold red]  No LLM API key found.")

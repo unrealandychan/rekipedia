@@ -131,6 +131,35 @@ class LLMClient:
             kwargs["api_key"] = self._api_key
         if self._base_url:
             kwargs["base_url"] = self._base_url
+
+        # Native Google Cloud Vertex AI ADC support
+        if self._model.startswith("vertex_ai/"):
+            project = (
+                os.environ.get("VERTEX_PROJECT")
+                or os.environ.get("GOOGLE_CLOUD_PROJECT")
+                or os.environ.get("GCP_PROJECT")
+            )
+            if not project:
+                try:
+                    import google.auth
+                    _, default_proj = google.auth.default()
+                    if default_proj:
+                        project = default_proj
+                except Exception:
+                    pass
+            if project:
+                kwargs["vertex_project"] = project
+                os.environ.setdefault("VERTEX_PROJECT", project)
+
+            location = (
+                os.environ.get("VERTEX_LOCATION")
+                or os.environ.get("GOOGLE_CLOUD_REGION")
+                or os.environ.get("GCP_REGION")
+                or "us-central1"
+            )
+            kwargs["vertex_location"] = location
+            os.environ.setdefault("VERTEX_LOCATION", location)
+
         return kwargs
 
     def call(self, prompt: str, *, system: str = "", timeout: int | None = None, history: list[dict] | None = None) -> str:
