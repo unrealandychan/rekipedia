@@ -5,8 +5,8 @@ section: development
 tags: [internals, contributing]
 pin: false
 importance: 50
-created_at: 2026-06-26T15:01:24Z
-rekipedia_version: 0.27.0
+created_at: 2026-09-26T08:17:05Z
+rekipedia_version: 0.28.0
 ---
 
 # Technical Debt
